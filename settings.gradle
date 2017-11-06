@@ -1,0 +1,6 @@
+rootProject.name = 'fs-replicator'
+include 'replicator-api'
+include 'replicator-impl'
+include 'distributor-api'
+include 'distributor-impl'
+

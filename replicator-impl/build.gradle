@@ -1,0 +1,18 @@
+group 'ch.sourcepond.io'
+version '0.1-SNAPSHOT'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile project(':replicator-api')
+    compile project(':distributor-api')
+    compile 'ch.sourcepond.io:checksum-api:4.0.0'
+    compile 'org.slf4j:slf4j-api:1.7.25'
+    testCompile 'junit:junit:4.12'
+}
