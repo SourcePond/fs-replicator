@@ -15,16 +15,63 @@ package ch.sourcepond.io.distributor.impl.lock;
 
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.InOrder;
 
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class MasterFileLockManagerTest {
+    private static final String ANY_PATH = "anyPath";
+    private static final String ANY_MEMBERSHIP_ID = "anyMembershipId";
+    private static final String ANY_LISTENER_ID = "anyListenerId";
     private final Cluster cluster = mock(Cluster.class);
     private final ITopic<String> sendFileLockRequestTopic = mock(ITopic.class);
     private final ITopic<LockMessage> receiveFileLockResponseTopic = mock(ITopic.class);
     private final ITopic<String> sendFileUnlockRequstTopic = mock(ITopic.class);
     private final ITopic<String> receiveFileUnlockResponseTopic = mock(ITopic.class);
+    private final MasterResponseListener<LockMessage> masterFileLockResponseListener = mock(MasterResponseListener.class);
+    private final MasterResponseListener<String> masterFileUnlockResponseListener = mock(MasterResponseListener.class);
+    private final MasterResponseListenerFactory factory = mock(MasterResponseListenerFactory.class);
+    private final MasterFileLockManager manager = new MasterFileLockManager(factory);
 
+    @Before
+    public void setup() {
+        when(factory.getCluster()).thenReturn(cluster);
+        when(factory.getReceiveFileLockResponseTopic()).thenReturn(receiveFileLockResponseTopic);
+        when(factory.getReceiveFileUnlockResponseTopic()).thenReturn(receiveFileUnlockResponseTopic);
+        when(factory.getSendFileLockRequestTopic()).thenReturn(sendFileLockRequestTopic);
+        when(factory.getSendFileUnlockRequstTopic()).thenReturn(sendFileUnlockRequstTopic);
+        when(factory.createLockListener(ANY_PATH)).thenReturn(masterFileLockResponseListener);
+        when(factory.createUnlockListener(ANY_PATH)).thenReturn(masterFileUnlockResponseListener);
+    }
 
+    private <T> void verifyPerformAction(final ITopic<T> receiveTopic, final ITopic<String> sendTopic,
+                                   final MasterResponseListener<T> listener) throws Exception {
+        final InOrder order = inOrder(cluster, receiveTopic, sendTopic, listener);
+        order.verify(cluster).addMembershipListener(listener);
+        order.verify(receiveTopic).addMessageListener(listener);
+        order.verify(sendTopic).publish(ANY_PATH);
+        order.verify(listener).awaitNodeAnswers();
+        order.verify(receiveTopic).removeMessageListener(ANY_LISTENER_ID);
+        order.verify(cluster).removeMembershipListener(ANY_MEMBERSHIP_ID);
+    }
 
+    @Test
+    public void acquireGlobalFileLock() throws Exception {
+        when(cluster.addMembershipListener(masterFileLockResponseListener)).thenReturn(ANY_MEMBERSHIP_ID);
+        when(receiveFileLockResponseTopic.addMessageListener(masterFileLockResponseListener)).thenReturn(ANY_LISTENER_ID);
+        manager.acquireGlobalFileLock(ANY_PATH);
+        verifyPerformAction(receiveFileLockResponseTopic, sendFileLockRequestTopic, masterFileLockResponseListener);
+    }
+
+    @Test
+    public void releaseGlobalFileLock() throws Exception {
+        when(cluster.addMembershipListener(masterFileUnlockResponseListener)).thenReturn(ANY_MEMBERSHIP_ID);
+        when(receiveFileUnlockResponseTopic.addMessageListener(masterFileUnlockResponseListener)).thenReturn(ANY_LISTENER_ID);
+        manager.releaseGlobalFileLock(ANY_PATH);
+        verifyPerformAction(receiveFileUnlockResponseTopic, sendFileUnlockRequstTopic, masterFileUnlockResponseListener);
+    }
 }

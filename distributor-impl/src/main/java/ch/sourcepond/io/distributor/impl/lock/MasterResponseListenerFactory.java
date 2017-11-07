@@ -15,12 +15,9 @@ package ch.sourcepond.io.distributor.impl.lock;
 
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
-import com.hazelcast.core.Member;
-
-import java.util.Collection;
 
 /**
- * Factory for creating {@link MasterResponseListener} instances.
+ * Factory for creating {@link BaseMasterResponseListener} instances.
  */
 class MasterResponseListenerFactory {
     private Cluster cluster;
@@ -75,7 +72,7 @@ class MasterResponseListenerFactory {
      * @param pPath Path to be locked, must not be {@code null}
      * @return New instance, never {@code null}
      */
-    public MasterFileLockResponseListener createLockListener(final String pPath) {
+    public MasterResponseListener createLockListener(final String pPath) {
         assert pPath != null : "pPath is null";
         assert cluster != null : "cluster is null";
         return new MasterFileLockResponseListener(pPath, cluster.getMembers());
@@ -87,7 +84,7 @@ class MasterResponseListenerFactory {
      * @param pPath Path to be unlocked, must not be {@code null}
      * @return New instance, never {@code null}
      */
-    public MasterFileUnlockResponseListener createUnlockListener(final String pPath) {
+    public MasterResponseListener createUnlockListener(final String pPath) {
         assert pPath != null : "pPath is null";
         assert cluster != null : "cluster is null";
         return new MasterFileUnlockResponseListener(pPath, cluster.getMembers());

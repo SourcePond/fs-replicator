@@ -32,7 +32,7 @@ class MasterFileLockManager {
     @FunctionalInterface
     private interface ClusterAction<T> {
 
-        void perform(MasterResponseListener<T> pListener, ITopic<String> pSenderTopic, ITopic<T> pReceiverTopic);
+        void perform(BaseMasterResponseListener<T> pListener, ITopic<String> pSenderTopic, ITopic<T> pReceiverTopic);
     }
 
     private static final Logger LOG = getLogger(ClientFileLockManager.class);

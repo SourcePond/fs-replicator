@@ -25,7 +25,7 @@ import java.util.Map;
 import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptyMap;
 
-class MasterFileLockResponseListener extends MasterResponseListener<LockMessage> implements MembershipListener {
+class MasterFileLockResponseListener extends BaseMasterResponseListener<LockMessage> implements MembershipListener {
     private final Map<Member, Object> responses = new HashMap<>();
 
     MasterFileLockResponseListener(final String pPath,

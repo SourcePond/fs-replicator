@@ -17,9 +17,8 @@ import com.hazelcast.core.Member;
 import com.hazelcast.core.Message;
 
 import java.util.Collection;
-import java.util.Set;
 
-class MasterFileUnlockResponseListener extends MasterResponseListener<String> {
+class MasterFileUnlockResponseListener extends BaseMasterResponseListener<String> {
     private final Collection<Member> members;
 
     public MasterFileUnlockResponseListener(final String pPath, final Collection<Member> pMembers) {
