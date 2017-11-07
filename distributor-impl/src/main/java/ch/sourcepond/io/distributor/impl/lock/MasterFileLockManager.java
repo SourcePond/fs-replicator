@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock;
 
-import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
 
@@ -37,31 +36,16 @@ class MasterFileLockManager {
     }
 
     private static final Logger LOG = getLogger(ClientFileLockManager.class);
-    private final Cluster cluster;
-    private final ITopic<String> sendFileLockRequestTopic;
-    private final ITopic<LockMessage> receiveFileLockResponseTopic;
-    private final ITopic<String> sendFileUnlockRequstTopic;
-    private final ITopic<String> receiveFileUnlockResponseTopic;
+    private final MasterResponseListenerFactory factory;
 
     /**
      * Creates a new instance of this class.
      *
-     * @param pCluster
-     * @param pSendFileLockRequestTopic
-     * @param pReceiveFileLockResponseTopic
-     * @param pSendFileUnlockRequstTopic
-     * @param pReceiveFileUnlockResponseTopic
+     * @param pFactory Listener-factory, must not be {@code null}
      */
-    MasterFileLockManager(final Cluster pCluster,
-                                 final ITopic<String> pSendFileLockRequestTopic,
-                                 final ITopic<LockMessage> pReceiveFileLockResponseTopic,
-                                 final ITopic<String> pSendFileUnlockRequstTopic,
-                                 final ITopic<String> pReceiveFileUnlockResponseTopic) {
-        cluster = pCluster;
-        sendFileLockRequestTopic = pSendFileLockRequestTopic;
-        receiveFileLockResponseTopic = pReceiveFileLockResponseTopic;
-        sendFileUnlockRequstTopic = pSendFileUnlockRequstTopic;
-        receiveFileUnlockResponseTopic = pReceiveFileUnlockResponseTopic;
+    MasterFileLockManager(final MasterResponseListenerFactory pFactory) {
+        assert pFactory != null : "pFactory is null";
+        factory = pFactory;
     }
 
     private <E> void performAction(final ITopic<String> pSenderTopic,
@@ -70,7 +54,7 @@ class MasterFileLockManager {
                                    final MasterResponseListener<E> pListener)
             throws TimeoutException, FileLockException {
         requireNonNull(pPath, "Path is null");
-        final String membershipId = cluster.addMembershipListener(pListener);
+        final String membershipId = factory.getCluster().addMembershipListener(pListener);
         try {
             final String registrationId = pReceiverTopic.addMessageListener(pListener);
             try {
@@ -80,7 +64,7 @@ class MasterFileLockManager {
                 pReceiverTopic.removeMessageListener(registrationId);
             }
         } finally {
-            cluster.removeMembershipListener(membershipId);
+            factory.getCluster().removeMembershipListener(membershipId);
         }
     }
 
@@ -90,12 +74,12 @@ class MasterFileLockManager {
      * and locked.
      *
      * @param pPath Path to be locked on all nodes, must not be {@code null}.
-     * @throws TimeoutException Thrown, if the lock acquisition timed out for a node.
+     * @throws TimeoutException  Thrown, if the lock acquisition timed out for a node.
      * @throws FileLockException Thrown, if the lock acquisition failed on some node.
      */
     public void acquireGlobalFileLock(final String pPath) throws TimeoutException, FileLockException {
-        performAction(sendFileLockRequestTopic, receiveFileLockResponseTopic, pPath,
-                new MasterFileLockResponseListener(pPath, cluster.getMembers()));
+        performAction(factory.getSendFileLockRequestTopic(), factory.getReceiveFileLockResponseTopic(), pPath,
+                factory.createLockListener(pPath));
     }
 
     /**
@@ -106,8 +90,8 @@ class MasterFileLockManager {
      */
     public void releaseGlobalFileLock(final String pPath) {
         try {
-            performAction(sendFileUnlockRequstTopic, receiveFileUnlockResponseTopic, pPath,
-                    new MasterFileUnlockResponseListener(pPath, cluster.getMembers()));
+            performAction(factory.getSendFileUnlockRequstTopic(), factory.getReceiveFileUnlockResponseTopic(), pPath,
+                    factory.createUnlockListener(pPath));
         } catch (final TimeoutException | FileLockException e) {
             LOG.warn(format("Exception occurred while releasing file-lock for %s", pPath), e);
         }

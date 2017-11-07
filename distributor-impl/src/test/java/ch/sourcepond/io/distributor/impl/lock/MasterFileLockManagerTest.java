@@ -24,9 +24,7 @@ public class MasterFileLockManagerTest {
     private final ITopic<LockMessage> receiveFileLockResponseTopic = mock(ITopic.class);
     private final ITopic<String> sendFileUnlockRequstTopic = mock(ITopic.class);
     private final ITopic<String> receiveFileUnlockResponseTopic = mock(ITopic.class);
-    private final MasterFileLockManager manager = new MasterFileLockManager(cluster,
-            sendFileLockRequestTopic, receiveFileLockResponseTopic,
-            sendFileUnlockRequstTopic, receiveFileUnlockResponseTopic);
+
 
 
 }
