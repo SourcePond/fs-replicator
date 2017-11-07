@@ -16,9 +16,7 @@ package ch.sourcepond.io.distributor.impl.lock;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
-import com.hazelcast.core.MembershipListener;
 import com.hazelcast.core.Message;
-import com.hazelcast.core.MessageListener;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -29,17 +27,25 @@ import java.util.concurrent.locks.ReentrantLock;
 import static java.lang.Thread.currentThread;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+/**
+ * Base implementation of the {@link MasterResponseListener} interface. It is responsible for proper monitor handling
+ * and signalling.
+ *
+ * @param <T> Type of the message payload object, see {@link Message#getMessageObject()}
+ */
 abstract class BaseMasterResponseListener<T> implements MasterResponseListener<T> {
     static final int MAX_TRIALS = 5;
-    static final long TIMEOUT = 30;
-    static final TimeUnit TIME_UNIT = SECONDS;
-    final Lock lock = new ReentrantLock();
-    final Condition answerReceived = lock.newCondition();
+    private final Lock lock = new ReentrantLock();
+    private final Condition answerReceived = lock.newCondition();
     private final String path;
+    private final long timeout;
+    private final TimeUnit unit;
     private int trials;
 
-    protected BaseMasterResponseListener(final String pPath) {
+    protected BaseMasterResponseListener(final String pPath, final long pTimeout, final TimeUnit pUnit) {
         path = pPath;
+        timeout = pTimeout;
+        unit = pUnit;
     }
 
     protected abstract void memberRemoved(Member pRemovedMember);
@@ -77,6 +83,7 @@ abstract class BaseMasterResponseListener<T> implements MasterResponseListener<T
     }
 
     protected void validateAnswers() throws FileLockException {
+        // noop by default
     }
 
     public final void awaitNodeAnswers() throws TimeoutException, FileLockException {
@@ -84,7 +91,7 @@ abstract class BaseMasterResponseListener<T> implements MasterResponseListener<T
         try {
             try {
                 while (checkOpenAnswers()) {
-                    answerReceived.await(TIMEOUT, TIME_UNIT);
+                    answerReceived.await(timeout, unit);
                 }
             } catch (final InterruptedException e) {
                 currentThread().interrupt();

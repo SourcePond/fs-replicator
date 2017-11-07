@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptyMap;
@@ -29,8 +30,10 @@ class MasterFileLockResponseListener extends BaseMasterResponseListener<LockMess
     private final Map<Member, Object> responses = new HashMap<>();
 
     MasterFileLockResponseListener(final String pPath,
+                                   final long pTimeout,
+                                   final TimeUnit pUnit,
                                    final Collection<Member> pMembers) {
-        super(pPath);
+        super(pPath, pTimeout, pUnit);
         for (final Member member : pMembers) {
             responses.put(member, null);
         }
@@ -48,6 +51,9 @@ class MasterFileLockResponseListener extends BaseMasterResponseListener<LockMess
 
     @Override
     protected boolean hasOpenAnswers() {
+        if (responses.isEmpty()) {
+            return false;
+        }
         for (final Object e : responses.values()) {
             if (e == null) {
                 return true;
@@ -72,6 +78,7 @@ class MasterFileLockResponseListener extends BaseMasterResponseListener<LockMess
 
     @Override
     protected void validateAnswers() throws FileLockException {
+        super.validateAnswers();
         final Map<Member, IOException> memberExceptions = collectMemberExceptions();
         if (!memberExceptions.isEmpty()) {
             final StringBuilder builder = new StringBuilder("Acquiring file-locks failed! Failures:\n\t");

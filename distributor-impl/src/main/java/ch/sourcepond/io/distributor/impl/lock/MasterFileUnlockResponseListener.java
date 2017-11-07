@@ -17,12 +17,14 @@ import com.hazelcast.core.Member;
 import com.hazelcast.core.Message;
 
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 class MasterFileUnlockResponseListener extends BaseMasterResponseListener<String> {
     private final Collection<Member> members;
 
-    public MasterFileUnlockResponseListener(final String pPath, final Collection<Member> pMembers) {
-        super(pPath);
+    public MasterFileUnlockResponseListener(final String pPath, final long pTimeout, final TimeUnit pUnit,
+                                            final Collection<Member> pMembers) {
+        super(pPath, pTimeout, pUnit);
         members = pMembers;
     }
 

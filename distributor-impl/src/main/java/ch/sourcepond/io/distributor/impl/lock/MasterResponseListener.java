@@ -14,11 +14,26 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock;
 
 import com.hazelcast.core.MembershipListener;
+import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
 
 import java.util.concurrent.TimeoutException;
 
+/**
+ * Instances of this interface are responsible for receiving messages from a particular
+ * topic (see {@link MessageListener} and {@link com.hazelcast.core.ITopic}. Additionally,
+ * they are added to the cluster as {@link MembershipListener}, see {@link com.hazelcast.core.Cluster#addMembershipListener(MembershipListener)}
+ *
+ * @param <T> Type of the message payload object, see {@link Message#getMessageObject()}
+ */
 interface MasterResponseListener<T> extends MessageListener<T>, MembershipListener {
 
+    /**
+     * This method blocks until all nodes have responded (success or failure)
+     * on a particular request.
+     *
+     * @throws TimeoutException
+     * @throws FileLockException
+     */
     void awaitNodeAnswers() throws TimeoutException, FileLockException;
 }

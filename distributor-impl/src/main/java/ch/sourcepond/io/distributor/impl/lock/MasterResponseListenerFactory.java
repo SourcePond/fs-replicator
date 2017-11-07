@@ -16,10 +16,16 @@ package ch.sourcepond.io.distributor.impl.lock;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
 
+import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 /**
  * Factory for creating {@link BaseMasterResponseListener} instances.
  */
 class MasterResponseListenerFactory {
+    static final long DEFAULT_TIMEOUT = 30;
+    static final TimeUnit DEFAULT_UNIT = SECONDS;
     private Cluster cluster;
     private ITopic<String> sendFileLockRequestTopic;
     private ITopic<LockMessage> receiveFileLockResponseTopic;
@@ -75,7 +81,7 @@ class MasterResponseListenerFactory {
     public MasterResponseListener createLockListener(final String pPath) {
         assert pPath != null : "pPath is null";
         assert cluster != null : "cluster is null";
-        return new MasterFileLockResponseListener(pPath, cluster.getMembers());
+        return new MasterFileLockResponseListener(pPath, DEFAULT_TIMEOUT, DEFAULT_UNIT, cluster.getMembers());
     }
 
     /**
@@ -87,6 +93,6 @@ class MasterResponseListenerFactory {
     public MasterResponseListener createUnlockListener(final String pPath) {
         assert pPath != null : "pPath is null";
         assert cluster != null : "cluster is null";
-        return new MasterFileUnlockResponseListener(pPath, cluster.getMembers());
+        return new MasterFileUnlockResponseListener(pPath, DEFAULT_TIMEOUT, DEFAULT_UNIT, cluster.getMembers());
     }
 }
