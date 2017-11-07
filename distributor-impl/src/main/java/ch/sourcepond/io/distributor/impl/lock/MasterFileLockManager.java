@@ -17,11 +17,17 @@ import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
 
+import java.nio.channels.FileLock;
 import java.util.concurrent.TimeoutException;
 
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
+/**
+ * The singleton instance of this class is responsible for managing file-locks
+ * (see {@link java.nio.channels.FileLock}) in a cluster.
+ */
 class MasterFileLockManager {
 
     @FunctionalInterface
@@ -54,6 +60,7 @@ class MasterFileLockManager {
                                    final String pPath,
                                    final MasterResponseListener<E> pListener)
             throws TimeoutException, FileLockException {
+        requireNonNull(pPath, "Path is null");
         final String membershipId = cluster.addMembershipListener(pListener);
         try {
             final String registrationId = pReceiverTopic.addMessageListener(pListener);
@@ -68,11 +75,26 @@ class MasterFileLockManager {
         }
     }
 
+    /**
+     * Acquires on all known cluster-nodes a {@link java.nio.channels.FileLock} for the path specified. This method
+     * blocks until all nodes have responded to the request. If the path does not exist on a node, it will be created
+     * and locked.
+     *
+     * @param pPath Path to be locked on all nodes, must not be {@code null}.
+     * @throws TimeoutException Thrown, if the lock acquisition timed out for a node.
+     * @throws FileLockException Thrown, if the lock acquisition failed on some node.
+     */
     public void acquireGlobalFileLock(final String pPath) throws TimeoutException, FileLockException {
         performAction(sendFileLockRequestTopic, receiveFileLockResponseTopic, pPath,
                 new MasterFileLockResponseListener(pPath, cluster.getMembers()));
     }
 
+    /**
+     * Releases on all known cluster-nodes the file-locks for the path specified (see {@link FileLock#release()}). If
+     * no locks exist, nothing happens.
+     *
+     * @param pPath Path to be released on all nodes, must not be {@code null}
+     */
     public void releaseGlobalFileLock(final String pPath) {
         try {
             performAction(sendFileUnlockRequstTopic, receiveFileUnlockResponseTopic, pPath,

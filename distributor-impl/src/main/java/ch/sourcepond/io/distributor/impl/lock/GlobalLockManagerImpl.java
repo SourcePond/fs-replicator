@@ -43,9 +43,13 @@ final class GlobalLockManagerImpl implements GlobalLockManager {
         try {
             throw new GlobalLockException(pMessage, pCause);
         } finally {
-            final ILock globalLock = globalLocks.remove(pPath);
-            assert globalLock != null : "globalLock is null";
-            globalLock.unlock();
+            try {
+                mflm.releaseGlobalFileLock(pPath);
+            } finally {
+                final ILock globalLock = globalLocks.remove(pPath);
+                assert globalLock != null : "globalLock is null";
+                globalLock.unlock();
+            }
         }
     }
 
