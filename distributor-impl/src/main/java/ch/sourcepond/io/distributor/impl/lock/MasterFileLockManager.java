@@ -43,7 +43,16 @@ class MasterFileLockManager {
     private final ITopic<String> sendFileUnlockRequstTopic;
     private final ITopic<String> receiveFileUnlockResponseTopic;
 
-    public MasterFileLockManager(final Cluster pCluster,
+    /**
+     * Creates a new instance of this class.
+     *
+     * @param pCluster
+     * @param pSendFileLockRequestTopic
+     * @param pReceiveFileLockResponseTopic
+     * @param pSendFileUnlockRequstTopic
+     * @param pReceiveFileUnlockResponseTopic
+     */
+    MasterFileLockManager(final Cluster pCluster,
                                  final ITopic<String> pSendFileLockRequestTopic,
                                  final ITopic<LockMessage> pReceiveFileLockResponseTopic,
                                  final ITopic<String> pSendFileUnlockRequstTopic,

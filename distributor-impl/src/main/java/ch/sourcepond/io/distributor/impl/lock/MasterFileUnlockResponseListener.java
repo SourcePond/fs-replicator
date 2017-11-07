@@ -16,12 +16,13 @@ package ch.sourcepond.io.distributor.impl.lock;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.Message;
 
+import java.util.Collection;
 import java.util.Set;
 
 class MasterFileUnlockResponseListener extends MasterResponseListener<String> {
-    private final Set<Member> members;
+    private final Collection<Member> members;
 
-    public MasterFileUnlockResponseListener(final String pPath, final Set<Member> pMembers) {
+    public MasterFileUnlockResponseListener(final String pPath, final Collection<Member> pMembers) {
         super(pPath);
         members = pMembers;
     }
