@@ -13,13 +13,19 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock;
 
-import com.hazelcast.core.Message;
-import com.sun.org.apache.bcel.internal.generic.RETURN;
+import org.junit.Test;
 
+import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class MasterFileLockResponseListenerTest extends BaseMasterResponseListenerTest<LockMessage> {
+    private static final String EXPECTED_FAILURE_MESSAGE = "someMessage";
 
     @Override
     protected BaseMasterResponseListener<LockMessage> createListener() {
@@ -33,23 +39,38 @@ public class MasterFileLockResponseListenerTest extends BaseMasterResponseListen
         return message;
     }
 
-    @Override
-    public void verifyMemberRemoved() {
-
-    }
-
+    @Test
     @Override
     public void verifyHasOpenAnswers() {
-
+        assertTrue(listener.hasOpenAnswers());
+        listener.onMessage(message);
+        assertFalse(listener.hasOpenAnswers());
     }
 
+    @Test
+    @Override
+    public void verifyHasOpenAnswersMemberRemoved() {
+        assertTrue(listener.hasOpenAnswers());
+        listener.memberRemoved(member);
+        assertFalse(listener.hasOpenAnswers());
+    }
+
+    @Test(timeout = 2000)
+    public void validateAnswers() throws Exception {
+        final IOException expected = new IOException(EXPECTED_FAILURE_MESSAGE);
+        when(payload.getFailureOrNull()).thenReturn(expected);
+        listener.onMessage(message);
+        try {
+            listener.awaitNodeAnswers();
+            fail("Exception expected");
+        } catch (final FileLockException e) {
+            assertTrue(expected.getMessage().contains(EXPECTED_FAILURE_MESSAGE));
+        }
+    }
+
+    @Test
     @Override
     public void verifyToPath() {
-
-    }
-
-    @Override
-    public void verifyProcessMessage() {
-
+        assertEquals(EXPECTED_PATH, listener.toPath(payload));
     }
 }

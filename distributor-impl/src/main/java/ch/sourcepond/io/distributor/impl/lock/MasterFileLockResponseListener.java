@@ -26,6 +26,11 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptyMap;
 
+/**
+ * Processes {@link LockMessage} objects which are send as response from the cluster-nodes when
+ * they are requested to acquire a {@link java.nio.channels.FileLock} for a particular path.
+ *
+ */
 class MasterFileLockResponseListener extends BaseMasterResponseListener<LockMessage> implements MembershipListener {
     private final Map<Member, Object> responses = new HashMap<>();
 

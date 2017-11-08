@@ -45,13 +45,19 @@ public abstract class BaseMasterResponseListenerTest<T> {
     protected static final TimeUnit EXPECTED_UNIT = MILLISECONDS;
     protected final Member member = mock(Member.class);
     protected final Collection<Member> members = asList(member);
+    protected final Message<T> message = mock(Message.class);
+    protected T payload;
+    protected BaseMasterResponseListener<T> listener;
     private final MembershipEvent event = mock(MembershipEvent.class);
     private ScheduledExecutorService executor = newSingleThreadScheduledExecutor();
-    private BaseMasterResponseListener<T> listener;
     private volatile boolean run;
 
     @Before
     public void setup() {
+        payload = createMessagePayload();
+        when(message.getPublishingMember()).thenReturn(member);
+        when(message.getMessageObject()).thenReturn(payload);
+
         when(event.getMember()).thenReturn(member);
         listener = createListener();
         interrupted();
@@ -66,13 +72,11 @@ public abstract class BaseMasterResponseListenerTest<T> {
 
     protected abstract T createMessagePayload();
 
-    public abstract void verifyMemberRemoved();
+    public abstract void verifyHasOpenAnswersMemberRemoved();
 
     public abstract void verifyHasOpenAnswers();
 
     public abstract void verifyToPath();
-
-    public abstract void verifyProcessMessage();
 
     @Test(timeout = 2000)
     public void memberRemoved() throws Exception {
@@ -126,10 +130,6 @@ public abstract class BaseMasterResponseListenerTest<T> {
     @Test
     public void onMessage() throws Exception {
         executor.schedule(() -> {
-            final Message<T> message = mock(Message.class);
-            when(message.getPublishingMember()).thenReturn(member);
-            final T payload = createMessagePayload();
-            when(message.getMessageObject()).thenReturn(payload);
             listener.onMessage(message);
             run = true;
         }, 500, MILLISECONDS);
