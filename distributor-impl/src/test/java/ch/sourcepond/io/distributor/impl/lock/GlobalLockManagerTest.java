@@ -25,8 +25,8 @@ import org.mockito.Mockito;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static ch.sourcepond.io.distributor.impl.lock.GlobalLockManagerImpl.DEFAULT_LEASE_TIMEOUT;
-import static ch.sourcepond.io.distributor.impl.lock.GlobalLockManagerImpl.DEFAULT_LEASE_UNIT;
+import static ch.sourcepond.io.distributor.impl.lock.GlobalLockManager.DEFAULT_LEASE_TIMEOUT;
+import static ch.sourcepond.io.distributor.impl.lock.GlobalLockManager.DEFAULT_LEASE_UNIT;
 import static java.lang.Thread.currentThread;
 import static java.lang.Thread.interrupted;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -40,14 +40,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class GlobalLockManagerImplTest {
+public class GlobalLockManagerTest {
     private static final String EXPECTED_PATH = "somePath";
     private static final TimeUnit EXPECTED_TIME_UNIT = MILLISECONDS;
     private static final long EXPECTED_TIMEOUT = 500;
     private final HazelcastInstance hci = mock(HazelcastInstance.class);
     private final ILock lock = mock(ILock.class);
     private final MasterFileLockManager mflm = mock(MasterFileLockManager.class);
-    private final GlobalLockManagerImpl manager = new GlobalLockManagerImpl(hci, mflm);
+    private final GlobalLockManager manager = new GlobalLockManager(hci, mflm);
 
     @Before
     public void setup() throws Exception {
