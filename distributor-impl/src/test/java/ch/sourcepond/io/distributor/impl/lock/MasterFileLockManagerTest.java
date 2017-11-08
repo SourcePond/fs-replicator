@@ -19,6 +19,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
 
+import java.util.concurrent.TimeoutException;
+
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -73,5 +76,15 @@ public class MasterFileLockManagerTest {
         when(receiveFileUnlockResponseTopic.addMessageListener(masterFileUnlockResponseListener)).thenReturn(ANY_LISTENER_ID);
         manager.releaseGlobalFileLock(ANY_PATH);
         verifyPerformAction(receiveFileUnlockResponseTopic, sendFileUnlockRequstTopic, masterFileUnlockResponseListener);
+    }
+
+    @Test
+    public void releaseGlobalFileLockFailureOccurred() throws Exception {
+        doThrow(TimeoutException.class).when(masterFileUnlockResponseListener).awaitNodeAnswers();
+        when(cluster.addMembershipListener(masterFileUnlockResponseListener)).thenReturn(ANY_MEMBERSHIP_ID);
+        when(receiveFileUnlockResponseTopic.addMessageListener(masterFileUnlockResponseListener)).thenReturn(ANY_LISTENER_ID);
+
+        // This should not cause an exception
+        manager.releaseGlobalFileLock(ANY_PATH);
     }
 }
