@@ -25,10 +25,13 @@ import java.util.concurrent.TimeoutException;
 
 import static java.lang.String.format;
 import static java.lang.Thread.currentThread;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.slf4j.LoggerFactory.getLogger;
 
 final class GlobalLockManagerImpl implements GlobalLockManager {
     private static final Logger LOG = getLogger(GlobalLockManagerImpl.class);
+    static final TimeUnit DEFAULT_LEASE_UNIT = MINUTES;
+    static final long DEFAULT_LEASE_TIMEOUT = 15;
     private final ConcurrentMap<String, ILock> globalLocks = new ConcurrentHashMap<>();
     private final HazelcastInstance hci;
     private final MasterFileLockManager mflm;
@@ -59,7 +62,7 @@ final class GlobalLockManagerImpl implements GlobalLockManager {
         final ILock globalLock = globalLocks.computeIfAbsent(pPath, p -> hci.getLock(p));
 
         try {
-            if (globalLock.tryLock(pTimeout, pTimeoutUnit, 10, TimeUnit.MINUTES)) {
+            if (globalLock.tryLock(pTimeout, pTimeoutUnit, DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT)) {
                 mflm.acquireGlobalFileLock(pPath);
             } else {
                 lockAcquisitionFailed(pPath, format("Lock acquisition timed out after %d %s", pTimeout, pTimeoutUnit), null);
