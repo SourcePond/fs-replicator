@@ -33,18 +33,18 @@ class ClientFileLockManager {
     /**
      * Listener to acquire a local file-lock.
      */
-    private class LockListener implements MessageListener<LockMessage> {
+    private class LockListener implements MessageListener<FileLockResponse> {
 
         @Override
-        public void onMessage(final Message<LockMessage> message) {
-            final LockMessage msg = message.getMessageObject();
+        public void onMessage(final Message<FileLockResponse> message) {
+            final FileLockResponse msg = message.getMessageObject();
             final String path = msg.getPath();
             try {
                 receiver.lockLocally(msg.getPath());
-                sendFileLockResponseTopic.publish(new LockMessage(path));
+                sendFileLockResponseTopic.publish(new FileLockResponse(path));
             } catch (final IOException e) {
                 LOG.error(e.getMessage(), e);
-                sendFileLockResponseTopic.publish(new LockMessage(path, e));
+                sendFileLockResponseTopic.publish(new FileLockResponse(path, e));
             }
         }
     }
@@ -63,7 +63,7 @@ class ClientFileLockManager {
     }
 
     private static final Logger LOG = getLogger(ClientFileLockManager.class);
-    private final ITopic<LockMessage> sendFileLockResponseTopic;
+    private final ITopic<FileLockResponse> sendFileLockResponseTopic;
     private final ITopic<String> sendFileUnlockResponseTopic;
     private final Receiver receiver;
     private volatile String lockListenerRegistrationId;
@@ -76,7 +76,7 @@ class ClientFileLockManager {
      * @param pSendFileUnlockResponseTopic
      * @param pReceiver
      */
-    public ClientFileLockManager(final ITopic<LockMessage> pSendFileLockResponseTopic,
+    public ClientFileLockManager(final ITopic<FileLockResponse> pSendFileLockResponseTopic,
                                  final ITopic<String> pSendFileUnlockResponseTopic,
                                  final Receiver pReceiver) {
         sendFileLockResponseTopic = pSendFileLockResponseTopic;

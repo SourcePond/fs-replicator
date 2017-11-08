@@ -27,11 +27,11 @@ import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptyMap;
 
 /**
- * Processes {@link LockMessage} objects which are send as response from the cluster-nodes when
+ * Processes {@link FileLockResponse} objects which are send as response from the cluster-nodes when
  * they are requested to acquire a {@link java.nio.channels.FileLock} for a particular path.
  *
  */
-class MasterFileLockResponseListener extends BaseMasterResponseListener<LockMessage> implements MembershipListener {
+class MasterFileLockResponseListener extends BaseMasterResponseListener<FileLockResponse> implements MembershipListener {
     private final Map<Member, Object> responses = new HashMap<>();
 
     MasterFileLockResponseListener(final String pPath,
@@ -50,7 +50,7 @@ class MasterFileLockResponseListener extends BaseMasterResponseListener<LockMess
     }
 
     @Override
-    protected String toPath(final LockMessage pMessage) {
+    protected String toPath(final FileLockResponse pMessage) {
         return pMessage.getPath();
     }
 
@@ -96,8 +96,8 @@ class MasterFileLockResponseListener extends BaseMasterResponseListener<LockMess
     }
 
     @Override
-    protected void processMessage(final Message<LockMessage> pMessage) {
-        final LockMessage message = pMessage.getMessageObject();
+    protected void processMessage(final Message<FileLockResponse> pMessage) {
+        final FileLockResponse message = pMessage.getMessageObject();
         final IOException failure = message.getFailureOrNull();
         responses.replace(pMessage.getPublishingMember(), failure == null ? TRUE : failure);
     }

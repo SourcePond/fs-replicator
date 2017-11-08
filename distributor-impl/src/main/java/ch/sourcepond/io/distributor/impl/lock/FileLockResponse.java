@@ -16,23 +16,43 @@ package ch.sourcepond.io.distributor.impl.lock;
 import java.io.IOException;
 import java.io.Serializable;
 
-class LockMessage implements Serializable {
+/**
+ * An instance of this class is sent by a node as response to a file-lock request.
+ */
+class FileLockResponse implements Serializable {
     private final String path;
     private final IOException failureOrNull;
 
-    public LockMessage(final String pPath) {
+    /**
+     *
+     * @param pPath
+     */
+    public FileLockResponse(final String pPath) {
         this(pPath, null);
     }
 
-    public LockMessage(final String pPath, final IOException pFailureOrNull) {
+    public FileLockResponse(final String pPath, final IOException pFailureOrNull) {
         path = pPath;
         failureOrNull = pFailureOrNull;
     }
 
+    /**
+     * Returns the path for which the {@link java.nio.channels.FileLock} on the node was
+     * acquired.
+     *
+     * @return Path, never {@code null}
+     */
     public String getPath() {
         return path;
     }
 
+    /**
+     * If the acquisition of the {@link java.nio.channels.FileLock} failed on the node, this
+     * method returns the thrown {@link IOException}. If the acquisition was successful, this method
+     * returns {@code null}.
+     *
+     * @return Failure or {@code} when successful
+     */
     public IOException getFailureOrNull() {
         return failureOrNull;
     }

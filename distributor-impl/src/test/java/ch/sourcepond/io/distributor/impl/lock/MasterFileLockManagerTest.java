@@ -29,10 +29,10 @@ public class MasterFileLockManagerTest {
     private static final String ANY_LISTENER_ID = "anyListenerId";
     private final Cluster cluster = mock(Cluster.class);
     private final ITopic<String> sendFileLockRequestTopic = mock(ITopic.class);
-    private final ITopic<LockMessage> receiveFileLockResponseTopic = mock(ITopic.class);
+    private final ITopic<FileLockResponse> receiveFileLockResponseTopic = mock(ITopic.class);
     private final ITopic<String> sendFileUnlockRequstTopic = mock(ITopic.class);
     private final ITopic<String> receiveFileUnlockResponseTopic = mock(ITopic.class);
-    private final MasterResponseListener<LockMessage> masterFileLockResponseListener = mock(MasterResponseListener.class);
+    private final MasterResponseListener<FileLockResponse> masterFileLockResponseListener = mock(MasterResponseListener.class);
     private final MasterResponseListener<String> masterFileUnlockResponseListener = mock(MasterResponseListener.class);
     private final MasterResponseListenerFactory factory = mock(MasterResponseListenerFactory.class);
     private final MasterFileLockManager manager = new MasterFileLockManager(factory);

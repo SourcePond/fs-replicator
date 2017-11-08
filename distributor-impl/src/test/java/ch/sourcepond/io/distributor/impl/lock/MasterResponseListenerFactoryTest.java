@@ -29,7 +29,7 @@ public class MasterResponseListenerFactoryTest {
     private static final String ANY_PATH = "anyPath";
     private final Cluster cluster = mock(Cluster.class);
     private ITopic<String> sendFileLockRequestTopic = mock(ITopic.class);
-    private ITopic<LockMessage> receiveFileLockResponseTopic = mock(ITopic.class);
+    private ITopic<FileLockResponse> receiveFileLockResponseTopic = mock(ITopic.class);
     private ITopic<String> sendFileUnlockRequstTopic = mock(ITopic.class);
     private ITopic<String> receiveFileUnlockResponseTopic = mock(ITopic.class);
     private final MasterResponseListenerFactory factory = new MasterResponseListenerFactory();

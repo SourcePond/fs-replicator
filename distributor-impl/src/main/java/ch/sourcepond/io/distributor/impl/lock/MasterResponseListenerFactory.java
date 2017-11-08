@@ -28,7 +28,7 @@ class MasterResponseListenerFactory {
     static final TimeUnit DEFAULT_UNIT = SECONDS;
     private Cluster cluster;
     private ITopic<String> sendFileLockRequestTopic;
-    private ITopic<LockMessage> receiveFileLockResponseTopic;
+    private ITopic<FileLockResponse> receiveFileLockResponseTopic;
     private ITopic<String> sendFileUnlockRequstTopic;
     private ITopic<String> receiveFileUnlockResponseTopic;
 
@@ -48,11 +48,11 @@ class MasterResponseListenerFactory {
         this.sendFileLockRequestTopic = sendFileLockRequestTopic;
     }
 
-    public ITopic<LockMessage> getReceiveFileLockResponseTopic() {
+    public ITopic<FileLockResponse> getReceiveFileLockResponseTopic() {
         return receiveFileLockResponseTopic;
     }
 
-    public void setReceiveFileLockResponseTopic(ITopic<LockMessage> receiveFileLockResponseTopic) {
+    public void setReceiveFileLockResponseTopic(ITopic<FileLockResponse> receiveFileLockResponseTopic) {
         this.receiveFileLockResponseTopic = receiveFileLockResponseTopic;
     }
 

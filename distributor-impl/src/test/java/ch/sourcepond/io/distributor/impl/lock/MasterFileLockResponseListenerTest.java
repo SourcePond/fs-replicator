@@ -24,17 +24,17 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class MasterFileLockResponseListenerTest extends BaseMasterResponseListenerTest<LockMessage> {
+public class MasterFileLockResponseListenerTest extends BaseMasterResponseListenerTest<FileLockResponse> {
     private static final String EXPECTED_FAILURE_MESSAGE = "someMessage";
 
     @Override
-    protected BaseMasterResponseListener<LockMessage> createListener() {
+    protected BaseMasterResponseListener<FileLockResponse> createListener() {
         return new MasterFileLockResponseListener(EXPECTED_PATH, EXPECTED_TIMOUT, EXPECTED_UNIT, members);
     }
 
     @Override
-    protected LockMessage createMessagePayload() {
-        final LockMessage message = mock(LockMessage.class);
+    protected FileLockResponse createMessagePayload() {
+        final FileLockResponse message = mock(FileLockResponse.class);
         when(message.getPath()).thenReturn(EXPECTED_PATH);
         return message;
     }
