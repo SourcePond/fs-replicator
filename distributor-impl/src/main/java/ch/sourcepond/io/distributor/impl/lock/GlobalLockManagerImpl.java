@@ -70,10 +70,8 @@ final class GlobalLockManagerImpl implements GlobalLockManager {
         } catch (final InterruptedException e) {
             currentThread().interrupt();
             lockAcquisitionFailed(pPath, format("Lock acquisition interrupted for %s!", pPath), e);
-        } catch (final TimeoutException e) {
-            lockAcquisitionFailed(pPath, format("Lock acquisition timed out for %s!", pPath), e);
-        } catch (final FileLockException e) {
-            lockAcquisitionFailed(pPath, format("File lock acquisition failed for %s!", pPath), e);
+        } catch (final FileLockException | TimeoutException e) {
+            lockAcquisitionFailed(pPath, format("Lock acquisition failed for %s!", pPath), e);
         }
     }
 
