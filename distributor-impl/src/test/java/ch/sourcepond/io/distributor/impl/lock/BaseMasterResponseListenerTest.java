@@ -21,6 +21,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -44,7 +45,7 @@ public abstract class BaseMasterResponseListenerTest<T> {
     protected static final long EXPECTED_TIMOUT = 500;
     protected static final TimeUnit EXPECTED_UNIT = MILLISECONDS;
     protected final Member member = mock(Member.class);
-    protected final Collection<Member> members = asList(member);
+    protected final Collection<Member> members = new ArrayList<>(asList(member));
     protected final Message<T> message = mock(Message.class);
     protected T payload;
     protected BaseMasterResponseListener<T> listener;
@@ -78,7 +79,7 @@ public abstract class BaseMasterResponseListenerTest<T> {
 
     public abstract void verifyToPath();
 
-    @Test(timeout = 2000)
+    @Test//(timeout = 2000)
     public void memberRemoved() throws Exception {
         executor.schedule(() -> {
             listener.memberRemoved(event);
