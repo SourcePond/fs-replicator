@@ -56,6 +56,10 @@ public class GlobalLockManager {
         }
     }
 
+    public boolean isLocked(final String pPath) {
+        return globalLocks.containsKey(pPath);
+    }
+
     public void lockGlobally(final String pPath, final TimeUnit pTimeoutUnit, final long pTimeout)
             throws GlobalLockException {
         final ILock globalLock = globalLocks.computeIfAbsent(pPath, p -> hci.getLock(p));

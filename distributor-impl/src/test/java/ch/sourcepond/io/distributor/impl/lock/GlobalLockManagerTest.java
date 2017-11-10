@@ -157,8 +157,11 @@ public class GlobalLockManagerTest {
 
     @Test
     public void lockUnlockGlobally() throws Exception {
+        assertFalse(manager.isLocked(EXPECTED_PATH));
         manager.lockGlobally(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
+        assertTrue(manager.isLocked(EXPECTED_PATH));
         manager.unlockGlobally(EXPECTED_PATH);
+        assertFalse(manager.isLocked(EXPECTED_PATH));
         final InOrder order = Mockito.inOrder(lock, mflm);
         order.verify(lock).tryLock(EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT, DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT);
         order.verify(mflm).acquireGlobalFileLock(EXPECTED_PATH);
