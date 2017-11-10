@@ -35,7 +35,7 @@ class MasterFileLockManager {
         void perform(BaseMasterResponseListener<T> pListener, ITopic<String> pSenderTopic, ITopic<T> pReceiverTopic);
     }
 
-    private static final Logger LOG = getLogger(ClientFileLockManager.class);
+    private static final Logger LOG = getLogger(MasterFileLockManager.class);
     private final MasterResponseListenerFactory factory;
 
     /**
