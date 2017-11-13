@@ -13,37 +13,27 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock;
 
+import ch.sourcepond.io.distributor.impl.DistributionMessage;
+
 import java.io.IOException;
-import java.io.Serializable;
 
 /**
  * An instance of this class is sent by a node as response to a file-lock request.
  */
-class FileLockResponse implements Serializable {
-    private final String path;
+public class FileLockMessage extends DistributionMessage {
     private final IOException failureOrNull;
 
     /**
      *
      * @param pPath
      */
-    public FileLockResponse(final String pPath) {
+    public FileLockMessage(final String pPath) {
         this(pPath, null);
     }
 
-    public FileLockResponse(final String pPath, final IOException pFailureOrNull) {
-        path = pPath;
+    public FileLockMessage(final String pPath, final IOException pFailureOrNull) {
+        super(pPath);
         failureOrNull = pFailureOrNull;
-    }
-
-    /**
-     * Returns the path for which the {@link java.nio.channels.FileLock} on the node was
-     * acquired.
-     *
-     * @return Path, never {@code null}
-     */
-    public String getPath() {
-        return path;
     }
 
     /**

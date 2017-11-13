@@ -1,11 +1,26 @@
+/*Copyright (C) 2017 Roland Hauser, <sourcepond@gmail.com>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.*/
 package ch.sourcepond.io.distributor.api;
 
-import java.nio.channels.WritableByteChannel;
+import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
 public interface Distributor {
 
     String getLocalNode();
+
+    void send(String pPath, ByteBuffer pData);
 
     /**
      * Deletes the path specified cluster wide.
@@ -13,18 +28,6 @@ public interface Distributor {
      * @param pPath
      */
     void delete(String pPath);
-
-    /**
-     * Opens an output stream which can be used to write the modified data into.
-     * This data will then be replicated into the cluster. During the time the
-     * stream is open, the path specified is locked throughout the cluster, i.e.
-     * the best effort is made that no other process on any node can change
-     * the currently replicated file.
-     *
-     * @param pPath
-     * @return
-     */
-    WritableByteChannel openChannel(String pPath);
 
     void lockGlobally(String pPath, TimeUnit pTimeoutUnit, long pTimeout) throws GlobalLockException;
 

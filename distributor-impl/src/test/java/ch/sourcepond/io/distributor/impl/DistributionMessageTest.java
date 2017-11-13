@@ -11,17 +11,18 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.api;
+package ch.sourcepond.io.distributor.impl;
 
-import java.io.IOException;
+import org.junit.Test;
 
-public class GlobalLockException extends IOException {
+import static org.junit.Assert.assertEquals;
 
-    public GlobalLockException(String message) {
-        super(message);
-    }
+public class DistributionMessageTest<T extends DistributionMessage> {
+    public static final String EXPECTED_PATH = "somePath";
 
-    public GlobalLockException(String message, Throwable cause) {
-        super(message, cause);
+    @Test
+    public void getPath() {
+        final DistributionMessage response = new DistributionMessage(EXPECTED_PATH);
+        assertEquals(EXPECTED_PATH, response.getPath());
     }
 }

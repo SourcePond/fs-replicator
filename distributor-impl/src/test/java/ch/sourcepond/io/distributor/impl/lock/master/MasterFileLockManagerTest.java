@@ -11,8 +11,9 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.lock;
+package ch.sourcepond.io.distributor.impl.lock.master;
 
+import ch.sourcepond.io.distributor.impl.lock.FileLockMessage;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
 import org.junit.Before;
@@ -32,10 +33,10 @@ public class MasterFileLockManagerTest {
     private static final String ANY_LISTENER_ID = "anyListenerId";
     private final Cluster cluster = mock(Cluster.class);
     private final ITopic<String> sendFileLockRequestTopic = mock(ITopic.class);
-    private final ITopic<FileLockResponse> receiveFileLockResponseTopic = mock(ITopic.class);
+    private final ITopic<FileLockMessage> receiveFileLockResponseTopic = mock(ITopic.class);
     private final ITopic<String> sendFileUnlockRequstTopic = mock(ITopic.class);
     private final ITopic<String> receiveFileUnlockResponseTopic = mock(ITopic.class);
-    private final MasterResponseListener<FileLockResponse> masterFileLockResponseListener = mock(MasterResponseListener.class);
+    private final MasterResponseListener<FileLockMessage> masterFileLockResponseListener = mock(MasterResponseListener.class);
     private final MasterResponseListener<String> masterFileUnlockResponseListener = mock(MasterResponseListener.class);
     private final MasterResponseListenerFactory factory = mock(MasterResponseListenerFactory.class);
     private final MasterFileLockManager manager = new MasterFileLockManager(factory);
@@ -46,7 +47,7 @@ public class MasterFileLockManagerTest {
         when(factory.getReceiveFileLockResponseTopic()).thenReturn(receiveFileLockResponseTopic);
         when(factory.getReceiveFileUnlockResponseTopic()).thenReturn(receiveFileUnlockResponseTopic);
         when(factory.getSendFileLockRequestTopic()).thenReturn(sendFileLockRequestTopic);
-        when(factory.getSendFileUnlockRequstTopic()).thenReturn(sendFileUnlockRequstTopic);
+        when(factory.getSendFileUnlockRequestTopic()).thenReturn(sendFileUnlockRequstTopic);
         when(factory.createLockListener(ANY_PATH)).thenReturn(masterFileLockResponseListener);
         when(factory.createUnlockListener(ANY_PATH)).thenReturn(masterFileUnlockResponseListener);
     }

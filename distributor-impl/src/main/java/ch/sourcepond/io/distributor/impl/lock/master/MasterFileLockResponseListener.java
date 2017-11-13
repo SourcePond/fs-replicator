@@ -11,8 +11,10 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.lock;
+package ch.sourcepond.io.distributor.impl.lock.master;
 
+import ch.sourcepond.io.distributor.impl.lock.client.FileLockException;
+import ch.sourcepond.io.distributor.impl.lock.FileLockMessage;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MembershipListener;
 import com.hazelcast.core.Message;
@@ -27,11 +29,11 @@ import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptyMap;
 
 /**
- * Processes {@link FileLockResponse} objects which are send as response from the cluster-nodes when
+ * Processes {@link FileLockMessage} objects which are send as response from the cluster-nodes when
  * they are requested to acquire a {@link java.nio.channels.FileLock} for a particular path.
  *
  */
-class MasterFileLockResponseListener extends BaseMasterResponseListener<FileLockResponse> implements MembershipListener {
+class MasterFileLockResponseListener extends BaseMasterResponseListener<FileLockMessage> implements MembershipListener {
     private final Map<Member, Object> responses = new HashMap<>();
 
     MasterFileLockResponseListener(final String pPath,
@@ -50,7 +52,7 @@ class MasterFileLockResponseListener extends BaseMasterResponseListener<FileLock
     }
 
     @Override
-    protected String toPath(final FileLockResponse pMessage) {
+    protected String toPath(final FileLockMessage pMessage) {
         return pMessage.getPath();
     }
 
@@ -83,7 +85,6 @@ class MasterFileLockResponseListener extends BaseMasterResponseListener<FileLock
 
     @Override
     protected void validateAnswers() throws FileLockException {
-        super.validateAnswers();
         final Map<Member, IOException> memberExceptions = collectMemberExceptions();
         if (!memberExceptions.isEmpty()) {
             final StringBuilder builder = new StringBuilder("Acquiring file-locks failed! Failures:\n\t");
@@ -96,8 +97,8 @@ class MasterFileLockResponseListener extends BaseMasterResponseListener<FileLock
     }
 
     @Override
-    protected void processMessage(final Message<FileLockResponse> pMessage) {
-        final FileLockResponse message = pMessage.getMessageObject();
+    protected void processMessage(final Message<FileLockMessage> pMessage) {
+        final FileLockMessage message = pMessage.getMessageObject();
         final IOException failure = message.getFailureOrNull();
         responses.replace(pMessage.getPublishingMember(), failure == null ? TRUE : failure);
     }

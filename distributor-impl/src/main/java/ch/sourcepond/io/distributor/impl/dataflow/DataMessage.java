@@ -11,17 +11,19 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.api;
+package ch.sourcepond.io.distributor.impl.dataflow;
 
-import java.io.IOException;
+import ch.sourcepond.io.distributor.impl.DistributionMessage;
 
-public class GlobalLockException extends IOException {
+class DataMessage extends DistributionMessage {
+    private final byte[] data;
 
-    public GlobalLockException(String message) {
-        super(message);
+    public DataMessage(final String pPath, final byte[] pData) {
+        super(pPath);
+        data = pData;
     }
 
-    public GlobalLockException(String message, Throwable cause) {
-        super(message, cause);
+    public byte[] getData() {
+        return data;
     }
 }

@@ -11,17 +11,13 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.api;
+package ch.sourcepond.io.distributor.spi;
 
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
-public class GlobalLockException extends IOException {
+public interface Storage {
 
-    public GlobalLockException(String message) {
-        super(message);
-    }
+    void store(ByteBuffer pBuffer);
 
-    public GlobalLockException(String message, Throwable cause) {
-        super(message, cause);
-    }
+    void store(byte[] pData);
 }

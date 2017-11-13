@@ -11,7 +11,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.lock;
+package ch.sourcepond.io.distributor.impl.lock.master;
 
 import org.junit.Test;
 
@@ -23,12 +23,12 @@ public class MasterFileUnlockResponseListenerTest extends BaseMasterResponseList
 
     @Override
     protected BaseMasterResponseListener<String> createListener() {
-        return new MasterFileUnlockResponseListener(EXPECTED_PATH, EXPECTED_TIMOUT, EXPECTED_UNIT, members);
+        return new MasterFileUnlockResponseListener(BaseMasterResponseListenerTest.EXPECTED_PATH, BaseMasterResponseListenerTest.EXPECTED_TIMOUT, BaseMasterResponseListenerTest.EXPECTED_UNIT, members);
     }
 
     @Override
     protected String createMessagePayload() {
-        return EXPECTED_PATH;
+        return BaseMasterResponseListenerTest.EXPECTED_PATH;
     }
 
     @Test
@@ -50,6 +50,6 @@ public class MasterFileUnlockResponseListenerTest extends BaseMasterResponseList
     @Test
     @Override
     public void verifyToPath() {
-        assertSame(EXPECTED_PATH, listener.toPath(EXPECTED_PATH));
+        assertSame(BaseMasterResponseListenerTest.EXPECTED_PATH, listener.toPath(BaseMasterResponseListenerTest.EXPECTED_PATH));
     }
 }

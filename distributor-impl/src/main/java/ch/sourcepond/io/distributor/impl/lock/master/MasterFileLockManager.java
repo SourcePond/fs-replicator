@@ -11,8 +11,9 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.lock;
+package ch.sourcepond.io.distributor.impl.lock.master;
 
+import ch.sourcepond.io.distributor.impl.lock.client.FileLockException;
 import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
 
@@ -27,7 +28,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * The singleton instance of this class is responsible for managing file-locks
  * (see {@link java.nio.channels.FileLock}) in a cluster.
  */
-class MasterFileLockManager {
+public class MasterFileLockManager {
 
     @FunctionalInterface
     private interface ClusterAction<T> {
@@ -90,7 +91,7 @@ class MasterFileLockManager {
      */
     public void releaseGlobalFileLock(final String pPath) {
         try {
-            performAction(factory.getSendFileUnlockRequstTopic(), factory.getReceiveFileUnlockResponseTopic(), pPath,
+            performAction(factory.getSendFileUnlockRequestTopic(), factory.getReceiveFileUnlockResponseTopic(), pPath,
                     factory.createUnlockListener(pPath));
         } catch (final TimeoutException | FileLockException e) {
             LOG.warn(format("Exception occurred while releasing file-lock for %s", pPath), e);

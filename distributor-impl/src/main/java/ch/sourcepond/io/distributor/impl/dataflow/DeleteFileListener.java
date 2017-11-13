@@ -11,17 +11,22 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.api;
+package ch.sourcepond.io.distributor.impl.dataflow;
 
-import java.io.IOException;
+import ch.sourcepond.io.distributor.spi.Receiver;
+import com.hazelcast.core.Message;
+import com.hazelcast.core.MessageListener;
 
-public class GlobalLockException extends IOException {
+final class DeleteFileListener implements MessageListener<String> {
+    private final Receiver receiver;
 
-    public GlobalLockException(String message) {
-        super(message);
+    public DeleteFileListener(final Receiver pReceiver) {
+        receiver = pReceiver;
     }
 
-    public GlobalLockException(String message, Throwable cause) {
-        super(message, cause);
+    @Override
+    public void onMessage(final Message<String> message) {
+        receiver.delete(message.getPublishingMember().getUuid(), message.getMessageObject());
+
     }
 }

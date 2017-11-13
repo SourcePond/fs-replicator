@@ -11,17 +11,15 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.api;
+package ch.sourcepond.io.distributor.impl.lock.client;
 
-import java.io.IOException;
+public class FileLockException extends Exception {
 
-public class GlobalLockException extends IOException {
-
-    public GlobalLockException(String message) {
+    public FileLockException(final String message) {
         super(message);
     }
 
-    public GlobalLockException(String message, Throwable cause) {
-        super(message, cause);
+    public FileLockException(final Throwable cause) {
+        super(cause);
     }
 }

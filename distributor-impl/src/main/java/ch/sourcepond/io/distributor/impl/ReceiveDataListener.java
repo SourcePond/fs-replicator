@@ -11,32 +11,26 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.lock;
+package ch.sourcepond.io.distributor.impl;
 
+import ch.sourcepond.io.distributor.impl.dataflow.DataMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
-import com.hazelcast.core.ITopic;
+import ch.sourcepond.io.distributor.spi.Storage;
 import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
 
-/**
- * Listener to release a local file-lock.
- */
-class ClientUnlockListener implements MessageListener<String> {
+class ReceiveDataListener implements MessageListener<DataMessage> {
     private final Receiver receiver;
-    private final ITopic<String> sendFileUnlockResponseTopic;
 
-    public ClientUnlockListener(final Receiver pReceiver, final ITopic<String> pSendFileUnlockResponseTopic) {
+    public ReceiveDataListener(final Receiver pReceiver) {
         receiver = pReceiver;
-        sendFileUnlockResponseTopic = pSendFileUnlockResponseTopic;
     }
 
     @Override
-    public void onMessage(final Message<String> message) {
-        final String path = message.getMessageObject();
-        try {
-            receiver.unlockLocally(path);
-        } finally {
-            sendFileUnlockResponseTopic.publish(path);
-        }
+    public void onMessage(final Message<DataMessage> message) {
+        final DataMessage payload = message.getMessageObject();
+        final Storage storage = receiver.getStorage(message.getPublishingMember().getUuid(),
+                payload.getPath());
+        storage.store(payload.getData());
     }
 }

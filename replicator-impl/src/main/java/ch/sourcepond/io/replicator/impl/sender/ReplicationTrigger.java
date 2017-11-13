@@ -14,11 +14,12 @@ limitations under the License.*/
 package ch.sourcepond.io.replicator.impl.sender;
 
 import ch.sourcepond.io.distributor.api.Distributor;
+import ch.sourcepond.io.distributor.api.Sender;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -26,8 +27,10 @@ import java.util.concurrent.TimeUnit;
 import static java.nio.ByteBuffer.allocate;
 import static java.nio.channels.FileChannel.open;
 import static java.nio.file.StandardOpenOption.READ;
+import static org.slf4j.LoggerFactory.getLogger;
 
 class ReplicationTrigger {
+    private static final Logger LOG = getLogger(ReplicationTrigger.class);
     private final Distributor distributor;
 
     public ReplicationTrigger(final Distributor pDistributor) {
@@ -35,15 +38,18 @@ class ReplicationTrigger {
     }
 
     private void transfer(final Path pSource, final String pTarget) throws IOException {
+        final Sender sender = distributor.getSender(pTarget);
         try (final ReadableByteChannel source = open(pSource, READ)) {
-            try (final WritableByteChannel dest = distributor.openChannel(pTarget.toString())) {
-                final ByteBuffer buffer = allocate(1024);
-                while (source.read(buffer) != -1) {
-                    buffer.flip();
-                    dest.write(buffer);
-                    buffer.rewind();
-                }
+            final ByteBuffer buffer = allocate(1024);
+            while (source.read(buffer) != -1) {
+                buffer.flip();
+                sender.send(buffer);
+                buffer.rewind();
             }
+            sender.close(true);
+        } catch (final IOException e) {
+            LOG.error(e.getMessage(), e);
+            sender.close(false);
         }
     }
 

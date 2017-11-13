@@ -21,12 +21,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
-public class FileLockResponseTest {
+public class FileLockMessageTest {
     private static final String EXPECTED_PATH = "somePath";
 
     @Test
     public void success() {
-        final FileLockResponse response = new FileLockResponse(EXPECTED_PATH);
+        final FileLockMessage response = new FileLockMessage(EXPECTED_PATH);
         assertEquals(EXPECTED_PATH, response.getPath());
         assertNull(response.getFailureOrNull());
     }
@@ -34,7 +34,7 @@ public class FileLockResponseTest {
     @Test
     public void failure() {
         final IOException expected = new IOException();
-        final FileLockResponse response = new FileLockResponse(EXPECTED_PATH, expected);
+        final FileLockMessage response = new FileLockMessage(EXPECTED_PATH, expected);
         assertEquals(EXPECTED_PATH, response.getPath());
         assertSame(expected, response.getFailureOrNull());
     }

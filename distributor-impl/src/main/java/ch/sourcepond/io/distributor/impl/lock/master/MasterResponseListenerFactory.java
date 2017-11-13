@@ -11,8 +11,9 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.lock;
+package ch.sourcepond.io.distributor.impl.lock.master;
 
+import ch.sourcepond.io.distributor.impl.lock.FileLockMessage;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
 
@@ -28,7 +29,7 @@ class MasterResponseListenerFactory {
     static final TimeUnit DEFAULT_UNIT = SECONDS;
     private Cluster cluster;
     private ITopic<String> sendFileLockRequestTopic;
-    private ITopic<FileLockResponse> receiveFileLockResponseTopic;
+    private ITopic<FileLockMessage> receiveFileLockResponseTopic;
     private ITopic<String> sendFileUnlockRequstTopic;
     private ITopic<String> receiveFileUnlockResponseTopic;
 
@@ -48,15 +49,15 @@ class MasterResponseListenerFactory {
         this.sendFileLockRequestTopic = sendFileLockRequestTopic;
     }
 
-    public ITopic<FileLockResponse> getReceiveFileLockResponseTopic() {
+    public ITopic<FileLockMessage> getReceiveFileLockResponseTopic() {
         return receiveFileLockResponseTopic;
     }
 
-    public void setReceiveFileLockResponseTopic(ITopic<FileLockResponse> receiveFileLockResponseTopic) {
+    public void setReceiveFileLockResponseTopic(ITopic<FileLockMessage> receiveFileLockResponseTopic) {
         this.receiveFileLockResponseTopic = receiveFileLockResponseTopic;
     }
 
-    public ITopic<String> getSendFileUnlockRequstTopic() {
+    public ITopic<String> getSendFileUnlockRequestTopic() {
         return sendFileUnlockRequstTopic;
     }
 
