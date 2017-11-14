@@ -13,14 +13,14 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.client;
 
-import ch.sourcepond.io.distributor.impl.lock.FileLockMessage;
+import ch.sourcepond.io.distributor.api.GlobalPath;
+import ch.sourcepond.io.distributor.impl.RespondingListener;
+import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
-import com.hazelcast.core.Message;
-import com.hazelcast.core.MessageListener;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -30,26 +30,26 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Listener to acquire a local file-lock.
  */
-class ClientLockListener implements MembershipListener, MessageListener<String> {
+class ClientLockListener extends RespondingListener<String> implements MembershipListener {
     private static final Logger LOG = getLogger(ClientLockListener.class);
-    private final Receiver receiver;
-    private final ITopic<FileLockMessage> sendFileLockResponseTopic;
 
-    public ClientLockListener(final Receiver pReceiver, final ITopic<FileLockMessage> pSendFileLockResponseTopic) {
-        receiver = pReceiver;
-        sendFileLockResponseTopic = pSendFileLockResponseTopic;
+    public ClientLockListener(final Receiver pReceiver, final ITopic<StatusResponseMessage> pSendFileLockResponseTopic) {
+        super(pReceiver, pSendFileLockResponseTopic);
     }
 
     @Override
-    public void onMessage(final Message<String> message) {
-        final String path = message.getMessageObject();
-        try {
-            receiver.lockLocally(message.getPublishingMember().getUuid(), path);
-            sendFileLockResponseTopic.publish(new FileLockMessage(path));
-        } catch (final IOException e) {
-            LOG.error(e.getMessage(), e);
-            sendFileLockResponseTopic.publish(new FileLockMessage(path, e));
-        }
+    protected Logger getLog() {
+        return LOG;
+    }
+
+    @Override
+    protected void processMessage(final GlobalPath pPath, final String pPayload) throws IOException {
+        receiver.lockLocally(pPath);
+    }
+
+    @Override
+    protected String toPath(final String pPayload) {
+        return pPayload;
     }
 
     @Override

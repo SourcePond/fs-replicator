@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.master;
 
+import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
 import ch.sourcepond.io.distributor.impl.lock.client.FileLockException;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberAttributeEvent;
@@ -33,7 +34,7 @@ import static java.lang.Thread.currentThread;
  *
  * @param <T> Type of the message payload object, see {@link Message#getMessageObject()}
  */
-abstract class BaseMasterResponseListener<T> implements MasterResponseListener<T> {
+abstract class BaseMasterResponseListener implements MasterResponseListener<StatusResponseMessage> {
     static final int MAX_TRIALS = 5;
     private final Lock lock = new ReentrantLock();
     private final Condition answerReceived = lock.newCondition();
@@ -73,8 +74,6 @@ abstract class BaseMasterResponseListener<T> implements MasterResponseListener<T
 
     protected abstract boolean hasOpenAnswers();
 
-    protected abstract String toPath(T pMessage);
-
     private boolean checkOpenAnswers() throws TimeoutException {
         if (trials++ > MAX_TRIALS) {
             throw new TimeoutException();
@@ -103,11 +102,11 @@ abstract class BaseMasterResponseListener<T> implements MasterResponseListener<T
         }
     }
 
-    protected abstract void processMessage(Message<T> pMessage);
+    protected abstract void processMessage(Message<StatusResponseMessage> pMessage);
 
     @Override
-    public final void onMessage(final Message<T> message) {
-        final String path = toPath(message.getMessageObject());
+    public final void onMessage(final Message<StatusResponseMessage> message) {
+        final String path = message.getMessageObject().getPath();
 
         // Only do something if the path matches
         if (this.path.equals(path)) {

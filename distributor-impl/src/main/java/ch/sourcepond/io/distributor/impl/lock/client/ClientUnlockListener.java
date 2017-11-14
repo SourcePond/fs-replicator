@@ -13,30 +13,38 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.client;
 
+import ch.sourcepond.io.distributor.api.GlobalPath;
+import ch.sourcepond.io.distributor.impl.RespondingListener;
+import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
-import com.hazelcast.core.Message;
-import com.hazelcast.core.MessageListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 /**
  * Listener to release a local file-lock.
  */
-class ClientUnlockListener implements MessageListener<String> {
-    private final Receiver receiver;
-    private final ITopic<String> sendFileUnlockResponseTopic;
+class ClientUnlockListener extends RespondingListener<String> {
+    private static final Logger LOG = LoggerFactory.getLogger(ClientUnlockListener.class);
 
-    public ClientUnlockListener(final Receiver pReceiver, final ITopic<String> pSendFileUnlockResponseTopic) {
-        receiver = pReceiver;
-        sendFileUnlockResponseTopic = pSendFileUnlockResponseTopic;
+    public ClientUnlockListener(final Receiver pReceiver, final ITopic<StatusResponseMessage> pSendFileUnlockResponseTopic) {
+        super(pReceiver, pSendFileUnlockResponseTopic);
     }
 
     @Override
-    public void onMessage(final Message<String> message) {
-        final String path = message.getMessageObject();
-        try {
-            receiver.unlockLocally(message.getPublishingMember().getUuid(), path);
-        } finally {
-            sendFileUnlockResponseTopic.publish(path);
-        }
+    protected Logger getLog() {
+        return LOG;
+    }
+
+    @Override
+    protected void processMessage(final GlobalPath pPath, final String pPayload) throws IOException {
+        receiver.unlockLocally(pPath);
+    }
+
+    @Override
+    protected String toPath(final String pPayload) {
+        return pPayload;
     }
 }

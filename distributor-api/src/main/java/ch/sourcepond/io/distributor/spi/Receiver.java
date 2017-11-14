@@ -13,15 +13,20 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.spi;
 
+import ch.sourcepond.io.distributor.api.GlobalPath;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 public interface Receiver {
 
-    void lockLocally(String pSendingNode, String pPath);
+    void lockLocally(GlobalPath pPath) throws IOException;
 
-    void unlockAllLocally(String pSendingNode);
+    void unlockLocally(GlobalPath pPath) throws IOException;
 
-    void unlockLocally(String pSendingNode, String pPath);
+    void unlockAllLocally(String pNode);
 
-    void delete(String pSendingNode, String pPath);
+    void delete(GlobalPath pPath) throws IOException;
 
-    Storage getStorage(String pSendingNode, String pPath);
+    void store(GlobalPath pPath, ByteBuffer pBuffer) throws IOException;
 }

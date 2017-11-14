@@ -11,7 +11,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.lock;
+package ch.sourcepond.io.distributor.impl;
 
 import org.junit.Test;
 
@@ -21,12 +21,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
-public class FileLockMessageTest {
+public class StatusResponseMessageTest {
     private static final String EXPECTED_PATH = "somePath";
 
     @Test
     public void success() {
-        final FileLockMessage response = new FileLockMessage(EXPECTED_PATH);
+        final StatusResponseMessage response = new StatusResponseMessage(EXPECTED_PATH);
         assertEquals(EXPECTED_PATH, response.getPath());
         assertNull(response.getFailureOrNull());
     }
@@ -34,7 +34,7 @@ public class FileLockMessageTest {
     @Test
     public void failure() {
         final IOException expected = new IOException();
-        final FileLockMessage response = new FileLockMessage(EXPECTED_PATH, expected);
+        final StatusResponseMessage response = new StatusResponseMessage(EXPECTED_PATH, expected);
         assertEquals(EXPECTED_PATH, response.getPath());
         assertSame(expected, response.getFailureOrNull());
     }

@@ -11,13 +11,27 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.spi;
+package ch.sourcepond.io.distributor.api;
 
-import java.nio.ByteBuffer;
+public class GlobalPath {
+    private final String sendingNode;
+    private final String path;
 
-public interface Storage {
+    public GlobalPath(final String pSendingNode, final String pPath) {
+        sendingNode = pSendingNode;
+        path = pPath;
+    }
 
-    void store(ByteBuffer pBuffer);
+    public String getSendingNode() {
+        return sendingNode;
+    }
 
-    void store(byte[] pData);
+    public String getPath() {
+        return path;
+    }
+
+    @Override
+    public String toString() {
+        return sendingNode + "://" + path;
+    }
 }

@@ -15,6 +15,9 @@ package ch.sourcepond.io.distributor.impl.lock.master;
 
 import org.junit.Test;
 
+import static ch.sourcepond.io.distributor.impl.lock.master.BaseMasterResponseListenerTest.EXPECTED_PATH;
+import static ch.sourcepond.io.distributor.impl.lock.master.BaseMasterResponseListenerTest.EXPECTED_TIMOUT;
+import static ch.sourcepond.io.distributor.impl.lock.master.BaseMasterResponseListenerTest.EXPECTED_UNIT;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -22,13 +25,8 @@ import static org.junit.Assert.assertTrue;
 public class MasterFileUnlockResponseListenerTest extends BaseMasterResponseListenerTest<String> {
 
     @Override
-    protected BaseMasterResponseListener<String> createListener() {
-        return new MasterFileUnlockResponseListener(BaseMasterResponseListenerTest.EXPECTED_PATH, BaseMasterResponseListenerTest.EXPECTED_TIMOUT, BaseMasterResponseListenerTest.EXPECTED_UNIT, members);
-    }
-
-    @Override
-    protected String createMessagePayload() {
-        return BaseMasterResponseListenerTest.EXPECTED_PATH;
+    protected BaseMasterResponseListener createListener() {
+        return new MasterFileUnlockResponseListener(EXPECTED_PATH, EXPECTED_TIMOUT, EXPECTED_UNIT, members);
     }
 
     @Test
@@ -45,11 +43,5 @@ public class MasterFileUnlockResponseListenerTest extends BaseMasterResponseList
         assertTrue(listener.hasOpenAnswers());
         listener.onMessage(message);
         assertFalse(listener.hasOpenAnswers());
-    }
-
-    @Test
-    @Override
-    public void verifyToPath() {
-        assertSame(BaseMasterResponseListenerTest.EXPECTED_PATH, listener.toPath(BaseMasterResponseListenerTest.EXPECTED_PATH));
     }
 }

@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.master;
 
+import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
 import ch.sourcepond.io.distributor.impl.lock.client.FileLockException;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberAttributeEvent;
@@ -47,16 +48,15 @@ public abstract class BaseMasterResponseListenerTest<T> {
     protected static final TimeUnit EXPECTED_UNIT = MILLISECONDS;
     protected final Member member = mock(Member.class);
     protected final Collection<Member> members = new ArrayList<>(asList(member));
-    protected final Message<T> message = mock(Message.class);
-    protected T payload;
-    protected BaseMasterResponseListener<T> listener;
+    protected final Message<StatusResponseMessage> message = mock(Message.class);
+    protected StatusResponseMessage payload = new StatusResponseMessage(EXPECTED_PATH);
+    protected BaseMasterResponseListener listener;
     private final MembershipEvent event = mock(MembershipEvent.class);
     private ScheduledExecutorService executor = newSingleThreadScheduledExecutor();
     private volatile boolean run;
 
     @Before
     public void setup() {
-        payload = createMessagePayload();
         when(message.getPublishingMember()).thenReturn(member);
         when(message.getMessageObject()).thenReturn(payload);
 
@@ -70,15 +70,11 @@ public abstract class BaseMasterResponseListenerTest<T> {
         executor.shutdown();
     }
 
-    protected abstract BaseMasterResponseListener<T> createListener();
-
-    protected abstract T createMessagePayload();
+    protected abstract BaseMasterResponseListener createListener();
 
     public abstract void verifyHasOpenAnswersMemberRemoved();
 
     public abstract void verifyHasOpenAnswers();
-
-    public abstract void verifyToPath();
 
     @Test//(timeout = 2000)
     public void memberRemoved() throws Exception {

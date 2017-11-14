@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.master;
 
-import ch.sourcepond.io.distributor.impl.lock.FileLockMessage;
+import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
 import org.junit.Before;
@@ -33,10 +33,10 @@ public class MasterFileLockManagerTest {
     private static final String ANY_LISTENER_ID = "anyListenerId";
     private final Cluster cluster = mock(Cluster.class);
     private final ITopic<String> sendFileLockRequestTopic = mock(ITopic.class);
-    private final ITopic<FileLockMessage> receiveFileLockResponseTopic = mock(ITopic.class);
+    private final ITopic<StatusResponseMessage> receiveFileLockResponseTopic = mock(ITopic.class);
     private final ITopic<String> sendFileUnlockRequstTopic = mock(ITopic.class);
     private final ITopic<String> receiveFileUnlockResponseTopic = mock(ITopic.class);
-    private final MasterResponseListener<FileLockMessage> masterFileLockResponseListener = mock(MasterResponseListener.class);
+    private final MasterResponseListener<StatusResponseMessage> masterFileLockResponseListener = mock(MasterResponseListener.class);
     private final MasterResponseListener<String> masterFileUnlockResponseListener = mock(MasterResponseListener.class);
     private final MasterResponseListenerFactory factory = mock(MasterResponseListenerFactory.class);
     private final MasterFileLockManager manager = new MasterFileLockManager(factory);

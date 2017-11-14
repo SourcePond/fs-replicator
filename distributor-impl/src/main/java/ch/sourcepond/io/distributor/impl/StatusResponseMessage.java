@@ -11,27 +11,27 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.lock;
+package ch.sourcepond.io.distributor.impl;
 
 import ch.sourcepond.io.distributor.impl.DistributionMessage;
 
 import java.io.IOException;
 
 /**
- * An instance of this class is sent by a node as response to a file-lock request.
+ * An instance of this class is sent by a node as response to a received request.
  */
-public class FileLockMessage extends DistributionMessage {
+public class StatusResponseMessage extends DistributionMessage {
     private final IOException failureOrNull;
 
     /**
      *
      * @param pPath
      */
-    public FileLockMessage(final String pPath) {
+    public StatusResponseMessage(final String pPath) {
         this(pPath, null);
     }
 
-    public FileLockMessage(final String pPath, final IOException pFailureOrNull) {
+    public StatusResponseMessage(final String pPath, final IOException pFailureOrNull) {
         super(pPath);
         failureOrNull = pFailureOrNull;
     }

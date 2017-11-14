@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.replicator.impl.receiver;
 
-import ch.sourcepond.io.distributor.spi.Storage;
 import org.slf4j.Logger;
 
 import java.io.Closeable;
@@ -27,7 +26,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  *
  */
-class StorageImpl implements Storage, Closeable {
+class StorageImpl implements Storage {
     private static final Logger LOG = getLogger(StorageImpl.class);
     private final WritableByteChannel channel;
 
@@ -42,11 +41,6 @@ class StorageImpl implements Storage, Closeable {
         } catch (final IOException e) {
             LOG.error(e.getMessage(), e);
         }
-    }
-
-    @Override
-    public void store(final byte[] pData) {
-        store(wrap(pData));
     }
 
     @Override

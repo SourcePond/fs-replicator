@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.master;
 
-import ch.sourcepond.io.distributor.impl.lock.FileLockMessage;
+import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
 
@@ -29,7 +29,7 @@ class MasterResponseListenerFactory {
     static final TimeUnit DEFAULT_UNIT = SECONDS;
     private Cluster cluster;
     private ITopic<String> sendFileLockRequestTopic;
-    private ITopic<FileLockMessage> receiveFileLockResponseTopic;
+    private ITopic<StatusResponseMessage> receiveFileLockResponseTopic;
     private ITopic<String> sendFileUnlockRequstTopic;
     private ITopic<String> receiveFileUnlockResponseTopic;
 
@@ -49,11 +49,11 @@ class MasterResponseListenerFactory {
         this.sendFileLockRequestTopic = sendFileLockRequestTopic;
     }
 
-    public ITopic<FileLockMessage> getReceiveFileLockResponseTopic() {
+    public ITopic<StatusResponseMessage> getReceiveFileLockResponseTopic() {
         return receiveFileLockResponseTopic;
     }
 
-    public void setReceiveFileLockResponseTopic(ITopic<FileLockMessage> receiveFileLockResponseTopic) {
+    public void setReceiveFileLockResponseTopic(ITopic<StatusResponseMessage> receiveFileLockResponseTopic) {
         this.receiveFileLockResponseTopic = receiveFileLockResponseTopic;
     }
 

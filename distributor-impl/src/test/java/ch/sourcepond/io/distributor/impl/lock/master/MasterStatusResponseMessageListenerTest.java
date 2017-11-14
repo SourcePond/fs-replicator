@@ -13,32 +13,23 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.master;
 
+import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
 import ch.sourcepond.io.distributor.impl.lock.client.FileLockException;
-import ch.sourcepond.io.distributor.impl.lock.FileLockMessage;
 import org.junit.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class MasterFileLockMessageListenerTest extends BaseMasterResponseListenerTest<FileLockMessage> {
+public class MasterStatusResponseMessageListenerTest extends BaseMasterResponseListenerTest<StatusResponseMessage> {
     private static final String EXPECTED_FAILURE_MESSAGE = "someMessage";
 
     @Override
-    protected BaseMasterResponseListener<FileLockMessage> createListener() {
+    protected BaseMasterResponseListener createListener() {
         return new MasterFileLockResponseListener(EXPECTED_PATH, EXPECTED_TIMOUT, EXPECTED_UNIT, members);
-    }
-
-    @Override
-    protected FileLockMessage createMessagePayload() {
-        final FileLockMessage message = mock(FileLockMessage.class);
-        when(message.getPath()).thenReturn(EXPECTED_PATH);
-        return message;
     }
 
     @Test
@@ -60,7 +51,8 @@ public class MasterFileLockMessageListenerTest extends BaseMasterResponseListene
     @Test(timeout = 2000)
     public void validateAnswers() throws Exception {
         final IOException expected = new IOException(EXPECTED_FAILURE_MESSAGE);
-        when(payload.getFailureOrNull()).thenReturn(expected);
+        payload = new StatusResponseMessage(EXPECTED_PATH, expected);
+        when(message.getMessageObject()).thenReturn(payload);
         listener.onMessage(message);
         try {
             listener.awaitNodeAnswers();
@@ -68,11 +60,5 @@ public class MasterFileLockMessageListenerTest extends BaseMasterResponseListene
         } catch (final FileLockException e) {
             assertTrue(expected.getMessage().contains(EXPECTED_FAILURE_MESSAGE));
         }
-    }
-
-    @Test
-    @Override
-    public void verifyToPath() {
-        assertEquals(EXPECTED_PATH, listener.toPath(payload));
     }
 }

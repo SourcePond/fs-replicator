@@ -13,13 +13,14 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.master;
 
+import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.Message;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-class MasterFileUnlockResponseListener extends BaseMasterResponseListener<String> {
+class MasterFileUnlockResponseListener extends BaseMasterResponseListener {
     private final Collection<Member> members;
 
     public MasterFileUnlockResponseListener(final String pPath, final long pTimeout, final TimeUnit pUnit,
@@ -39,12 +40,7 @@ class MasterFileUnlockResponseListener extends BaseMasterResponseListener<String
     }
 
     @Override
-    protected String toPath(final String pMessage) {
-        return pMessage;
-    }
-
-    @Override
-    protected void processMessage(final Message<String> pMessage) {
+    protected void processMessage(final Message<StatusResponseMessage> pMessage) {
         members.remove(pMessage.getPublishingMember());
     }
 }

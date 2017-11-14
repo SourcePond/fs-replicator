@@ -14,15 +14,18 @@ limitations under the License.*/
 package ch.sourcepond.io.replicator.impl.receiver;
 
 import ch.sourcepond.io.distributor.api.Distributor;
+import ch.sourcepond.io.distributor.api.GlobalPath;
+import ch.sourcepond.io.distributor.api.Status;
 import ch.sourcepond.io.distributor.spi.LockException;
 import ch.sourcepond.io.distributor.spi.Receiver;
-import ch.sourcepond.io.distributor.spi.Storage;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,21 +38,26 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class ShouldReceiveReplication implements Receiver {
 
-    private static final Storage EMPTY_STORAGE = new Storage() {
+    private static final WritableByteChannel NOOP_CHANNEL = new WritableByteChannel() {
 
         @Override
-        public void store(final ByteBuffer pBuffer) {
-            LOG.debug("noop EMPTY_STORAGE.store(ByteBuffer)");
+        public int write(final ByteBuffer src) throws IOException {
+            return 0;
         }
 
         @Override
-        public void store(final byte[] pData) {
-            LOG.debug("noop EMPTY_STORAGE::store(byte[])");
+        public boolean isOpen() {
+            return false;
+        }
+
+        @Override
+        public void close() {
+            // noop
         }
     };
 
     private static final Logger LOG = getLogger(ShouldReceiveReplication.class);
-    private final Map<String, Map<String, StorageImpl>> storages = new HashMap<>();
+    private final Map<String, Map<String, WritableByteChannel>> storages = new HashMap<>();
     private final Distributor distributor;
     private final FileSystem fileSystem;
 
@@ -58,73 +66,113 @@ public class ShouldReceiveReplication implements Receiver {
         fileSystem = pFileSystem;
     }
 
-    private Map<String, StorageImpl> getNodeStorage(final String pNode) {
-        return storages.computeIfAbsent(pNode, n -> new HashMap<>());
+    private Map<String, WritableByteChannel> getNodeStorage(final GlobalPath pPath) {
+        return storages.computeIfAbsent(pPath.getPath(), n -> new HashMap<>());
     }
 
-    private boolean isLocalNode(final String pNode) {
-        return pNode.equals(distributor.getLocalNode());
+    private boolean isRemoteNode(final GlobalPath pPath) {
+        return !pPath.getSendingNode().equals(distributor.getLocalNode());
     }
 
-    public void lockLocally(final String pSendingNode, final String pPath) throws IOException {
-        if (!isLocalNode(pSendingNode)) {
+    private Path toPath(final GlobalPath pPath) {
+        return fileSystem.getPath(pPath.getPath());
+    }
+
+    public void lockLocally(final Status pStatus, final GlobalPath pPath) {
+        if (isRemoteNode(pPath)) {
             synchronized (storages) {
                 if (storages.containsKey(pPath)) {
-                    throw new LockException(format("%s/%s is already locked!", pSendingNode, pPath));
+                    pStatus.setFailure(new IOException(format("%s is already locked!", pPath)));
+                } else {
+                    try {
+                        final FileChannel ch = open(toPath(pPath), CREATE, TRUNCATE_EXISTING);
+                        ch.lock();
+                        getNodeStorage(pPath).put(pPath.getPath(), ch);
+                    } catch (final IOException e) {
+                        pStatus.setFailure(e);
+                    }
                 }
-                final FileChannel ch = open(fileSystem.getPath(pPath), CREATE, TRUNCATE_EXISTING);
-                ch.lock();
-                getNodeStorage(pSendingNode).put(pPath, new StorageImpl(ch));
             }
         }
     }
 
     @Override
-    public void unlockAllLocally(final String pSendingNode) {
+    public void unlockAllLocally(final Status pStatus, final String pSendingNode) {
         synchronized (storages) {
-            final Map<String, StorageImpl> storagesPerNode = storages.remove(pSendingNode);
+            final Map<String, WritableByteChannel> storagesPerNode = storages.remove(pSendingNode);
             if (storagesPerNode != null && !storagesPerNode.isEmpty()) {
                 storagesPerNode.values().forEach(s -> close(s));
             }
         }
     }
 
-    private static void close(final StorageImpl pStorage) {
+    private static void close(final WritableByteChannel pChannel) {
         try {
-            pStorage.close();
+            pChannel.close();
         } catch (final IOException e) {
             LOG.warn(e.getMessage(), e);
         }
     }
 
-    public void unlockLocally(final String pSendingNode, final String pPath) {
-        if (!isLocalNode(pSendingNode)) {
-            final StorageImpl storage;
+    public void unlockLocally(final Status pStatus, final GlobalPath pPath) throws IOException {
+        if (isRemoteNode(pPath)) {
+            final WritableByteChannel ch;
             synchronized (storages) {
-                storage = getNodeStorage(pSendingNode).remove(pPath);
+                ch = getNodeStorage(pPath).remove(pPath.getPath());
             }
-            if (storage == null) {
-                LOG.warn("unlockLocally: no storage registered for {}/{}", pSendingNode, pPath);
+            if (ch == null) {
+                LOG.warn("unlockLocally: no storage registered for {}", pPath);
             } else {
-                close(storage);
+                close(ch);
+            }
+        }
+    }
+
+    private WritableByteChannel getChannel(final GlobalPath pPath) {
+        WritableByteChannel ch = null;
+        if (isRemoteNode(pPath)) {
+            synchronized (storages) {
+                ch = getNodeStorage(pPath).get(pPath.getPath());
+            }
+            if (ch == null) {
+                LOG.warn("getChannel: no storage registered for {}", pPath);
+            }
+        }
+        return ch;
+    }
+
+    @Override
+    public void delete(final Status pStatus, final GlobalPath pPath) {
+        synchronized (storages) {
+            final WritableByteChannel ch = getChannel(pPath);
+            try {
+                if (ch == null) {
+                    LOG.warn("delete: no storage registered for {}", pPath);
+                } else {
+                    ch.close();
+                }
+            } catch (final IOException e) {
+                LOG.warn(e.getMessage(), e);
+            } finally {
+                getNodeStorage(pPath).put(pPath.getPath(), NOOP_CHANNEL);
+                try {
+                    Files.delete(toPath(pPath));
+                } catch (final IOException e) {
+                    pStatus.setFailure(e);
+                }
             }
         }
     }
 
     @Override
-    public Storage getStorage(final String pSendingNode, final String pPath) {
-        Storage storage;
-        if (isLocalNode(pSendingNode)) {
-            storage = EMPTY_STORAGE;
-        } else {
-            synchronized (storages) {
-                storage = getNodeStorage(pSendingNode).get(pPath);
-            }
-            if (storage == null) {
-                storage = EMPTY_STORAGE;
-                LOG.warn("getStorage: no storage registered for {}/{}", pSendingNode, pPath);
+    public void store(final Status pStatus, final GlobalPath pPath, final ByteBuffer pBuffer) {
+        final WritableByteChannel ch = getChannel(pPath);
+        if (ch != null) {
+            try {
+                ch.write(pBuffer);
+            } catch (final IOException e) {
+                pStatus.setFailure(e);
             }
         }
-        return storage;
     }
 }

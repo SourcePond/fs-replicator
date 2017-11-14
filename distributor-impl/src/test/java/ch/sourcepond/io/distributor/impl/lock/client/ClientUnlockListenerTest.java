@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.client;
 
-import ch.sourcepond.io.distributor.impl.lock.client.ClientUnlockListener;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.Member;
@@ -22,7 +21,16 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
 
+import java.io.IOException;
+
+import static ch.sourcepond.io.distributor.impl.lock.client.Constants.EXPECTED_EXCEPTION;
+import static ch.sourcepond.io.distributor.impl.lock.client.Constants.EXPECTED_NODE;
+import static ch.sourcepond.io.distributor.impl.lock.client.Constants.EXPECTED_PATH;
+import static ch.sourcepond.io.distributor.impl.lock.client.Constants.FAILURE_RESPONSE_ARGUMENT_MATCHER;
+import static ch.sourcepond.io.distributor.impl.lock.client.Constants.GLOBAL_PATH_ARGUMENT_MATCHER;
+import static ch.sourcepond.io.distributor.impl.lock.client.Constants.SUCCESS_RESPONSE_ARGUMENT_MATCHER;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -30,8 +38,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class ClientUnlockListenerTest {
-    private static final String EXPECTED_NODE = "someNode";
-    private static final String EXPECTED_PATH = "somePath";
     private final Receiver receiver = mock(Receiver.class);
     private final Member member = mock(Member.class);
     private final Message<String> message = mock(Message.class);
@@ -46,22 +52,17 @@ public class ClientUnlockListenerTest {
     }
 
     @Test
-    public void onMessageFailure() {
-        doThrow(RuntimeException.class).when(receiver).unlockLocally(EXPECTED_NODE, EXPECTED_PATH);
-        try {
-            listener.onMessage(message);
-            fail("Exception expected");
-        } catch (final RuntimeException e) {
-            // noop
-        }
-        verify(sendFileUnlockResponseTopic).publish(EXPECTED_PATH);
+    public void onMessageFailure() throws IOException {
+        doThrow(EXPECTED_EXCEPTION).when(receiver).unlockLocally(argThat(GLOBAL_PATH_ARGUMENT_MATCHER));
+        listener.onMessage(message);
+        verify(sendFileUnlockResponseTopic).publish(argThat(FAILURE_RESPONSE_ARGUMENT_MATCHER));
     }
 
     @Test
-    public void onMessageSuccess() {
+    public void onMessageSuccess() throws IOException {
         listener.onMessage(message);
         final InOrder order = inOrder(receiver, sendFileUnlockResponseTopic);
-        order.verify(receiver).unlockLocally(EXPECTED_NODE, EXPECTED_PATH);
-        order.verify(sendFileUnlockResponseTopic).publish(EXPECTED_PATH);
+        order.verify(receiver).unlockLocally(argThat(GLOBAL_PATH_ARGUMENT_MATCHER));
+        order.verify(sendFileUnlockResponseTopic).publish(argThat(SUCCESS_RESPONSE_ARGUMENT_MATCHER));
     }
 }
