@@ -13,39 +13,28 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.master;
 
+import ch.sourcepond.io.distributor.impl.MasterListener;
+import ch.sourcepond.io.distributor.impl.MasterListenerTest;
 import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
-import ch.sourcepond.io.distributor.impl.lock.client.FileLockException;
 import org.junit.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
-public class MasterStatusResponseMessageListenerTest extends BaseMasterResponseListenerTest<StatusResponseMessage> {
+public class MasterFileLockListenerTest extends MasterListenerTest<FileLockException> {
     private static final String EXPECTED_FAILURE_MESSAGE = "someMessage";
 
     @Override
-    protected BaseMasterResponseListener createListener() {
-        return new MasterFileLockResponseListener(EXPECTED_PATH, EXPECTED_TIMOUT, EXPECTED_UNIT, members);
+    protected MasterListener createListener() {
+        return new MasterFileLockListener(EXPECTED_PATH, EXPECTED_TIMOUT, EXPECTED_UNIT, members);
     }
 
-    @Test
     @Override
-    public void verifyHasOpenAnswers() {
-        assertTrue(listener.hasOpenAnswers());
-        listener.onMessage(message);
-        assertFalse(listener.hasOpenAnswers());
-    }
-
-    @Test
-    @Override
-    public void verifyHasOpenAnswersMemberRemoved() {
-        assertTrue(listener.hasOpenAnswers());
-        listener.memberRemoved(member);
-        assertFalse(listener.hasOpenAnswers());
+    protected Class<FileLockException> getValidationExceptionType() {
+        return FileLockException.class;
     }
 
     @Test(timeout = 2000)

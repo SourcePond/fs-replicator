@@ -34,6 +34,6 @@ public class MasterDataflowManager {
     }
 
     public void delete(final String pPath) {
-
+        sendDeleteTopic.publish(pPath);
     }
 }

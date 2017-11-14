@@ -11,10 +11,8 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.lock.master;
+package ch.sourcepond.io.distributor.impl;
 
-import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
-import ch.sourcepond.io.distributor.impl.lock.client.FileLockException;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MembershipListener;
 import com.hazelcast.core.Message;
@@ -28,15 +26,11 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptyMap;
 
-/**
- * Processes {@link StatusResponseMessage} objects which are send as response from the cluster-nodes when
- * they are requested to acquire a {@link java.nio.channels.FileLock} for a particular path.
- *
- */
-class MasterFileLockResponseListener extends BaseMasterResponseListener implements MembershipListener {
+public abstract class AnswerValidatingMasterListener<E extends Exception> extends MasterListener<E>
+        implements MembershipListener {
     private final Map<Member, Object> responses = new HashMap<>();
 
-    MasterFileLockResponseListener(final String pPath,
+    protected AnswerValidatingMasterListener(final String pPath,
                                    final long pTimeout,
                                    final TimeUnit pUnit,
                                    final Collection<Member> pMembers) {
@@ -78,16 +72,22 @@ class MasterFileLockResponseListener extends BaseMasterResponseListener implemen
         return exceptions == null ? emptyMap() : exceptions;
     }
 
+    protected abstract void addValidationFailureMessage(StringBuilder pBuilder);
+
+    protected abstract void throwValidationException(String pMessage) throws E;
+
     @Override
-    protected void validateAnswers() throws FileLockException {
+    protected void validateAnswers() throws E {
         final Map<Member, IOException> memberExceptions = collectMemberExceptions();
         if (!memberExceptions.isEmpty()) {
-            final StringBuilder builder = new StringBuilder("Acquiring file-locks failed! Failures:\n\t");
+            final StringBuilder builder = new StringBuilder();
+            addValidationFailureMessage(builder);
+            builder.append("Failures:\n\t");
             for (final Map.Entry<Member, IOException> entry : memberExceptions.entrySet()) {
                 builder.append(entry.getKey()).append(": ").append(entry.getValue().getMessage()).append("\n\t");
             }
             builder.append("See logs on members for further information.");
-            throw new FileLockException(builder.toString());
+            throwValidationException(builder.toString());
         }
     }
 

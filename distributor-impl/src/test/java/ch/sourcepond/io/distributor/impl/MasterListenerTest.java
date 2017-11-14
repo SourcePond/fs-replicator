@@ -11,10 +11,9 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.lock.master;
+package ch.sourcepond.io.distributor.impl;
 
-import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
-import ch.sourcepond.io.distributor.impl.lock.client.FileLockException;
+import ch.sourcepond.io.distributor.impl.lock.master.FileLockException;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
@@ -34,6 +33,7 @@ import static java.lang.Thread.interrupted;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -42,7 +42,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-public abstract class BaseMasterResponseListenerTest<T> {
+public abstract class MasterListenerTest<E extends Exception> {
     protected static final String EXPECTED_PATH = "anyPath";
     protected static final long EXPECTED_TIMOUT = 500;
     protected static final TimeUnit EXPECTED_UNIT = MILLISECONDS;
@@ -50,7 +50,7 @@ public abstract class BaseMasterResponseListenerTest<T> {
     protected final Collection<Member> members = new ArrayList<>(asList(member));
     protected final Message<StatusResponseMessage> message = mock(Message.class);
     protected StatusResponseMessage payload = new StatusResponseMessage(EXPECTED_PATH);
-    protected BaseMasterResponseListener listener;
+    protected MasterListener listener;
     private final MembershipEvent event = mock(MembershipEvent.class);
     private ScheduledExecutorService executor = newSingleThreadScheduledExecutor();
     private volatile boolean run;
@@ -70,11 +70,21 @@ public abstract class BaseMasterResponseListenerTest<T> {
         executor.shutdown();
     }
 
-    protected abstract BaseMasterResponseListener createListener();
+    protected abstract MasterListener createListener();
 
-    public abstract void verifyHasOpenAnswersMemberRemoved();
+    @Test
+    public void verifyHasOpenAnswers() {
+        assertTrue(listener.hasOpenAnswers());
+        listener.onMessage(message);
+        assertFalse(listener.hasOpenAnswers());
+    }
 
-    public abstract void verifyHasOpenAnswers();
+    @Test
+    public void verifyHasOpenAnswersMemberRemoved() {
+        assertTrue(listener.hasOpenAnswers());
+        listener.memberRemoved(member);
+        assertFalse(listener.hasOpenAnswers());
+    }
 
     @Test//(timeout = 2000)
     public void memberRemoved() throws Exception {
@@ -99,6 +109,8 @@ public abstract class BaseMasterResponseListenerTest<T> {
         verifyZeroInteractions(event);
     }
 
+    protected abstract Class<E> getValidationExceptionType();
+
     @Test(timeout = 2000)
     public void awaitNodeAnswersWaitInterrupted() throws Exception {
         final Thread thread = currentThread();
@@ -106,13 +118,13 @@ public abstract class BaseMasterResponseListenerTest<T> {
         try {
             listener.awaitNodeAnswers();
             fail("Exception expected");
-        } catch (final FileLockException e) {
+        } catch (final Exception e) {
+            assertSame(getValidationExceptionType(), e.getClass());
             final Throwable cause = e.getCause();
             assertNotNull(cause);
             assertSame(InterruptedException.class, cause.getClass());
         }
     }
-
 
     @Test(timeout = 5000, expected = TimeoutException.class)
     public void awaitNodeAnswersWaitTimedOut() throws Exception {

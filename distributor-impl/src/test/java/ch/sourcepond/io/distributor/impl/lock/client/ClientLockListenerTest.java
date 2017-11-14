@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.client;
 
+import ch.sourcepond.io.distributor.impl.Constants;
 import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
@@ -22,10 +23,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
 
-import static ch.sourcepond.io.distributor.impl.lock.client.Constants.EXPECTED_PATH;
-import static ch.sourcepond.io.distributor.impl.lock.client.Constants.FAILURE_RESPONSE_ARGUMENT_MATCHER;
-import static ch.sourcepond.io.distributor.impl.lock.client.Constants.GLOBAL_PATH_ARGUMENT_MATCHER;
-import static ch.sourcepond.io.distributor.impl.lock.client.Constants.SUCCESS_RESPONSE_ARGUMENT_MATCHER;
+import static ch.sourcepond.io.distributor.impl.Constants.EXPECTED_PATH;
+import static ch.sourcepond.io.distributor.impl.Constants.FAILURE_RESPONSE_ARGUMENT_MATCHER;
+import static ch.sourcepond.io.distributor.impl.Constants.GLOBAL_PATH_ARGUMENT_MATCHER;
+import static ch.sourcepond.io.distributor.impl.Constants.SUCCESS_RESPONSE_ARGUMENT_MATCHER;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;

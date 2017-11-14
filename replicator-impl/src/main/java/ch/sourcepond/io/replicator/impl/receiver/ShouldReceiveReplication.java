@@ -15,8 +15,6 @@ package ch.sourcepond.io.replicator.impl.receiver;
 
 import ch.sourcepond.io.distributor.api.Distributor;
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.api.Status;
-import ch.sourcepond.io.distributor.spi.LockException;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import org.slf4j.Logger;
 
@@ -78,26 +76,23 @@ public class ShouldReceiveReplication implements Receiver {
         return fileSystem.getPath(pPath.getPath());
     }
 
-    public void lockLocally(final Status pStatus, final GlobalPath pPath) {
+    @Override
+    public void lockLocally(final GlobalPath pPath) throws IOException {
         if (isRemoteNode(pPath)) {
             synchronized (storages) {
                 if (storages.containsKey(pPath)) {
-                    pStatus.setFailure(new IOException(format("%s is already locked!", pPath)));
+                    throw new IOException(format("%s is already locked!", pPath));
                 } else {
-                    try {
-                        final FileChannel ch = open(toPath(pPath), CREATE, TRUNCATE_EXISTING);
-                        ch.lock();
-                        getNodeStorage(pPath).put(pPath.getPath(), ch);
-                    } catch (final IOException e) {
-                        pStatus.setFailure(e);
-                    }
+                    final FileChannel ch = open(toPath(pPath), CREATE, TRUNCATE_EXISTING);
+                    ch.lock();
+                    getNodeStorage(pPath).put(pPath.getPath(), ch);
                 }
             }
         }
     }
 
     @Override
-    public void unlockAllLocally(final Status pStatus, final String pSendingNode) {
+    public void unlockAllLocally(final String pSendingNode) {
         synchronized (storages) {
             final Map<String, WritableByteChannel> storagesPerNode = storages.remove(pSendingNode);
             if (storagesPerNode != null && !storagesPerNode.isEmpty()) {
@@ -114,7 +109,7 @@ public class ShouldReceiveReplication implements Receiver {
         }
     }
 
-    public void unlockLocally(final Status pStatus, final GlobalPath pPath) throws IOException {
+    public void unlockLocally(final GlobalPath pPath) throws IOException {
         if (isRemoteNode(pPath)) {
             final WritableByteChannel ch;
             synchronized (storages) {
@@ -142,7 +137,7 @@ public class ShouldReceiveReplication implements Receiver {
     }
 
     @Override
-    public void delete(final Status pStatus, final GlobalPath pPath) {
+    public void delete(final GlobalPath pPath) throws IOException {
         synchronized (storages) {
             final WritableByteChannel ch = getChannel(pPath);
             try {
@@ -155,24 +150,16 @@ public class ShouldReceiveReplication implements Receiver {
                 LOG.warn(e.getMessage(), e);
             } finally {
                 getNodeStorage(pPath).put(pPath.getPath(), NOOP_CHANNEL);
-                try {
-                    Files.delete(toPath(pPath));
-                } catch (final IOException e) {
-                    pStatus.setFailure(e);
-                }
+                Files.delete(toPath(pPath));
             }
         }
     }
 
     @Override
-    public void store(final Status pStatus, final GlobalPath pPath, final ByteBuffer pBuffer) {
+    public void store(final GlobalPath pPath, final ByteBuffer pBuffer) throws IOException {
         final WritableByteChannel ch = getChannel(pPath);
         if (ch != null) {
-            try {
-                ch.write(pBuffer);
-            } catch (final IOException e) {
-                pStatus.setFailure(e);
-            }
+            ch.write(pBuffer);
         }
     }
 }

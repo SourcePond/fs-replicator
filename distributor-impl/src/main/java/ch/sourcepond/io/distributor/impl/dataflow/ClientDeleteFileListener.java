@@ -14,7 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.dataflow;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.RespondingListener;
+import ch.sourcepond.io.distributor.impl.ClientListener;
 import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
@@ -24,10 +24,10 @@ import java.io.IOException;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-final class DeleteFileListener extends RespondingListener<String> {
-    private static final Logger LOG = getLogger(DeleteFileListener.class);
+final class ClientDeleteFileListener extends ClientListener<String> {
+    private static final Logger LOG = getLogger(ClientDeleteFileListener.class);
 
-    public DeleteFileListener(Receiver pReceiver, ITopic<StatusResponseMessage> pSendResponseTopic) {
+    public ClientDeleteFileListener(final Receiver pReceiver, final ITopic<StatusResponseMessage> pSendResponseTopic) {
         super(pReceiver, pSendResponseTopic);
     }
 

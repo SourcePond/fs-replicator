@@ -11,34 +11,30 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl;
+package ch.sourcepond.io.distributor.impl.session;
 
 import ch.sourcepond.io.distributor.api.DeleteSession;
-import ch.sourcepond.io.distributor.api.Distributor;
 import ch.sourcepond.io.distributor.api.GlobalLockException;
-import ch.sourcepond.io.distributor.api.ModifySession;
+import ch.sourcepond.io.distributor.impl.lock.GlobalLockManager;
+import ch.sourcepond.io.distributor.spi.Receiver;
+import com.hazelcast.core.ITopic;
 
-import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
-public class DistributorImpl implements Distributor {
-    @Override
-    public DeleteSession lockDelete(String pPath, TimeUnit pTimeoutUnit, long pTimeout) throws GlobalLockException {
-        return null;
+public class SessionFactory {
+    private final Receiver receiver;
+    private final GlobalLockManager glm;
+    private final ITopic<String> sendDeleteTopic;
+
+    SessionFactory(final Receiver pReceiver, final GlobalLockManager pGlm, final ITopic<String> pSendDeleteTopic) {
+        receiver = pReceiver;
+        glm = pGlm;
+        sendDeleteTopic = pSendDeleteTopic;
     }
 
-    @Override
-    public ModifySession lockModify(String pPath, TimeUnit pTimeoutUnit, long pTimeout) throws GlobalLockException {
-        return null;
-    }
+    public DeleteSession lockDelete(final String pPath, final TimeUnit pTimeoutUnit, final long pTimeout) throws GlobalLockException {
+        glm.lockGlobally(pPath, pTimeoutUnit, pTimeout);
 
-    @Override
-    public String getLocalNode() {
         return null;
-    }
-
-    @Override
-    public byte[] getGlobalChecksum(String pFile) {
-        return new byte[0];
     }
 }

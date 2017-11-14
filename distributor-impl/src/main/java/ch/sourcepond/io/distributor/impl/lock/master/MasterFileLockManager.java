@@ -13,7 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.master;
 
-import ch.sourcepond.io.distributor.impl.lock.client.FileLockException;
+import ch.sourcepond.io.distributor.impl.MasterListener;
+import ch.sourcepond.io.distributor.impl.MasterResponseListener;
+import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
 import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
 
@@ -33,7 +35,7 @@ public class MasterFileLockManager {
     @FunctionalInterface
     private interface ClusterAction<T> {
 
-        void perform(BaseMasterResponseListener pListener, ITopic<String> pSenderTopic, ITopic<T> pReceiverTopic);
+        void perform(MasterListener pListener, ITopic<String> pSenderTopic, ITopic<T> pReceiverTopic);
     }
 
     private static final Logger LOG = getLogger(MasterFileLockManager.class);
@@ -49,11 +51,11 @@ public class MasterFileLockManager {
         factory = pFactory;
     }
 
-    private <E> void performAction(final ITopic<String> pSenderTopic,
-                                   final ITopic<E> pReceiverTopic,
+    private <E extends Exception> void performAction(final ITopic<String> pSenderTopic,
+                                   final ITopic<StatusResponseMessage> pReceiverTopic,
                                    final String pPath,
                                    final MasterResponseListener<E> pListener)
-            throws TimeoutException, FileLockException {
+            throws TimeoutException, E {
         requireNonNull(pPath, "Path is null");
         final String membershipId = factory.getCluster().addMembershipListener(pListener);
         try {
@@ -93,7 +95,7 @@ public class MasterFileLockManager {
         try {
             performAction(factory.getSendFileUnlockRequestTopic(), factory.getReceiveFileUnlockResponseTopic(), pPath,
                     factory.createUnlockListener(pPath));
-        } catch (final TimeoutException | FileLockException e) {
+        } catch (final TimeoutException | FileUnlockException e) {
             LOG.warn(format("Exception occurred while releasing file-lock for %s", pPath), e);
         }
     }

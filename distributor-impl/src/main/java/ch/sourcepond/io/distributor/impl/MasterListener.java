@@ -11,10 +11,8 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.lock.master;
+package ch.sourcepond.io.distributor.impl;
 
-import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
-import ch.sourcepond.io.distributor.impl.lock.client.FileLockException;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
@@ -31,19 +29,17 @@ import static java.lang.Thread.currentThread;
 /**
  * Base implementation of the {@link MasterResponseListener} interface. It is responsible for proper monitor handling
  * and signalling.
- *
- * @param <T> Type of the message payload object, see {@link Message#getMessageObject()}
  */
-abstract class BaseMasterResponseListener implements MasterResponseListener<StatusResponseMessage> {
+public abstract class MasterListener<E extends Exception> implements MasterResponseListener<E> {
     static final int MAX_TRIALS = 5;
     private final Lock lock = new ReentrantLock();
     private final Condition answerReceived = lock.newCondition();
-    private final String path;
+    protected final String path;
     private final long timeout;
     private final TimeUnit unit;
     private int trials;
 
-    protected BaseMasterResponseListener(final String pPath, final long pTimeout, final TimeUnit pUnit) {
+    protected MasterListener(final String pPath, final long pTimeout, final TimeUnit pUnit) {
         path = pPath;
         timeout = pTimeout;
         unit = pUnit;
@@ -81,11 +77,15 @@ abstract class BaseMasterResponseListener implements MasterResponseListener<Stat
         return hasOpenAnswers();
     }
 
-    protected void validateAnswers() throws FileLockException {
+    protected void throwValidationException(Exception pCause) throws E {
         // noop by default
     }
 
-    public final void awaitNodeAnswers() throws TimeoutException, FileLockException {
+    protected void validateAnswers() throws E {
+        // noop by default
+    }
+
+    public final void awaitNodeAnswers() throws TimeoutException, E {
         lock.lock();
         try {
             try {
@@ -94,7 +94,7 @@ abstract class BaseMasterResponseListener implements MasterResponseListener<Stat
                 }
             } catch (final InterruptedException e) {
                 currentThread().interrupt();
-                throw new FileLockException(e);
+                throwValidationException(e);
             }
             validateAnswers();
         } finally {

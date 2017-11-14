@@ -14,7 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.client;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.RespondingListener;
+import ch.sourcepond.io.distributor.impl.ClientListener;
 import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
@@ -30,7 +30,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Listener to acquire a local file-lock.
  */
-class ClientLockListener extends RespondingListener<String> implements MembershipListener {
+class ClientLockListener extends ClientListener<String> implements MembershipListener {
     private static final Logger LOG = getLogger(ClientLockListener.class);
 
     public ClientLockListener(final Receiver pReceiver, final ITopic<StatusResponseMessage> pSendFileLockResponseTopic) {

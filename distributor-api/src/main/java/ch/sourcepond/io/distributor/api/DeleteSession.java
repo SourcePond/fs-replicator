@@ -13,16 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.api;
 
-import java.nio.ByteBuffer;
-import java.util.concurrent.TimeUnit;
+import java.io.Closeable;
 
-public interface Distributor {
+public interface DeleteSession extends Closeable {
 
-    DeleteSession lockDelete(String pPath, TimeUnit pTimeoutUnit, long pTimeout) throws GlobalLockException;
-
-    ModifySession lockModify(String pPath, TimeUnit pTimeoutUnit, long pTimeout) throws GlobalLockException;
-
-    String getLocalNode();
-
-    byte[] getGlobalChecksum(String pFile);
+    /**
+     * Deletes the path specified cluster wide.
+     *
+     */
+    void delete();
 }

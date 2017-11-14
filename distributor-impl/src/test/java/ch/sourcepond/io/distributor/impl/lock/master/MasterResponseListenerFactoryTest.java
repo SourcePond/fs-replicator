@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.master;
 
+import ch.sourcepond.io.distributor.impl.MasterResponseListener;
 import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
@@ -32,7 +33,7 @@ public class MasterResponseListenerFactoryTest {
     private ITopic<String> sendFileLockRequestTopic = mock(ITopic.class);
     private ITopic<StatusResponseMessage> receiveFileLockResponseTopic = mock(ITopic.class);
     private ITopic<String> sendFileUnlockRequstTopic = mock(ITopic.class);
-    private ITopic<String> receiveFileUnlockResponseTopic = mock(ITopic.class);
+    private ITopic<StatusResponseMessage> receiveFileUnlockResponseTopic = mock(ITopic.class);
     private final MasterResponseListenerFactory factory = new MasterResponseListenerFactory();
 
     @Before
@@ -89,7 +90,7 @@ public class MasterResponseListenerFactoryTest {
 
     @Test
     public void createLockListener() {
-         verifyInstances(factory.createLockListener(ANY_PATH), factory.createLockListener(ANY_PATH));
+        verifyInstances(factory.createLockListener(ANY_PATH), factory.createLockListener(ANY_PATH));
     }
 
     @Test

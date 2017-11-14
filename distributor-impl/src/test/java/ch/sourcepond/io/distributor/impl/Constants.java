@@ -11,7 +11,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.lock.client;
+package ch.sourcepond.io.distributor.impl;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
 import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
@@ -20,16 +20,16 @@ import org.mockito.ArgumentMatcher;
 import java.io.IOException;
 
 public class Constants {
-    static final String EXPECTED_NODE = "someNode";
-    static final String EXPECTED_PATH = "somePath";
-    static final IOException EXPECTED_EXCEPTION = new IOException();
-    static final ArgumentMatcher<GlobalPath> GLOBAL_PATH_ARGUMENT_MATCHER = globalPath -> {
+    public static final String EXPECTED_NODE = "someNode";
+    public static final String EXPECTED_PATH = "somePath";
+    public static final IOException EXPECTED_EXCEPTION = new IOException();
+    public static final ArgumentMatcher<GlobalPath> GLOBAL_PATH_ARGUMENT_MATCHER = globalPath -> {
         return EXPECTED_NODE.equals(globalPath.getSendingNode()) && EXPECTED_PATH.equals(EXPECTED_PATH);
     };
-    static final ArgumentMatcher<StatusResponseMessage> SUCCESS_RESPONSE_ARGUMENT_MATCHER = response -> {
+    public static final ArgumentMatcher<StatusResponseMessage> SUCCESS_RESPONSE_ARGUMENT_MATCHER = response -> {
         return EXPECTED_PATH.equals(response.getPath()) && response.getFailureOrNull() == null;
     };
-    static final ArgumentMatcher<StatusResponseMessage> FAILURE_RESPONSE_ARGUMENT_MATCHER = response -> {
+    public static final ArgumentMatcher<StatusResponseMessage> FAILURE_RESPONSE_ARGUMENT_MATCHER = response -> {
         return EXPECTED_PATH.equals(response.getPath()) && EXPECTED_EXCEPTION.equals(response.getFailureOrNull());
     };
 }

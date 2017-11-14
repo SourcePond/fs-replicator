@@ -22,11 +22,11 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 
-public abstract class RespondingListener<T> implements MessageListener<T> {
+public abstract class ClientListener<T> implements MessageListener<T> {
     protected final Receiver receiver;
     private final ITopic<StatusResponseMessage> sendResponseTopic;
 
-    public RespondingListener(final Receiver pReceiver, final ITopic<StatusResponseMessage> pSendResponseTopic) {
+    public ClientListener(final Receiver pReceiver, final ITopic<StatusResponseMessage> pSendResponseTopic) {
         receiver = pReceiver;
         sendResponseTopic = pSendResponseTopic;
     }

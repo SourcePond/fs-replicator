@@ -14,7 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.dataflow;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.RespondingListener;
+import ch.sourcepond.io.distributor.impl.ClientListener;
 import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
@@ -25,10 +25,10 @@ import java.io.IOException;
 
 import static java.nio.ByteBuffer.wrap;
 
-class ReceiveDataListener extends RespondingListener<DataMessage> {
-    private static final Logger LOG = LoggerFactory.getLogger(ReceiveDataListener.class);
+class ClientReceiveDataListener extends ClientListener<DataMessage> {
+    private static final Logger LOG = LoggerFactory.getLogger(ClientReceiveDataListener.class);
 
-    public ReceiveDataListener(final Receiver pReceiver, final ITopic<StatusResponseMessage> pSendResponseTopic) {
+    public ClientReceiveDataListener(final Receiver pReceiver, final ITopic<StatusResponseMessage> pSendResponseTopic) {
         super(pReceiver, pSendResponseTopic);
     }
 

@@ -14,7 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock;
 
 import ch.sourcepond.io.distributor.api.GlobalLockException;
-import ch.sourcepond.io.distributor.impl.lock.client.FileLockException;
+import ch.sourcepond.io.distributor.impl.lock.master.FileLockException;
 import ch.sourcepond.io.distributor.impl.lock.master.MasterFileLockManager;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ILock;

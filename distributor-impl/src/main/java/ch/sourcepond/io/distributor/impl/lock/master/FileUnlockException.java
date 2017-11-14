@@ -11,18 +11,15 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.api;
+package ch.sourcepond.io.distributor.impl.lock.master;
 
-import java.nio.ByteBuffer;
-import java.util.concurrent.TimeUnit;
+public class FileUnlockException extends Exception {
 
-public interface Distributor {
+    public FileUnlockException(String message) {
+        super(message);
+    }
 
-    DeleteSession lockDelete(String pPath, TimeUnit pTimeoutUnit, long pTimeout) throws GlobalLockException;
-
-    ModifySession lockModify(String pPath, TimeUnit pTimeoutUnit, long pTimeout) throws GlobalLockException;
-
-    String getLocalNode();
-
-    byte[] getGlobalChecksum(String pFile);
+    public FileUnlockException(Throwable cause) {
+        super(cause);
+    }
 }

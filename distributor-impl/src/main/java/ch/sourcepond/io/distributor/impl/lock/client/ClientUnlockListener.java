@@ -14,7 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.client;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.RespondingListener;
+import ch.sourcepond.io.distributor.impl.ClientListener;
 import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
@@ -26,7 +26,7 @@ import java.io.IOException;
 /**
  * Listener to release a local file-lock.
  */
-class ClientUnlockListener extends RespondingListener<String> {
+class ClientUnlockListener extends ClientListener<String> {
     private static final Logger LOG = LoggerFactory.getLogger(ClientUnlockListener.class);
 
     public ClientUnlockListener(final Receiver pReceiver, final ITopic<StatusResponseMessage> pSendFileUnlockResponseTopic) {
