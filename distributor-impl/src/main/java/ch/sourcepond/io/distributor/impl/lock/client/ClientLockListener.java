@@ -53,7 +53,7 @@ class ClientLockListener extends ClientListener<String> implements MembershipLis
     }
 
     @Override
-    public void memberAdded(MembershipEvent membershipEvent) {
+    public void memberAdded(final MembershipEvent membershipEvent) {
         // noop
     }
 
@@ -63,7 +63,7 @@ class ClientLockListener extends ClientListener<String> implements MembershipLis
     }
 
     @Override
-    public void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {
+    public void memberAttributeChanged(final MemberAttributeEvent memberAttributeEvent) {
         // noop
     }
 }

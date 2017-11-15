@@ -13,18 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.master;
 
+import ch.sourcepond.io.distributor.impl.AnswerValidatingMasterListenerTest;
 import ch.sourcepond.io.distributor.impl.MasterListener;
-import ch.sourcepond.io.distributor.impl.MasterListenerTest;
-import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
-import org.junit.Test;
 
-import java.io.IOException;
-
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.when;
-
-public class MasterFileUnlockListenerTest extends MasterListenerTest<FileUnlockException> {
+public class MasterFileUnlockListenerTest extends AnswerValidatingMasterListenerTest<FileUnlockException> {
     private static final String EXPECTED_FAILURE_MESSAGE = "someMessage";
 
     @Override
@@ -35,19 +27,5 @@ public class MasterFileUnlockListenerTest extends MasterListenerTest<FileUnlockE
     @Override
     protected Class<FileUnlockException> getValidationExceptionType() {
         return FileUnlockException.class;
-    }
-
-    @Test(timeout = 2000)
-    public void validateAnswers() throws Exception {
-        final IOException expected = new IOException(EXPECTED_FAILURE_MESSAGE);
-        payload = new StatusResponseMessage(EXPECTED_PATH, expected);
-        when(message.getMessageObject()).thenReturn(payload);
-        listener.onMessage(message);
-        try {
-            listener.awaitNodeAnswers();
-            fail("Exception expected");
-        } catch (final FileUnlockException e) {
-            assertTrue(expected.getMessage().contains(EXPECTED_FAILURE_MESSAGE));
-        }
     }
 }
