@@ -24,10 +24,10 @@ import java.io.IOException;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-final class ClientDeleteFileListener extends ClientListener<String> {
-    private static final Logger LOG = getLogger(ClientDeleteFileListener.class);
+final class ClientStoreListener extends ClientListener<String> {
+    private static final Logger LOG = getLogger(ClientStoreListener.class);
 
-    public ClientDeleteFileListener(final Receiver pReceiver, final ITopic<StatusResponseMessage> pSendResponseTopic) {
+    public ClientStoreListener(Receiver pReceiver, ITopic<StatusResponseMessage> pSendResponseTopic) {
         super(pReceiver, pSendResponseTopic);
     }
 
@@ -38,7 +38,7 @@ final class ClientDeleteFileListener extends ClientListener<String> {
 
     @Override
     protected void processMessage(final GlobalPath pPath, final String pPayload) throws IOException {
-        receiver.delete(pPath);
+        receiver.store(pPath);
     }
 
     @Override

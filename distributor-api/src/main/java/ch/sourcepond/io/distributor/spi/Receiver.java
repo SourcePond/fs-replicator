@@ -24,9 +24,25 @@ public interface Receiver {
 
     void unlockLocally(GlobalPath pPath) throws IOException;
 
-    void unlockAllLocally(String pNode);
-
     void delete(GlobalPath pPath) throws IOException;
 
-    void store(GlobalPath pPath, ByteBuffer pBuffer) throws IOException;
+    /**
+     * Receives the data specified and temporarily store it. The temporary file is not yet visible
+     * and needs to be moved to its destination location after all data has been received
+     * (see {@link #store(GlobalPath)}).
+     *
+     * @param pPath
+     * @param pBuffer
+     */
+    void receive(GlobalPath pPath, ByteBuffer pBuffer);
+
+    void store(GlobalPath pPath) throws IOException;
+
+    /**
+     * Unlocks and removes any state which associated with the node-id specified. This method should be called
+     * when the sending node goes offline unexpectedly.
+     *
+     * @param pNode
+     */
+    void kill(String pNode);
 }

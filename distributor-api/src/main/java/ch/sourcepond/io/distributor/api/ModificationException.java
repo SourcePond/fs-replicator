@@ -13,14 +13,15 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.api;
 
-import java.io.Closeable;
-import java.util.concurrent.TimeoutException;
+import java.io.IOException;
 
-public interface DeleteSession extends Closeable {
+public class ModificationException extends IOException {
 
-    /**
-     * Deletes the path specified cluster wide.
-     *
-     */
-    void delete();
+    public ModificationException(String message) {
+        super(message);
+    }
+
+    public ModificationException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

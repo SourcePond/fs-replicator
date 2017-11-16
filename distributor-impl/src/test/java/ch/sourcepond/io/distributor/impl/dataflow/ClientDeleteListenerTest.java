@@ -29,7 +29,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 
-public class ClientDeleteFileListenerTest extends ClientListenerTest<ClientDeleteFileListener, String> {
+public class ClientDeleteListenerTest extends ClientListenerTest<ClientDeleteListener, String> {
 
     @Override
     protected String createPayload() {
@@ -37,8 +37,8 @@ public class ClientDeleteFileListenerTest extends ClientListenerTest<ClientDelet
     }
 
     @Override
-    protected ClientDeleteFileListener createListener() {
-        return new ClientDeleteFileListener(receiver, sendResponseTopic);
+    protected ClientDeleteListener createListener() {
+        return new ClientDeleteListener(receiver, sendResponseTopic);
     }
 
     @Test

@@ -13,26 +13,23 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.session;
 
-import ch.sourcepond.io.distributor.impl.AnswerValidatingMasterListener;
+import ch.sourcepond.io.distributor.api.ModifySession;
 import ch.sourcepond.io.distributor.impl.lock.GlobalLockManager;
 import com.hazelcast.core.ITopic;
 
-import java.io.Closeable;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-abstract class SessionImpl<T, E extends Exception> extends AnswerValidatingMasterListener<E> implements Closeable {
-    protected final GlobalLockManager globalLockManager;
-    protected final ITopic<T> sendTopic;
+public class ModifySessionImpl extends SessionImpl implements ModifySession {
 
-    public SessionImpl(final GlobalLockManager pGlobalLockManager,
-                       final ITopic<T> pSendTopic,
-                       final String pPath,
-                       final long pTimeout,
-                       final TimeUnit pUnit,
-                       final Collection pMembers) {
-        super(pPath, pTimeout, pUnit, pMembers);
-        globalLockManager = pGlobalLockManager;
-        sendTopic = pSendTopic;
+    public ModifySessionImpl(final GlobalLockManager pGlobalLockManager,
+                             final ITopic pSendTopic,
+                             final String pPath,
+                             final long pTimeout,
+                             final TimeUnit pUnit,
+                             final Collection pMembers) {
+        super(pGlobalLockManager, pSendTopic, pPath, pTimeout, pUnit, pMembers);
     }
+
+
 }

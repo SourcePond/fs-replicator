@@ -13,7 +13,49 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.session;
 
-final class DeleteSessionImpl {
+import ch.sourcepond.io.distributor.api.DeleteSession;
+import ch.sourcepond.io.distributor.api.DeletionException;
+import ch.sourcepond.io.distributor.impl.lock.GlobalLockManager;
+import com.hazelcast.core.ITopic;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
+final class DeleteSessionImpl extends SessionImpl<String, DeletionException> implements DeleteSession {
+
+    public DeleteSessionImpl(final GlobalLockManager pGlobalLockManager,
+                             final ITopic<String> pSendTopic,
+                             final String pPath,
+                             final long pTimeout,
+                             final TimeUnit pUnit,
+                             final Collection pMembers) {
+        super(pGlobalLockManager, pSendTopic, pPath, pTimeout, pUnit, pMembers);
+    }
+
+    @Override
+    public void delete() throws TimeoutException, DeletionException {
+        sendTopic.publish(path);
+        awaitNodeAnswers();
+    }
+
+    @Override
+    protected void addValidationFailureMessage(final StringBuilder pBuilder) {
+        pBuilder.append("Deleting file ").append(path).append(" failed on some node(s)!");
+    }
+
+    @Override
+    protected void throwValidationException(final String pMessage) throws DeletionException {
+        throw new DeletionException(pMessage);
+    }
+
+    @Override
+    public void close() throws IOException {
+        try {
+            awaitNodeAnswers();
+        } finally {
+            globalLockManager.unlockGlobally(path);
+        }
+    }
 }

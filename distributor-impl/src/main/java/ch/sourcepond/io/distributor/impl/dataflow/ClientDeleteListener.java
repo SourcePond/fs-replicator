@@ -19,16 +19,15 @@ import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-import static java.nio.ByteBuffer.wrap;
+import static org.slf4j.LoggerFactory.getLogger;
 
-class ClientReceiveDataListener extends ClientListener<DataMessage> {
-    private static final Logger LOG = LoggerFactory.getLogger(ClientReceiveDataListener.class);
+final class ClientDeleteListener extends ClientListener<String> {
+    private static final Logger LOG = getLogger(ClientDeleteListener.class);
 
-    public ClientReceiveDataListener(final Receiver pReceiver, final ITopic<StatusResponseMessage> pSendResponseTopic) {
+    public ClientDeleteListener(final Receiver pReceiver, final ITopic<StatusResponseMessage> pSendResponseTopic) {
         super(pReceiver, pSendResponseTopic);
     }
 
@@ -38,12 +37,12 @@ class ClientReceiveDataListener extends ClientListener<DataMessage> {
     }
 
     @Override
-    protected void processMessage(final GlobalPath pPath, final DataMessage pPayload) throws IOException {
-        receiver.store(pPath, wrap(pPayload.getData()));
+    protected void processMessage(final GlobalPath pPath, final String pPayload) throws IOException {
+        receiver.delete(pPath);
     }
 
     @Override
-    protected String toPath(final DataMessage pPayload) {
-        return pPayload.getPath();
+    protected String toPath(final String pPayload) {
+        return pPayload;
     }
 }
