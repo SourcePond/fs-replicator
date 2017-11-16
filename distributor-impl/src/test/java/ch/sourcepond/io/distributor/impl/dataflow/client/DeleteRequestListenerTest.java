@@ -11,9 +11,10 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.dataflow;
+package ch.sourcepond.io.distributor.impl.dataflow.client;
 
-import ch.sourcepond.io.distributor.impl.ClientListenerTest;
+import ch.sourcepond.io.distributor.impl.common.client.ClientListenerTest;
+import ch.sourcepond.io.distributor.impl.dataflow.client.ClientDeleteListener;
 import org.junit.Test;
 import org.mockito.InOrder;
 
@@ -29,7 +30,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 
-public class ClientDeleteListenerTest extends ClientListenerTest<ClientDeleteListener, String> {
+public class DeleteRequestListenerTest extends ClientListenerTest<ClientDeleteListener, String> {
 
     @Override
     protected String createPayload() {

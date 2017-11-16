@@ -11,19 +11,22 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl;
+package ch.sourcepond.io.distributor.impl.common.client;
 
 import ch.sourcepond.io.distributor.impl.common.DistributionMessage;
-import org.junit.Test;
+import ch.sourcepond.io.distributor.impl.common.master.StatusResponse;
+import ch.sourcepond.io.distributor.spi.Receiver;
+import com.hazelcast.core.ITopic;
 
-import static org.junit.Assert.assertEquals;
+public abstract class DistributionMessageClientListener<T extends DistributionMessage> extends ClientListener<T> {
 
-public class DistributionMessageTest<T extends DistributionMessage> {
-    public static final String EXPECTED_PATH = "somePath";
+    public DistributionMessageClientListener(final Receiver pReceiver,
+                                             final ITopic<StatusResponse> pSendResponseTopic) {
+        super(pReceiver, pSendResponseTopic);
+    }
 
-    @Test
-    public void getPath() {
-        final DistributionMessage response = new DistributionMessage(EXPECTED_PATH);
-        assertEquals(EXPECTED_PATH, response.getPath());
+    @Override
+    protected String toPath(T pPayload) {
+        return pPayload.getPath();
     }
 }

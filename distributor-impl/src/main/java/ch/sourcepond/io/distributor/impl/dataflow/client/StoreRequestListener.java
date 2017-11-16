@@ -11,11 +11,12 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.dataflow;
+package ch.sourcepond.io.distributor.impl.dataflow.client;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.ClientListener;
-import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
+import ch.sourcepond.io.distributor.impl.common.client.DistributionMessageClientListener;
+import ch.sourcepond.io.distributor.impl.common.master.StatusResponse;
+import ch.sourcepond.io.distributor.impl.common.client.StoreRequest;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
@@ -24,10 +25,10 @@ import java.io.IOException;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-final class ClientDeleteListener extends ClientListener<String> {
-    private static final Logger LOG = getLogger(ClientDeleteListener.class);
+final class StoreRequestListener extends DistributionMessageClientListener<StoreRequest> {
+    private static final Logger LOG = getLogger(StoreRequestListener.class);
 
-    public ClientDeleteListener(final Receiver pReceiver, final ITopic<StatusResponseMessage> pSendResponseTopic) {
+    public StoreRequestListener(final Receiver pReceiver, final ITopic<StatusResponse> pSendResponseTopic) {
         super(pReceiver, pSendResponseTopic);
     }
 
@@ -37,12 +38,7 @@ final class ClientDeleteListener extends ClientListener<String> {
     }
 
     @Override
-    protected void processMessage(final GlobalPath pPath, final String pPayload) throws IOException {
-        receiver.delete(pPath);
-    }
-
-    @Override
-    protected String toPath(final String pPayload) {
-        return pPayload;
+    protected void processMessage(final GlobalPath pPath, final StoreRequest pPayload) throws IOException {
+        receiver.store(pPath);
     }
 }

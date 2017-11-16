@@ -11,7 +11,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl;
+package ch.sourcepond.io.distributor.impl.common.master;
 
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberAttributeEvent;
@@ -102,14 +102,12 @@ public abstract class MasterListener<E extends Exception> implements MasterRespo
         }
     }
 
-    protected abstract void processMessage(Message<StatusResponseMessage> pMessage);
+    protected abstract void processMessage(Message<StatusResponse> pMessage);
 
     @Override
-    public final void onMessage(final Message<StatusResponseMessage> message) {
-        final String path = message.getMessageObject().getPath();
-
+    public final void onMessage(final Message<StatusResponse> message) {
         // Only do something if the path matches
-        if (this.path.equals(path)) {
+        if (this.path.equals(message.getMessageObject().getPath())) {
             lock.lock();
             try {
                 processMessage(message);

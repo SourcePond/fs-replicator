@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.client;
 
-import ch.sourcepond.io.distributor.impl.ClientListenerTest;
+import ch.sourcepond.io.distributor.impl.common.client.ClientListenerTest;
 import org.junit.Test;
 import org.mockito.InOrder;
 

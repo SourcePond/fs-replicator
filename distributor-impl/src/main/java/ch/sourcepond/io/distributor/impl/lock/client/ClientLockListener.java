@@ -14,8 +14,8 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.client;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.ClientListener;
-import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
+import ch.sourcepond.io.distributor.impl.common.client.ClientListener;
+import ch.sourcepond.io.distributor.impl.common.master.StatusResponse;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.MemberAttributeEvent;
@@ -33,7 +33,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 class ClientLockListener extends ClientListener<String> implements MembershipListener {
     private static final Logger LOG = getLogger(ClientLockListener.class);
 
-    public ClientLockListener(final Receiver pReceiver, final ITopic<StatusResponseMessage> pSendFileLockResponseTopic) {
+    public ClientLockListener(final Receiver pReceiver, final ITopic<StatusResponse> pSendFileLockResponseTopic) {
         super(pReceiver, pSendFileLockResponseTopic);
     }
 
@@ -59,7 +59,7 @@ class ClientLockListener extends ClientListener<String> implements MembershipLis
 
     @Override
     public void memberRemoved(final MembershipEvent membershipEvent) {
-        receiver.unlockAllLocally(membershipEvent.getMember().getUuid());
+        receiver.kill(membershipEvent.getMember().getUuid());
     }
 
     @Override

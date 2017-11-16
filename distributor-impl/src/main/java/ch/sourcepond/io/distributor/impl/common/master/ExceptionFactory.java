@@ -11,16 +11,10 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.api;
+package ch.sourcepond.io.distributor.impl.common.master;
 
-import java.io.Closeable;
-import java.util.concurrent.TimeoutException;
+@FunctionalInterface
+public interface ExceptionFactory<E extends Exception> {
 
-public interface DeleteSession extends Closeable {
-
-    /**
-     * Deletes the path specified cluster wide.
-     *
-     */
-    void delete();
+    E create(StringBuilder pMessage);
 }

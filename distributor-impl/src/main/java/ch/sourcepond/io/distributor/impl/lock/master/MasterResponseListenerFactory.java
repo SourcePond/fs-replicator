@@ -13,14 +13,17 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.master;
 
-import ch.sourcepond.io.distributor.impl.MasterListener;
-import ch.sourcepond.io.distributor.impl.MasterResponseListener;
-import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
-import com.hazelcast.core.Cluster;
+import ch.sourcepond.io.distributor.impl.common.master.AnswerValidatingMasterListener;
+import ch.sourcepond.io.distributor.impl.common.master.ExceptionFactory;
+import ch.sourcepond.io.distributor.impl.common.master.MasterListener;
+import ch.sourcepond.io.distributor.impl.common.master.MasterResponseListener;
 import com.hazelcast.core.ITopic;
+import com.hazelcast.core.Member;
 
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -29,19 +32,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 class MasterResponseListenerFactory {
     static final long DEFAULT_TIMEOUT = 30;
     static final TimeUnit DEFAULT_UNIT = SECONDS;
-    private Cluster cluster;
     private ITopic<String> sendFileLockRequestTopic;
-    private ITopic<StatusResponseMessage> receiveFileLockResponseTopic;
     private ITopic<String> sendFileUnlockRequstTopic;
-    private ITopic<StatusResponseMessage> receiveFileUnlockResponseTopic;
-
-    public Cluster getCluster() {
-        return cluster;
-    }
-
-    public void setCluster(final Cluster pCluster) {
-        cluster = pCluster;
-    }
 
     public ITopic<String> getSendFileLockRequestTopic() {
         return sendFileLockRequestTopic;
@@ -49,14 +41,6 @@ class MasterResponseListenerFactory {
 
     public void setSendFileLockRequestTopic(ITopic<String> sendFileLockRequestTopic) {
         this.sendFileLockRequestTopic = sendFileLockRequestTopic;
-    }
-
-    public ITopic<StatusResponseMessage> getReceiveFileLockResponseTopic() {
-        return receiveFileLockResponseTopic;
-    }
-
-    public void setReceiveFileLockResponseTopic(ITopic<StatusResponseMessage> receiveFileLockResponseTopic) {
-        this.receiveFileLockResponseTopic = receiveFileLockResponseTopic;
     }
 
     public ITopic<String> getSendFileUnlockRequestTopic() {
@@ -67,35 +51,35 @@ class MasterResponseListenerFactory {
         this.sendFileUnlockRequstTopic = sendFileUnlockRequstTopic;
     }
 
-    public ITopic<StatusResponseMessage> getReceiveFileUnlockResponseTopic() {
-        return receiveFileUnlockResponseTopic;
-    }
-
-    public void setReceiveFileUnlockResponseTopic(ITopic<StatusResponseMessage> receiveFileUnlockResponseTopic) {
-        this.receiveFileUnlockResponseTopic = receiveFileUnlockResponseTopic;
+    private <E extends Exception> MasterResponseListener<E> createListener(final String pPath,
+                                                                           final Collection<Member> pMembers,
+                                                                           final ExceptionFactory<E> pExceptionFactory) {
+        return new AnswerValidatingMasterListener<E>(pExceptionFactory,
+                requireNonNull(pPath, "Path is null"),
+                DEFAULT_TIMEOUT,
+                DEFAULT_UNIT,
+                requireNonNull(pMembers, "Members are null"));
     }
 
     /**
-     * Creates a new instance of {@link MasterFileLockListener}.
+     * Creates a new response listener.
      *
      * @param pPath Path to be locked, must not be {@code null}
      * @return New instance, never {@code null}
      */
-    public MasterResponseListener<FileLockException> createLockListener(final String pPath) {
-        assert pPath != null : "pPath is null";
-        assert cluster != null : "cluster is null";
-        return new MasterFileLockListener(pPath, DEFAULT_TIMEOUT, DEFAULT_UNIT, cluster.getMembers());
+    public MasterResponseListener<FileLockException> createLockListener(final String pPath, final Collection<Member> pMembers) {
+        return createListener(pPath, pMembers, message ->
+                new FileLockException(message.insert(0, "Acquiring file-lock failed on some nodes!").toString()));
     }
 
     /**
-     * Creates a new instance of {@link MasterFileUnlockListener}.
+     * Creates a new response listener.
      *
      * @param pPath Path to be unlocked, must not be {@code null}
      * @return New instance, never {@code null}
      */
-    public MasterResponseListener<FileUnlockException> createUnlockListener(final String pPath) {
-        assert pPath != null : "pPath is null";
-        assert cluster != null : "cluster is null";
-        return new MasterFileUnlockListener(pPath, DEFAULT_TIMEOUT, DEFAULT_UNIT, cluster.getMembers());
+    public MasterResponseListener<FileUnlockException> createUnlockListener(final String pPath, final Collection<Member> pMembers) {
+        return createListener(pPath, pMembers, message ->
+                new FileUnlockException(message.insert(0, "Releasing file-lock failed on some nodes!").toString()));
     }
 }

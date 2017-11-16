@@ -15,7 +15,8 @@ package ch.sourcepond.io.distributor.impl.session;
 
 import ch.sourcepond.io.distributor.api.DeleteSession;
 import ch.sourcepond.io.distributor.api.DeletionException;
-import ch.sourcepond.io.distributor.impl.lock.GlobalLockManager;
+import ch.sourcepond.io.distributor.impl.common.master.ExceptionFactory;
+import ch.sourcepond.io.distributor.impl.lock.LockManager;
 import com.hazelcast.core.ITopic;
 
 import java.io.IOException;
@@ -25,37 +26,27 @@ import java.util.concurrent.TimeoutException;
 
 final class DeleteSessionImpl extends SessionImpl<String, DeletionException> implements DeleteSession {
 
-    public DeleteSessionImpl(final GlobalLockManager pGlobalLockManager,
+    public DeleteSessionImpl(final LockManager pLockManager,
                              final ITopic<String> pSendTopic,
                              final String pPath,
                              final long pTimeout,
                              final TimeUnit pUnit,
                              final Collection pMembers) {
-        super(pGlobalLockManager, pSendTopic, pPath, pTimeout, pUnit, pMembers);
+        super(pLockManager, pSendTopic, pPath, pTimeout, pUnit, pMembers);
     }
 
     @Override
-    public void delete() throws TimeoutException, DeletionException {
+    public void delete() throws DeletionException {
         sendTopic.publish(path);
         awaitNodeAnswers();
     }
 
     @Override
-    protected void addValidationFailureMessage(final StringBuilder pBuilder) {
-        pBuilder.append("Deleting file ").append(path).append(" failed on some node(s)!");
-    }
-
-    @Override
-    protected void throwValidationException(final String pMessage) throws DeletionException {
-        throw new DeletionException(pMessage);
-    }
-
-    @Override
-    public void close() throws IOException {
+    public void close() throws Exception {
         try {
             awaitNodeAnswers();
         } finally {
-            globalLockManager.unlockGlobally(path);
+            lockManager.unlockGlobally(path);
         }
     }
 }

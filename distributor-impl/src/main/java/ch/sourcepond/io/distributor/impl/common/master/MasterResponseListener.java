@@ -11,11 +11,9 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl;
+package ch.sourcepond.io.distributor.impl.common.master;
 
-import ch.sourcepond.io.distributor.impl.lock.master.FileLockException;
 import com.hazelcast.core.MembershipListener;
-import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
 
 import java.util.concurrent.TimeoutException;
@@ -27,7 +25,7 @@ import java.util.concurrent.TimeoutException;
  *
  * @param <E> Type of the validation exception
  */
-public interface MasterResponseListener<E extends Exception> extends MessageListener<StatusResponseMessage>, MembershipListener {
+public interface MasterResponseListener<E extends Exception> extends MessageListener<StatusResponse>, MembershipListener {
 
     /**
      * This method blocks until all nodes have responded (success or failure)

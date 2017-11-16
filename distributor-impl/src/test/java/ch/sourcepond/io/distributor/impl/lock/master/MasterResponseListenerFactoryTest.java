@@ -13,12 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.master;
 
-import ch.sourcepond.io.distributor.impl.MasterResponseListener;
-import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
-import com.hazelcast.core.Cluster;
+import ch.sourcepond.io.distributor.impl.common.master.MasterResponseListener;
 import com.hazelcast.core.ITopic;
-import org.junit.Before;
+import com.hazelcast.core.Member;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
@@ -29,34 +30,10 @@ import static org.mockito.Mockito.verify;
 
 public class MasterResponseListenerFactoryTest {
     private static final String ANY_PATH = "anyPath";
-    private final Cluster cluster = mock(Cluster.class);
-    private ITopic<String> sendFileLockRequestTopic = mock(ITopic.class);
-    private ITopic<StatusResponseMessage> receiveFileLockResponseTopic = mock(ITopic.class);
-    private ITopic<String> sendFileUnlockRequstTopic = mock(ITopic.class);
-    private ITopic<StatusResponseMessage> receiveFileUnlockResponseTopic = mock(ITopic.class);
+    private final Collection<Member> members = new ArrayList<>();
+    private final ITopic<String> sendFileLockRequestTopic = mock(ITopic.class);
+    private final ITopic<String> sendFileUnlockRequstTopic = mock(ITopic.class);
     private final MasterResponseListenerFactory factory = new MasterResponseListenerFactory();
-
-    @Before
-    public void setup() {
-        factory.setCluster(cluster);
-    }
-
-    @Test
-    public void getCluster() {
-        assertSame(cluster, factory.getCluster());
-    }
-
-    @Test
-    public void getSetReceiveFileLockResponseTopic() {
-        factory.setReceiveFileLockResponseTopic(receiveFileLockResponseTopic);
-        assertSame(receiveFileLockResponseTopic, factory.getReceiveFileLockResponseTopic());
-    }
-
-    @Test
-    public void getSetReceiveFileUnlockResponseTopic() {
-        factory.setReceiveFileUnlockResponseTopic(receiveFileUnlockResponseTopic);
-        assertSame(receiveFileUnlockResponseTopic, factory.getReceiveFileUnlockResponseTopic());
-    }
 
     @Test
     public void getSetSendFileLockRequestTopic() {
@@ -75,26 +52,35 @@ public class MasterResponseListenerFactoryTest {
         assertNotNull(l2);
         assertSame(l1.getClass(), l2.getClass());
         assertNotSame(l1, l2);
-        verify(cluster, times(2)).getMembers();
     }
 
-    @Test(expected = AssertionError.class)
+    @Test(expected = NullPointerException.class)
     public void createLockListenerPathIsNull() {
-        factory.createLockListener(null);
+        factory.createLockListener(null, members);
     }
 
-    @Test(expected = AssertionError.class)
+    @Test(expected = NullPointerException.class)
     public void createUnlockListenerPathIsNull() {
-        factory.createUnlockListener(null);
+        factory.createUnlockListener(null, members);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void createLockListenerMembersAreNull() {
+        factory.createLockListener(null, members);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void createUnlockListenerMembersAreIsNull() {
+        factory.createUnlockListener(null, members);
     }
 
     @Test
     public void createLockListener() {
-        verifyInstances(factory.createLockListener(ANY_PATH), factory.createLockListener(ANY_PATH));
+        verifyInstances(factory.createLockListener(ANY_PATH, members), factory.createLockListener(ANY_PATH, members));
     }
 
     @Test
     public void createUnlockListener() {
-        verifyInstances(factory.createUnlockListener(ANY_PATH), factory.createUnlockListener(ANY_PATH));
+        verifyInstances(factory.createUnlockListener(ANY_PATH, members), factory.createUnlockListener(ANY_PATH, members));
     }
 }

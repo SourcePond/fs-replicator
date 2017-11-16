@@ -13,24 +13,35 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.dataflow;
 
+import ch.sourcepond.io.distributor.impl.common.ResponseAwaitingManager;
+import ch.sourcepond.io.distributor.impl.common.client.DataRequest;
+import ch.sourcepond.io.distributor.impl.common.master.StatusResponse;
+import ch.sourcepond.io.distributor.impl.dataflow.master.MasterDataSendResponseListener;
+import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
 
 import java.nio.ByteBuffer;
 
-public class MasterDataflowManager {
+public class DataflowManager extends ResponseAwaitingManager {
     private final ITopic<String> sendDeleteTopic;
-    private final ITopic<DataMessage> sendDataTopic;
+    private final ITopic<DataRequest> sendDataTopic;
+    private final ITopic<String> sendDataTransferFinishedTopic;
 
-    public MasterDataflowManager(final ITopic<String> pSendDeleteTopic,
-                                 final ITopic<DataMessage> pSendDataTopic) {
+    public DataflowManager(final Cluster pCluster,
+                           final ITopic<StatusResponse> pResponseTopic,
+                           final ITopic<String> pSendDeleteTopic,
+                           final ITopic<DataRequest> pSendDataTopic,
+                           final ITopic<String> pSendDataTransferFinishedTopic) {
+        super(pCluster, pResponseTopic);
         sendDeleteTopic = pSendDeleteTopic;
         sendDataTopic = pSendDataTopic;
+        sendDataTransferFinishedTopic = pSendDataTransferFinishedTopic;
     }
 
     public void send(final String pPath, final ByteBuffer pData) {
         final byte[] data = new byte[pData.limit()];
         pData.get(data);
-        sendDataTopic.publish(new DataMessage(pPath, data));
+        performAction(sendDataTopic, new DataRequest(pPath, data), new MasterDataSendResponseListener());
     }
 
     public void delete(final String pPath) {

@@ -14,7 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
+import ch.sourcepond.io.distributor.impl.common.master.StatusResponse;
 import org.mockito.ArgumentMatcher;
 
 import java.io.IOException;
@@ -26,10 +26,10 @@ public class Constants {
     public static final ArgumentMatcher<GlobalPath> GLOBAL_PATH_ARGUMENT_MATCHER = globalPath -> {
         return EXPECTED_NODE.equals(globalPath.getSendingNode()) && EXPECTED_PATH.equals(EXPECTED_PATH);
     };
-    public static final ArgumentMatcher<StatusResponseMessage> SUCCESS_RESPONSE_ARGUMENT_MATCHER = response -> {
+    public static final ArgumentMatcher<StatusResponse> SUCCESS_RESPONSE_ARGUMENT_MATCHER = response -> {
         return EXPECTED_PATH.equals(response.getPath()) && response.getFailureOrNull() == null;
     };
-    public static final ArgumentMatcher<StatusResponseMessage> FAILURE_RESPONSE_ARGUMENT_MATCHER = response -> {
+    public static final ArgumentMatcher<StatusResponse> FAILURE_RESPONSE_ARGUMENT_MATCHER = response -> {
         return EXPECTED_PATH.equals(response.getPath()) && EXPECTED_EXCEPTION.equals(response.getFailureOrNull());
     };
 }

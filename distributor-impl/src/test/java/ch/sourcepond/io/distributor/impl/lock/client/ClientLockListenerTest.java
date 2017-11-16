@@ -14,7 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.client;
 
 import ch.sourcepond.io.distributor.impl.Constants;
-import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
+import ch.sourcepond.io.distributor.impl.common.master.StatusResponse;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
@@ -24,8 +24,6 @@ import com.hazelcast.core.Message;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
-
-import java.util.Collections;
 
 import static ch.sourcepond.io.distributor.impl.Constants.EXPECTED_NODE;
 import static ch.sourcepond.io.distributor.impl.Constants.EXPECTED_PATH;
@@ -44,7 +42,7 @@ import static org.mockito.Mockito.when;
 
 public class ClientLockListenerTest {
     private final Receiver receiver = mock(Receiver.class);
-    private final ITopic<StatusResponseMessage> sendFileLockResponseTopic = mock(ITopic.class);
+    private final ITopic<StatusResponse> sendFileLockResponseTopic = mock(ITopic.class);
     private final Member member = mock(Member.class);
     private final Message<String> message = mock(Message.class);
     private final ClientLockListener listener = new ClientLockListener(receiver, sendFileLockResponseTopic);

@@ -13,9 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.master;
 
-import ch.sourcepond.io.distributor.impl.MasterListener;
-import ch.sourcepond.io.distributor.impl.MasterResponseListener;
-import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
+import ch.sourcepond.io.distributor.impl.common.ResponseAwaitingManager;
+import ch.sourcepond.io.distributor.impl.common.master.MasterListener;
+import ch.sourcepond.io.distributor.impl.common.master.MasterResponseListener;
+import ch.sourcepond.io.distributor.impl.common.master.StatusResponse;
+import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
 
@@ -30,7 +32,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * The singleton instance of this class is responsible for managing file-locks
  * (see {@link java.nio.channels.FileLock}) in a cluster.
  */
-public class MasterFileLockManager {
+public class MasterFileLockManager extends ResponseAwaitingManager {
 
     @FunctionalInterface
     private interface ClusterAction<T> {
@@ -46,29 +48,12 @@ public class MasterFileLockManager {
      *
      * @param pFactory Listener-factory, must not be {@code null}
      */
-    MasterFileLockManager(final MasterResponseListenerFactory pFactory) {
+    MasterFileLockManager(final Cluster pCluster,
+                          final ITopic<StatusResponse> pResponseTopic,
+                          final MasterResponseListenerFactory pFactory) {
+        super(pCluster, pResponseTopic);
         assert pFactory != null : "pFactory is null";
         factory = pFactory;
-    }
-
-    private <E extends Exception> void performAction(final ITopic<String> pSenderTopic,
-                                   final ITopic<StatusResponseMessage> pReceiverTopic,
-                                   final String pPath,
-                                   final MasterResponseListener<E> pListener)
-            throws TimeoutException, E {
-        requireNonNull(pPath, "Path is null");
-        final String membershipId = factory.getCluster().addMembershipListener(pListener);
-        try {
-            final String registrationId = pReceiverTopic.addMessageListener(pListener);
-            try {
-                pSenderTopic.publish(pPath);
-                pListener.awaitNodeAnswers();
-            } finally {
-                pReceiverTopic.removeMessageListener(registrationId);
-            }
-        } finally {
-            factory.getCluster().removeMembershipListener(membershipId);
-        }
     }
 
     /**
@@ -81,8 +66,8 @@ public class MasterFileLockManager {
      * @throws FileLockException Thrown, if the lock acquisition failed on some node.
      */
     public void acquireGlobalFileLock(final String pPath) throws TimeoutException, FileLockException {
-        performAction(factory.getSendFileLockRequestTopic(), factory.getReceiveFileLockResponseTopic(), pPath,
-                factory.createLockListener(pPath));
+        performAction(factory.getSendFileLockRequestTopic(), pPath,
+                factory.createLockListener(pPath, cluster.getMembers()));
     }
 
     /**
@@ -93,8 +78,8 @@ public class MasterFileLockManager {
      */
     public void releaseGlobalFileLock(final String pPath) {
         try {
-            performAction(factory.getSendFileUnlockRequestTopic(), factory.getReceiveFileUnlockResponseTopic(), pPath,
-                    factory.createUnlockListener(pPath));
+            performAction(factory.getSendFileUnlockRequestTopic(), pPath,
+                    factory.createUnlockListener(pPath, cluster.getMembers()));
         } catch (final TimeoutException | FileUnlockException e) {
             LOG.warn(format("Exception occurred while releasing file-lock for %s", pPath), e);
         }

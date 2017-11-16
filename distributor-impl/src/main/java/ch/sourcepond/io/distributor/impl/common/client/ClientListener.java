@@ -11,9 +11,10 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl;
+package ch.sourcepond.io.distributor.impl.common.client;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
+import ch.sourcepond.io.distributor.impl.common.master.StatusResponse;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.Message;
@@ -24,9 +25,9 @@ import java.io.IOException;
 
 public abstract class ClientListener<T> implements MessageListener<T> {
     protected final Receiver receiver;
-    private final ITopic<StatusResponseMessage> sendResponseTopic;
+    private final ITopic<StatusResponse> sendResponseTopic;
 
-    public ClientListener(final Receiver pReceiver, final ITopic<StatusResponseMessage> pSendResponseTopic) {
+    public ClientListener(final Receiver pReceiver, final ITopic<StatusResponse> pSendResponseTopic) {
         receiver = pReceiver;
         sendResponseTopic = pSendResponseTopic;
     }
@@ -45,10 +46,10 @@ public abstract class ClientListener<T> implements MessageListener<T> {
 
         try {
             processMessage(globalPath, payload);
-            sendResponseTopic.publish(new StatusResponseMessage(path));
+            sendResponseTopic.publish(new StatusResponse(path));
         } catch (final IOException e) {
             getLog().error(e.getMessage(), e);
-            sendResponseTopic.publish(new StatusResponseMessage(path, e));
+            sendResponseTopic.publish(new StatusResponse(path, e));
         }
     }
 }

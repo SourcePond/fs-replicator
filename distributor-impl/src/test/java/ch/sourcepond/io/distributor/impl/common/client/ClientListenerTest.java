@@ -11,8 +11,9 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl;
+package ch.sourcepond.io.distributor.impl.common.client;
 
+import ch.sourcepond.io.distributor.impl.common.master.StatusResponse;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.Member;
@@ -26,7 +27,7 @@ import static org.mockito.Mockito.when;
 
 public abstract class ClientListenerTest<L extends MessageListener<M>, M> {
     protected final Receiver receiver = mock(Receiver.class);
-    protected final ITopic<StatusResponseMessage> sendResponseTopic = mock(ITopic.class);
+    protected final ITopic<StatusResponse> sendResponseTopic = mock(ITopic.class);
     protected final Member member = mock(Member.class);
     protected Message<M> message = mock(Message.class);
     protected M payload;

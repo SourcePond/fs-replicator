@@ -11,9 +11,8 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl;
+package ch.sourcepond.io.distributor.impl.common.master;
 
-import ch.sourcepond.io.distributor.impl.lock.master.FileLockException;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -29,7 +28,7 @@ public abstract class AnswerValidatingMasterListenerTest<E extends Exception> ex
     @Test(timeout = 2000)
     public void validateAnswers() throws Exception {
         final IOException expected = new IOException(EXPECTED_FAILURE_MESSAGE);
-        payload = new StatusResponseMessage(EXPECTED_PATH, expected);
+        payload = new StatusResponse(EXPECTED_PATH, expected);
         when(message.getMessageObject()).thenReturn(payload);
         listener.onMessage(message);
         try {

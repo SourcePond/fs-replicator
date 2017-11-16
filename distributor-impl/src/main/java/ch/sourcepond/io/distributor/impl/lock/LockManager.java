@@ -30,15 +30,15 @@ import static java.lang.Thread.currentThread;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class GlobalLockManager {
-    private static final Logger LOG = getLogger(GlobalLockManager.class);
+public class LockManager {
+    private static final Logger LOG = getLogger(LockManager.class);
     static final TimeUnit DEFAULT_LEASE_UNIT = MINUTES;
     static final long DEFAULT_LEASE_TIMEOUT = 15;
     private final ConcurrentMap<String, ILock> globalLocks = new ConcurrentHashMap<>();
     private final HazelcastInstance hci;
     private final MasterFileLockManager mflm;
 
-    public GlobalLockManager(final HazelcastInstance pHci, final MasterFileLockManager pMflm) {
+    public LockManager(final HazelcastInstance pHci, final MasterFileLockManager pMflm) {
         hci = pHci;
         mflm = pMflm;
     }

@@ -18,9 +18,13 @@ import java.util.concurrent.TimeUnit;
 
 public interface Distributor {
 
-    DeleteSession lockDelete(String pPath, TimeUnit pTimeoutUnit, long pTimeout) throws GlobalLockException;
+    void lockGlobally(String pPath, TimeUnit pTimeoutUnit, long pTimeout);
 
-    ModifySession lockModify(String pPath, TimeUnit pTimeoutUnit, long pTimeout) throws GlobalLockException;
+    void unlockGlobally(String pPath, TimeUnit pTimeoutUnit, long pTimeout);
+
+    void delete(String pPath) throws DeletionException;
+
+    void modify(String pPath, ByteBuffer pData) throws ModificationException;
 
     String getLocalNode();
 

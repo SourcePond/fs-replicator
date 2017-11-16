@@ -11,7 +11,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl;
+package ch.sourcepond.io.distributor.impl.common.master;
 
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MembershipListener;
@@ -26,15 +26,18 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptyMap;
 
-public abstract class AnswerValidatingMasterListener<E extends Exception> extends MasterListener<E>
+public final class AnswerValidatingMasterListener<E extends Exception> extends MasterListener<E>
         implements MembershipListener {
+    private final ExceptionFactory<E> exceptionFactory;
     private final Map<Member, Object> responses = new HashMap<>();
 
-    protected AnswerValidatingMasterListener(final String pPath,
-                                   final long pTimeout,
-                                   final TimeUnit pUnit,
-                                   final Collection<Member> pMembers) {
+    public AnswerValidatingMasterListener(final ExceptionFactory<E> pExceptionFactory,
+                                             final String pPath,
+                                             final long pTimeout,
+                                             final TimeUnit pUnit,
+                                             final Collection<Member> pMembers) {
         super(pPath, pTimeout, pUnit);
+        exceptionFactory = pExceptionFactory;
         for (final Member member : pMembers) {
             responses.put(member, null);
         }
@@ -72,28 +75,23 @@ public abstract class AnswerValidatingMasterListener<E extends Exception> extend
         return exceptions == null ? emptyMap() : exceptions;
     }
 
-    protected abstract void addValidationFailureMessage(StringBuilder pBuilder);
-
-    protected abstract void throwValidationException(String pMessage) throws E;
-
     @Override
     protected void validateAnswers() throws E {
         final Map<Member, IOException> memberExceptions = collectMemberExceptions();
         if (!memberExceptions.isEmpty()) {
             final StringBuilder builder = new StringBuilder();
-            addValidationFailureMessage(builder);
-            builder.append("Failures:\n\t");
+            builder.append("\nFailures:\n\t");
             for (final Map.Entry<Member, IOException> entry : memberExceptions.entrySet()) {
                 builder.append(entry.getKey()).append(": ").append(entry.getValue().getMessage()).append("\n\t");
             }
             builder.append("See logs on members for further information.");
-            throwValidationException(builder.toString());
+            throw exceptionFactory.create(builder);
         }
     }
 
     @Override
-    protected void processMessage(final Message<StatusResponseMessage> pMessage) {
-        final StatusResponseMessage message = pMessage.getMessageObject();
+    protected void processMessage(final Message<StatusResponse> pMessage) {
+        final StatusResponse message = pMessage.getMessageObject();
         final IOException failure = message.getFailureOrNull();
         responses.replace(pMessage.getPublishingMember(), failure == null ? TRUE : failure);
     }

@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock.master;
 
-import ch.sourcepond.io.distributor.impl.MasterResponseListener;
-import ch.sourcepond.io.distributor.impl.StatusResponseMessage;
+import ch.sourcepond.io.distributor.impl.common.master.MasterResponseListener;
+import ch.sourcepond.io.distributor.impl.common.master.StatusResponse;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
 import org.junit.Before;
@@ -34,9 +34,9 @@ public class MasterFileLockManagerTest {
     private static final String ANY_LISTENER_ID = "anyListenerId";
     private final Cluster cluster = mock(Cluster.class);
     private final ITopic<String> sendFileLockRequestTopic = mock(ITopic.class);
-    private final ITopic<StatusResponseMessage> receiveFileLockResponseTopic = mock(ITopic.class);
+    private final ITopic<StatusResponse> receiveFileLockResponseTopic = mock(ITopic.class);
     private final ITopic<String> sendFileUnlockRequstTopic = mock(ITopic.class);
-    private final ITopic<StatusResponseMessage> receiveFileUnlockResponseTopic = mock(ITopic.class);
+    private final ITopic<StatusResponse> receiveFileUnlockResponseTopic = mock(ITopic.class);
     private final MasterResponseListener<FileLockException> masterFileLockResponseListener = mock(MasterResponseListener.class);
     private final MasterResponseListener<FileUnlockException> masterFileUnlockResponseListener = mock(MasterResponseListener.class);
     private final MasterResponseListenerFactory factory = mock(MasterResponseListenerFactory.class);
@@ -53,7 +53,7 @@ public class MasterFileLockManagerTest {
         when(factory.createUnlockListener(ANY_PATH)).thenReturn(masterFileUnlockResponseListener);
     }
 
-    private <T, E extends Exception> void verifyPerformAction(final ITopic<StatusResponseMessage> receiveTopic, final ITopic<String> sendTopic,
+    private <T, E extends Exception> void verifyPerformAction(final ITopic<StatusResponse> receiveTopic, final ITopic<String> sendTopic,
                                                               final MasterResponseListener<E> listener) throws Exception {
         final InOrder order = inOrder(cluster, receiveTopic, sendTopic, listener);
         order.verify(cluster).addMembershipListener(listener);

@@ -13,23 +13,64 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.session;
 
+import ch.sourcepond.io.distributor.api.ModificationException;
 import ch.sourcepond.io.distributor.api.ModifySession;
-import ch.sourcepond.io.distributor.impl.lock.GlobalLockManager;
+import ch.sourcepond.io.distributor.impl.common.client.DataRequest;
+import ch.sourcepond.io.distributor.impl.common.client.StoreRequest;
+import ch.sourcepond.io.distributor.impl.common.master.AnswerValidatingMasterListener;
+import ch.sourcepond.io.distributor.impl.lock.LockManager;
 import com.hazelcast.core.ITopic;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-public class ModifySessionImpl extends SessionImpl implements ModifySession {
+public class ModifySessionImpl extends SessionImpl<DataRequest, ModificationException> implements ModifySession {
+    private final ITopic<StoreRequest> sendStoreTopic;
+    private IOException failureOrNull;
 
-    public ModifySessionImpl(final GlobalLockManager pGlobalLockManager,
-                             final ITopic pSendTopic,
+    public ModifySessionImpl(final LockManager pLockManager,
+                             final ITopic<DataRequest> pSendDataTopic,
+                             final ITopic<StoreRequest> pSendStoreTopic,
                              final String pPath,
                              final long pTimeout,
                              final TimeUnit pUnit,
                              final Collection pMembers) {
-        super(pGlobalLockManager, pSendTopic, pPath, pTimeout, pUnit, pMembers);
+        super(pLockManager, pSendDataTopic, pPath, pTimeout, pUnit, pMembers);
+        sendStoreTopic = pSendStoreTopic;
     }
 
+    @Override
+    public void send(final ByteBuffer pData) {
+        final byte[] data = new byte[pData.limit()];
+        pData.get(data);
+        sendTopic.publish(new DataRequest(path, data));
 
+        new AnswerValidatingMasterListener<ModificationException>()
+    }
+
+    @Override
+    public IOException setFailure(final IOException e) {
+        failureOrNull = e;
+        return e;
+    }
+
+    @Override
+    public void close() throws Exception {
+        try {
+            try {
+                // Firstly, wait until all nodes have responded to the data messages
+                awaitNodeAnswers();
+            } finally {
+                if (failureOrNull != null) {
+                    sendStoreTopic.publish(new StoreRequest(path, false));
+                } else {
+                    sendStoreTopic.publish(new StoreRequest(path, true));
+                }
+            }
+        } finally {
+            super.close();
+        }
+    }
 }

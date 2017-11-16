@@ -11,20 +11,19 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.lock.master;
+package ch.sourcepond.io.distributor.impl.common.client;
 
-import ch.sourcepond.io.distributor.impl.AnswerValidatingMasterListenerTest;
-import ch.sourcepond.io.distributor.impl.MasterListener;
+import ch.sourcepond.io.distributor.impl.common.DistributionMessage;
 
-public class MasterFileLockListenerTest extends AnswerValidatingMasterListenerTest<FileLockException> {
+public class StoreRequest extends DistributionMessage {
+    private final boolean success;
 
-    @Override
-    protected MasterListener createListener() {
-        return new MasterFileLockListener(EXPECTED_PATH, EXPECTED_TIMOUT, EXPECTED_UNIT, members);
+    public StoreRequest(final String pPath, final boolean pSuccess) {
+        super(pPath);
+        success = pSuccess;
     }
 
-    @Override
-    protected Class<FileLockException> getValidationExceptionType() {
-        return FileLockException.class;
+    public boolean success() {
+        return success;
     }
 }

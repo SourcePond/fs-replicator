@@ -11,8 +11,9 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl;
+package ch.sourcepond.io.distributor.impl.common.master;
 
+import ch.sourcepond.io.distributor.impl.common.master.StatusResponse;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -21,12 +22,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
-public class StatusResponseMessageTest {
+public class StatusResponseTest {
     private static final String EXPECTED_PATH = "somePath";
 
     @Test
     public void success() {
-        final StatusResponseMessage response = new StatusResponseMessage(EXPECTED_PATH);
+        final StatusResponse response = new StatusResponse(EXPECTED_PATH);
         assertEquals(EXPECTED_PATH, response.getPath());
         assertNull(response.getFailureOrNull());
     }
@@ -34,7 +35,7 @@ public class StatusResponseMessageTest {
     @Test
     public void failure() {
         final IOException expected = new IOException();
-        final StatusResponseMessage response = new StatusResponseMessage(EXPECTED_PATH, expected);
+        final StatusResponse response = new StatusResponse(EXPECTED_PATH, expected);
         assertEquals(EXPECTED_PATH, response.getPath());
         assertSame(expected, response.getFailureOrNull());
     }

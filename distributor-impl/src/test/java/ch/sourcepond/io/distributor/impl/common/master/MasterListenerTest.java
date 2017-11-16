@@ -11,9 +11,10 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl;
+package ch.sourcepond.io.distributor.impl.common.master;
 
-import ch.sourcepond.io.distributor.impl.lock.master.FileLockException;
+import ch.sourcepond.io.distributor.impl.common.master.MasterListener;
+import ch.sourcepond.io.distributor.impl.common.master.StatusResponse;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
@@ -48,8 +49,8 @@ public abstract class MasterListenerTest<E extends Exception> {
     protected static final TimeUnit EXPECTED_UNIT = MILLISECONDS;
     protected final Member member = mock(Member.class);
     protected final Collection<Member> members = new ArrayList<>(asList(member));
-    protected final Message<StatusResponseMessage> message = mock(Message.class);
-    protected StatusResponseMessage payload = new StatusResponseMessage(EXPECTED_PATH);
+    protected final Message<StatusResponse> message = mock(Message.class);
+    protected StatusResponse payload = new StatusResponse(EXPECTED_PATH);
     protected MasterListener listener;
     private final MembershipEvent event = mock(MembershipEvent.class);
     private ScheduledExecutorService executor = newSingleThreadScheduledExecutor();

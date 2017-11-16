@@ -55,7 +55,8 @@ public class ShouldReceiveReplication implements Receiver {
     };
 
     private static final Logger LOG = getLogger(ShouldReceiveReplication.class);
-    private final Map<String, Map<String, WritableByteChannel>> storages = new HashMap<>();
+    private final Map<String, Map<String, WritableByteChannel>> channnels = new HashMap<>();
+    private final Map<String, Map<String, IOException>> failures = new HashMap<>();
     private final Distributor distributor;
     private final FileSystem fileSystem;
 
@@ -64,8 +65,12 @@ public class ShouldReceiveReplication implements Receiver {
         fileSystem = pFileSystem;
     }
 
-    private Map<String, WritableByteChannel> getNodeStorage(final GlobalPath pPath) {
-        return storages.computeIfAbsent(pPath.getPath(), n -> new HashMap<>());
+    private Map<String, WritableByteChannel> getNodeChannels(final GlobalPath pPath) {
+        return channnels.computeIfAbsent(pPath.getPath(), n -> new HashMap<>());
+    }
+
+    private Map<String, IOException> getNodeFailures(final GlobalPath pPath) {
+        return failures.computeIfAbsent(pPath.getPath(), n -> new HashMap<>());
     }
 
     private boolean isRemoteNode(final GlobalPath pPath) {
@@ -79,22 +84,22 @@ public class ShouldReceiveReplication implements Receiver {
     @Override
     public void lockLocally(final GlobalPath pPath) throws IOException {
         if (isRemoteNode(pPath)) {
-            synchronized (storages) {
-                if (storages.containsKey(pPath)) {
+            synchronized (channnels) {
+                if (channnels.containsKey(pPath)) {
                     throw new IOException(format("%s is already locked!", pPath));
                 } else {
                     final FileChannel ch = open(toPath(pPath), CREATE, TRUNCATE_EXISTING);
                     ch.lock();
-                    getNodeStorage(pPath).put(pPath.getPath(), ch);
+                    getNodeChannels(pPath).put(pPath.getPath(), ch);
                 }
             }
         }
     }
 
     @Override
-    public void unlockAllLocally(final String pSendingNode) {
-        synchronized (storages) {
-            final Map<String, WritableByteChannel> storagesPerNode = storages.remove(pSendingNode);
+    public void kill(final String pSendingNode) {
+        synchronized (channnels) {
+            final Map<String, WritableByteChannel> storagesPerNode = channnels.remove(pSendingNode);
             if (storagesPerNode != null && !storagesPerNode.isEmpty()) {
                 storagesPerNode.values().forEach(s -> close(s));
             }
@@ -112,8 +117,8 @@ public class ShouldReceiveReplication implements Receiver {
     public void unlockLocally(final GlobalPath pPath) throws IOException {
         if (isRemoteNode(pPath)) {
             final WritableByteChannel ch;
-            synchronized (storages) {
-                ch = getNodeStorage(pPath).remove(pPath.getPath());
+            synchronized (channnels) {
+                ch = getNodeChannels(pPath).remove(pPath.getPath());
             }
             if (ch == null) {
                 LOG.warn("unlockLocally: no storage registered for {}", pPath);
@@ -126,8 +131,8 @@ public class ShouldReceiveReplication implements Receiver {
     private WritableByteChannel getChannel(final GlobalPath pPath) {
         WritableByteChannel ch = null;
         if (isRemoteNode(pPath)) {
-            synchronized (storages) {
-                ch = getNodeStorage(pPath).get(pPath.getPath());
+            synchronized (channnels) {
+                ch = getNodeChannels(pPath).get(pPath.getPath());
             }
             if (ch == null) {
                 LOG.warn("getChannel: no storage registered for {}", pPath);
@@ -138,7 +143,7 @@ public class ShouldReceiveReplication implements Receiver {
 
     @Override
     public void delete(final GlobalPath pPath) throws IOException {
-        synchronized (storages) {
+        synchronized (channnels) {
             final WritableByteChannel ch = getChannel(pPath);
             try {
                 if (ch == null) {
@@ -149,17 +154,36 @@ public class ShouldReceiveReplication implements Receiver {
             } catch (final IOException e) {
                 LOG.warn(e.getMessage(), e);
             } finally {
-                getNodeStorage(pPath).put(pPath.getPath(), NOOP_CHANNEL);
+                getNodeChannels(pPath).put(pPath.getPath(), NOOP_CHANNEL);
                 Files.delete(toPath(pPath));
             }
         }
     }
 
     @Override
-    public void store(final GlobalPath pPath, final ByteBuffer pBuffer) throws IOException {
+    public void receive(final GlobalPath pPath, final ByteBuffer pBuffer) {
         final WritableByteChannel ch = getChannel(pPath);
-        if (ch != null) {
-            ch.write(pBuffer);
+        synchronized (failures) {
+            final String path = pPath.getPath();
+            final Map<String, IOException> failures = getNodeFailures(pPath);
+            if (!failures.containsKey(path)) {
+                if (ch == null) {
+                    failures.put(path, new IOException(format("No open channel for %s found!", pPath)));
+                } else {
+                    try {
+                        ch.write(pBuffer);
+                    } catch (final IOException e) {
+                        failures.put(path, e);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void store(final GlobalPath pPath) throws IOException {
+        synchronized (failures) {
+
         }
     }
 }

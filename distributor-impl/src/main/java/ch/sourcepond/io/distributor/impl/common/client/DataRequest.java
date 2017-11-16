@@ -11,14 +11,19 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.api;
+package ch.sourcepond.io.distributor.impl.common.client;
 
-import java.io.Closeable;
-import java.nio.ByteBuffer;
+import ch.sourcepond.io.distributor.impl.common.DistributionMessage;
 
-public interface ModifySession extends Closeable {
+public class DataRequest extends DistributionMessage {
+    private final byte[] data;
 
-    void send(ByteBuffer pData);
+    public DataRequest(final String pPath, final byte[] pData) {
+        super(pPath);
+        data = pData;
+    }
 
-    void revert();
+    public byte[] getData() {
+        return data;
+    }
 }

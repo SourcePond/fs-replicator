@@ -13,23 +13,33 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl;
 
-import ch.sourcepond.io.distributor.api.DeleteSession;
+import ch.sourcepond.io.distributor.api.DeletionException;
 import ch.sourcepond.io.distributor.api.Distributor;
-import ch.sourcepond.io.distributor.api.GlobalLockException;
-import ch.sourcepond.io.distributor.api.ModifySession;
+import ch.sourcepond.io.distributor.api.ModificationException;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
 public class DistributorImpl implements Distributor {
+
     @Override
-    public DeleteSession lockDelete(String pPath, TimeUnit pTimeoutUnit, long pTimeout) throws GlobalLockException {
-        return null;
+    public void lockGlobally(String pPath, TimeUnit pTimeoutUnit, long pTimeout) {
+
     }
 
     @Override
-    public ModifySession lockModify(String pPath, TimeUnit pTimeoutUnit, long pTimeout) throws GlobalLockException {
-        return null;
+    public void unlockGlobally(String pPath, TimeUnit pTimeoutUnit, long pTimeout) {
+
+    }
+
+    @Override
+    public void delete(String pPath) throws DeletionException {
+
+    }
+
+    @Override
+    public void modify(String pPath, ByteBuffer pData) throws ModificationException {
+
     }
 
     @Override

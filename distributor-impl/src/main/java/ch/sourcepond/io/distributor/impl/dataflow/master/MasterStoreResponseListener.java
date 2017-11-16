@@ -11,31 +11,27 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.session;
+package ch.sourcepond.io.distributor.impl.dataflow.master;
 
 import ch.sourcepond.io.distributor.impl.common.master.AnswerValidatingMasterListener;
-import ch.sourcepond.io.distributor.impl.lock.LockManager;
-import com.hazelcast.core.ITopic;
+import com.hazelcast.core.Member;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-abstract class SessionImpl<T, E extends Exception> implements AutoCloseable {
-    protected final LockManager lockManager;
-    protected final ITopic<T> sendTopic;
+public class MasterStoreResponseListener extends AnswerValidatingMasterListener<Exception >{
 
-    public SessionImpl(final LockManager pLockManager,
-                       final ITopic<T> pSendTopic,
-                       final String pPath,
-                       final long pTimeout,
-                       final TimeUnit pUnit,
-                       final Collection pMembers) {
-        lockManager = pLockManager;
-        sendTopic = pSendTopic;
+    public MasterStoreResponseListener(final String pPath, final long pTimeout, final TimeUnit pUnit, final Collection<Member> pMembers) {
+        super(pPath, pTimeout, pUnit, pMembers);
     }
 
     @Override
-    public void close() throws Exception {
-        lockManager.unlockGlobally(path);
+    protected void addValidationFailureMessage(StringBuilder pBuilder) {
+
+    }
+
+    @Override
+    protected void throwValidationException(String pMessage) throws Exception {
+
     }
 }

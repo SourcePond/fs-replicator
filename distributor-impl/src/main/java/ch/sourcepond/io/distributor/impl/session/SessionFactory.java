@@ -15,7 +15,7 @@ package ch.sourcepond.io.distributor.impl.session;
 
 import ch.sourcepond.io.distributor.api.DeleteSession;
 import ch.sourcepond.io.distributor.api.GlobalLockException;
-import ch.sourcepond.io.distributor.impl.lock.GlobalLockManager;
+import ch.sourcepond.io.distributor.impl.lock.LockManager;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 
@@ -23,10 +23,10 @@ import java.util.concurrent.TimeUnit;
 
 public class SessionFactory {
     private final Receiver receiver;
-    private final GlobalLockManager glm;
+    private final LockManager glm;
     private final ITopic<String> sendDeleteTopic;
 
-    SessionFactory(final Receiver pReceiver, final GlobalLockManager pGlm, final ITopic<String> pSendDeleteTopic) {
+    SessionFactory(final Receiver pReceiver, final LockManager pGlm, final ITopic<String> pSendDeleteTopic) {
         receiver = pReceiver;
         glm = pGlm;
         sendDeleteTopic = pSendDeleteTopic;
