@@ -14,7 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.common.master.StatusResponse;
+import ch.sourcepond.io.distributor.impl.response.StatusResponse;
 import org.mockito.ArgumentMatcher;
 
 import java.io.IOException;

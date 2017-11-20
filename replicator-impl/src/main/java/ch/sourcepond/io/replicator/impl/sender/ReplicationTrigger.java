@@ -49,11 +49,11 @@ class ReplicationTrigger {
     }
 
     private void lockGlobally(final Path pPath) {
-        distributor.lockGlobally(pPath.toString(), SECONDS, 10);
+        distributor.lock(pPath.toString(), SECONDS, 10);
     }
 
     private void unlockGlobally(final Path pPath) {
-        distributor.unlockGlobally(pPath.toString(), SECONDS, 10);
+        distributor.unlock(pPath.toString(), SECONDS, 10);
     }
 
     void delete(final Path pFile) throws IOException {

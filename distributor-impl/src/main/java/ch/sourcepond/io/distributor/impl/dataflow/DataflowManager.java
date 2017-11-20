@@ -13,16 +13,14 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.dataflow;
 
-import ch.sourcepond.io.distributor.impl.common.ResponseAwaitingManager;
 import ch.sourcepond.io.distributor.impl.common.client.DataRequest;
-import ch.sourcepond.io.distributor.impl.common.master.StatusResponse;
-import ch.sourcepond.io.distributor.impl.dataflow.master.MasterDataSendResponseListener;
+import ch.sourcepond.io.distributor.impl.response.StatusResponse;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
 
 import java.nio.ByteBuffer;
 
-public class DataflowManager extends ResponseAwaitingManager {
+public class DataflowManager {
     private final ITopic<String> sendDeleteTopic;
     private final ITopic<DataRequest> sendDataTopic;
     private final ITopic<String> sendDataTransferFinishedTopic;
@@ -32,16 +30,18 @@ public class DataflowManager extends ResponseAwaitingManager {
                            final ITopic<String> pSendDeleteTopic,
                            final ITopic<DataRequest> pSendDataTopic,
                            final ITopic<String> pSendDataTransferFinishedTopic) {
-        super(pCluster, pResponseTopic);
         sendDeleteTopic = pSendDeleteTopic;
         sendDataTopic = pSendDataTopic;
         sendDataTransferFinishedTopic = pSendDataTransferFinishedTopic;
     }
 
     public void send(final String pPath, final ByteBuffer pData) {
+        // Transfer data into a byte array...
         final byte[] data = new byte[pData.limit()];
         pData.get(data);
-        performAction(sendDataTopic, new DataRequest(pPath, data), new MasterDataSendResponseListener());
+
+        // ...and distribute it
+        //performAction(sendDataTopic, new DataRequest(pPath, data), listenerFactory.);
     }
 
     public void delete(final String pPath) {

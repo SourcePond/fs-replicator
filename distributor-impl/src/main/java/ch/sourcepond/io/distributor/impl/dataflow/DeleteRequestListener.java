@@ -11,25 +11,23 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.dataflow.client;
+package ch.sourcepond.io.distributor.impl.dataflow;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.common.client.DataRequest;
-import ch.sourcepond.io.distributor.impl.common.client.DistributionMessageClientListener;
-import ch.sourcepond.io.distributor.impl.common.master.StatusResponse;
+import ch.sourcepond.io.distributor.impl.common.client.ClientListener;
+import ch.sourcepond.io.distributor.impl.response.StatusResponse;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 
-import static java.nio.ByteBuffer.wrap;
 import static org.slf4j.LoggerFactory.getLogger;
 
-final class DataRequestListener extends DistributionMessageClientListener<DataRequest> {
-    private static final Logger LOG = getLogger(DataRequestListener.class);
+final class DeleteRequestListener extends ClientListener<String> {
+    private static final Logger LOG = getLogger(DeleteRequestListener.class);
 
-    public DataRequestListener(final Receiver pReceiver, ITopic<StatusResponse> pSendResponseTopic) {
+    public DeleteRequestListener(final Receiver pReceiver, final ITopic<StatusResponse> pSendResponseTopic) {
         super(pReceiver, pSendResponseTopic);
     }
 
@@ -39,7 +37,12 @@ final class DataRequestListener extends DistributionMessageClientListener<DataRe
     }
 
     @Override
-    protected void processMessage(final GlobalPath pPath, final DataRequest pPayload) throws IOException {
-        receiver.receive(pPath, wrap(pPayload.getData()));
+    protected void processMessage(final GlobalPath pPath, final String pPayload) throws IOException {
+        receiver.delete(pPath);
+    }
+
+    @Override
+    protected String toPath(final String pPayload) {
+        return pPayload;
     }
 }

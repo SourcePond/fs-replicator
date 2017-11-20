@@ -13,10 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock;
 
-import ch.sourcepond.io.distributor.api.GlobalLockException;
-import ch.sourcepond.io.distributor.impl.lock.master.MasterFileLockManager;
+import ch.sourcepond.io.distributor.api.exception.LockException;
+import ch.sourcepond.io.distributor.impl.response.StatusResponseException;
+import ch.sourcepond.io.distributor.impl.response.StatusResponseListener;
+import ch.sourcepond.io.distributor.impl.response.StatusResponseListenerFactory;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ILock;
+import com.hazelcast.core.ITopic;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,6 +40,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,12 +51,18 @@ public class LockManagerTest {
     private static final long EXPECTED_TIMEOUT = 500;
     private final HazelcastInstance hci = mock(HazelcastInstance.class);
     private final ILock lock = mock(ILock.class);
-    private final MasterFileLockManager mflm = mock(MasterFileLockManager.class);
-    private final LockManager manager = new LockManager(hci, mflm);
+    private final StatusResponseListener<String> lockListener = mock(StatusResponseListener.class);
+    private final StatusResponseListener<String> unlockListener = mock(StatusResponseListener.class);
+    private final StatusResponseListenerFactory factory = mock(StatusResponseListenerFactory.class);
+    private final ITopic<String> lockRequestTopic = mock(ITopic.class);
+    private final ITopic<String> unlockRequestTopic = mock(ITopic.class);
+    private final LockManager manager = new LockManager(hci, factory, lockRequestTopic, unlockRequestTopic);
 
     @Before
     public void setup() throws Exception {
         when(hci.getLock(EXPECTED_PATH)).thenReturn(lock);
+        when(factory.create(EXPECTED_PATH, lockRequestTopic)).thenReturn(lockListener);
+        when(factory.create(EXPECTED_PATH, unlockRequestTopic)).thenReturn(unlockListener);
         setup(lock);
     }
 
@@ -93,19 +103,19 @@ public class LockManagerTest {
     @Test
     public void verifyUnlockWhenReleaseFileLockFails() throws Exception {
         when(lock.tryLock(EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT, DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT)).thenReturn(false);
-        final RuntimeException expected = new RuntimeException();
-        doThrow(expected).when(mflm).releaseGlobalFileLock(EXPECTED_PATH);
+        final StatusResponseException expected = new StatusResponseException("any");
+        doThrow(expected).when(unlockListener).awaitResponse(EXPECTED_PATH);
         try {
             manager.lockGlobally(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
             fail("Exception expected");
-        } catch (final RuntimeException e) {
-            assertSame(expected, e);
+        } catch (final LockException e) {
+            assertNull(e.getCause());
         }
         verify(lock).unlock();
     }
 
-    private void verifyLockReleaseAfterFailure() {
-        verify(mflm).releaseGlobalFileLock(EXPECTED_PATH);
+    private void verifyLockReleaseAfterFailure() throws Exception {
+        verify(unlockListener).awaitResponse(EXPECTED_PATH);
         verify(lock).unlock();
     }
 
@@ -115,7 +125,7 @@ public class LockManagerTest {
         try {
             manager.lockGlobally(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
             fail("Exception expected");
-        } catch (final GlobalLockException e) {
+        } catch (final LockException e) {
             assertNull(e.getCause());
         }
         verifyLockReleaseAfterFailure();
@@ -129,7 +139,7 @@ public class LockManagerTest {
         try {
             manager.lockGlobally(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
             fail("Exception expected");
-        } catch (final GlobalLockException e) {
+        } catch (final LockException e) {
             assertSame(expected, e.getCause());
         }
         verifyLockReleaseAfterFailure();
@@ -139,11 +149,12 @@ public class LockManagerTest {
     @Test
     public void acquireGlobalFileLockFailed() throws Exception {
         final TimeoutException expected = new TimeoutException();
-        doThrow(expected).when(mflm).acquireGlobalFileLock(EXPECTED_PATH);
+        doThrow(expected).when(lockListener).awaitResponse(EXPECTED_PATH);
+
         try {
             manager.lockGlobally(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
             fail("Exception expected");
-        } catch (final GlobalLockException e) {
+        } catch (final LockException e) {
             assertSame(expected, e.getCause());
         }
         verifyLockReleaseAfterFailure();
@@ -151,7 +162,7 @@ public class LockManagerTest {
     }
 
     @Test
-    public void unlockGloballyNoLockRegistered() {
+    public void unlockGloballyNoLockRegistered() throws Exception {
         // No exception should be thrown
         manager.unlockGlobally("unknown");
     }
@@ -163,10 +174,10 @@ public class LockManagerTest {
         assertTrue(manager.isLocked(EXPECTED_PATH));
         manager.unlockGlobally(EXPECTED_PATH);
         assertFalse(manager.isLocked(EXPECTED_PATH));
-        final InOrder order = Mockito.inOrder(lock, mflm);
+        final InOrder order = inOrder(lock, lockListener, unlockListener);
         order.verify(lock).tryLock(EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT, DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT);
-        order.verify(mflm).acquireGlobalFileLock(EXPECTED_PATH);
-        order.verify(mflm).releaseGlobalFileLock(EXPECTED_PATH);
+        order.verify(lockListener).awaitResponse(EXPECTED_PATH);
+        order.verify(unlockListener).awaitResponse(EXPECTED_PATH);
         order.verify(lock).unlock();
     }
 }

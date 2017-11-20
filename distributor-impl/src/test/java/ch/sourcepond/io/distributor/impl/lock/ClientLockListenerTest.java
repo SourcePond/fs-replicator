@@ -11,10 +11,11 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.lock.client;
+package ch.sourcepond.io.distributor.impl.lock;
 
 import ch.sourcepond.io.distributor.impl.Constants;
-import ch.sourcepond.io.distributor.impl.common.master.StatusResponse;
+import ch.sourcepond.io.distributor.impl.response.StatusResponse;
+import ch.sourcepond.io.distributor.impl.lock.ClientLockListener;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
@@ -75,7 +76,7 @@ public class ClientLockListenerTest {
     public void memberRemoved() {
         final MembershipEvent event = new MembershipEvent(mock(Cluster.class), member, MEMBER_REMOVED, emptySet());
         listener.memberRemoved(event);
-        verify(receiver).unlockAllLocally(EXPECTED_NODE);
+        verify(receiver).kill(EXPECTED_NODE);
     }
 
     @Test

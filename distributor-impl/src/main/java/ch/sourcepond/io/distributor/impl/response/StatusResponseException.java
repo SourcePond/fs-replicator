@@ -11,10 +11,15 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.common.master;
+package ch.sourcepond.io.distributor.impl.response;
 
-@FunctionalInterface
-public interface ExceptionFactory<E extends Exception> {
+public class StatusResponseException extends Exception {
 
-    E create(StringBuilder pMessage);
+    public StatusResponseException(final String pMessage) {
+        super(pMessage);
+    }
+
+    public StatusResponseException(final String pMessage, final Throwable pCause) {
+        super(pMessage, pCause);
+    }
 }

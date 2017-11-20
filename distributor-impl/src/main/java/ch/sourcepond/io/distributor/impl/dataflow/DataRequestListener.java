@@ -11,24 +11,25 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.dataflow.client;
+package ch.sourcepond.io.distributor.impl.dataflow;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
+import ch.sourcepond.io.distributor.impl.common.client.DataRequest;
 import ch.sourcepond.io.distributor.impl.common.client.DistributionMessageClientListener;
-import ch.sourcepond.io.distributor.impl.common.master.StatusResponse;
-import ch.sourcepond.io.distributor.impl.common.client.StoreRequest;
+import ch.sourcepond.io.distributor.impl.response.StatusResponse;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 
+import static java.nio.ByteBuffer.wrap;
 import static org.slf4j.LoggerFactory.getLogger;
 
-final class StoreRequestListener extends DistributionMessageClientListener<StoreRequest> {
-    private static final Logger LOG = getLogger(StoreRequestListener.class);
+final class DataRequestListener extends DistributionMessageClientListener<DataRequest> {
+    private static final Logger LOG = getLogger(DataRequestListener.class);
 
-    public StoreRequestListener(final Receiver pReceiver, final ITopic<StatusResponse> pSendResponseTopic) {
+    public DataRequestListener(final Receiver pReceiver, ITopic<StatusResponse> pSendResponseTopic) {
         super(pReceiver, pSendResponseTopic);
     }
 
@@ -38,7 +39,7 @@ final class StoreRequestListener extends DistributionMessageClientListener<Store
     }
 
     @Override
-    protected void processMessage(final GlobalPath pPath, final StoreRequest pPayload) throws IOException {
-        receiver.store(pPath);
+    protected void processMessage(final GlobalPath pPath, final DataRequest pPayload) throws IOException {
+        receiver.receive(pPath, wrap(pPayload.getData()));
     }
 }

@@ -11,10 +11,10 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.dataflow.client;
+package ch.sourcepond.io.distributor.impl.lock;
 
 import ch.sourcepond.io.distributor.impl.common.client.ClientListenerTest;
-import ch.sourcepond.io.distributor.impl.dataflow.client.ClientDeleteListener;
+import ch.sourcepond.io.distributor.impl.lock.ClientUnlockListener;
 import org.junit.Test;
 import org.mockito.InOrder;
 
@@ -30,7 +30,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 
-public class DeleteRequestListenerTest extends ClientListenerTest<ClientDeleteListener, String> {
+public class ClientUnlockListenerTest extends ClientListenerTest<ClientUnlockListener, String> {
 
     @Override
     protected String createPayload() {
@@ -38,13 +38,13 @@ public class DeleteRequestListenerTest extends ClientListenerTest<ClientDeleteLi
     }
 
     @Override
-    protected ClientDeleteListener createListener() {
-        return new ClientDeleteListener(receiver, sendResponseTopic);
+    protected ClientUnlockListener createListener() {
+        return new ClientUnlockListener(receiver, sendResponseTopic);
     }
 
     @Test
     public void onMessageFailure() throws IOException {
-        doThrow(EXPECTED_EXCEPTION).when(receiver).delete(argThat(GLOBAL_PATH_ARGUMENT_MATCHER));
+        doThrow(EXPECTED_EXCEPTION).when(receiver).unlockLocally(argThat(GLOBAL_PATH_ARGUMENT_MATCHER));
         listener.onMessage(message);
         verify(sendResponseTopic).publish(argThat(FAILURE_RESPONSE_ARGUMENT_MATCHER));
     }
@@ -53,7 +53,7 @@ public class DeleteRequestListenerTest extends ClientListenerTest<ClientDeleteLi
     public void onMessageSuccess() throws IOException {
         listener.onMessage(message);
         final InOrder order = inOrder(receiver, sendResponseTopic);
-        order.verify(receiver).delete(argThat(GLOBAL_PATH_ARGUMENT_MATCHER));
+        order.verify(receiver).unlockLocally(argThat(GLOBAL_PATH_ARGUMENT_MATCHER));
         order.verify(sendResponseTopic).publish(argThat(SUCCESS_RESPONSE_ARGUMENT_MATCHER));
     }
 }

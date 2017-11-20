@@ -11,15 +11,12 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.lock.master;
+package ch.sourcepond.io.distributor.impl.response;
 
-public class FileLockException extends Exception {
+import java.io.Serializable;
+import java.util.concurrent.TimeoutException;
 
-    public FileLockException(final String message) {
-        super(message);
-    }
+public interface StatusResponseListener<T extends Serializable> {
 
-    public FileLockException(final Throwable cause) {
-        super(cause);
-    }
+    void awaitResponse(final T pMessage)  throws TimeoutException, StatusResponseException;
 }

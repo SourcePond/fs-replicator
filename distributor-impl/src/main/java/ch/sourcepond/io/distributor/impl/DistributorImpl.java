@@ -13,9 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl;
 
-import ch.sourcepond.io.distributor.api.DeletionException;
+import ch.sourcepond.io.distributor.api.exception.DeletionException;
 import ch.sourcepond.io.distributor.api.Distributor;
-import ch.sourcepond.io.distributor.api.ModificationException;
+import ch.sourcepond.io.distributor.api.exception.LockException;
+import ch.sourcepond.io.distributor.api.exception.ModificationException;
+import ch.sourcepond.io.distributor.api.exception.StoreException;
+import ch.sourcepond.io.distributor.api.exception.UnlockException;
+import ch.sourcepond.io.distributor.impl.lock.LockManager;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
@@ -23,12 +27,12 @@ import java.util.concurrent.TimeUnit;
 public class DistributorImpl implements Distributor {
 
     @Override
-    public void lockGlobally(String pPath, TimeUnit pTimeoutUnit, long pTimeout) {
+    public void lock(String pPath) throws LockException {
 
     }
 
     @Override
-    public void unlockGlobally(String pPath, TimeUnit pTimeoutUnit, long pTimeout) {
+    public void unlock(String pPath) throws UnlockException {
 
     }
 
@@ -38,7 +42,12 @@ public class DistributorImpl implements Distributor {
     }
 
     @Override
-    public void modify(String pPath, ByteBuffer pData) throws ModificationException {
+    public void transfer(String pPath, ByteBuffer pData) throws ModificationException {
+
+    }
+
+    @Override
+    public void store(String pPath, byte[] pChecksum) throws StoreException {
 
     }
 
@@ -48,7 +57,7 @@ public class DistributorImpl implements Distributor {
     }
 
     @Override
-    public byte[] getGlobalChecksum(String pFile) {
+    public byte[] getChecksum(String pPath) {
         return new byte[0];
     }
 }
