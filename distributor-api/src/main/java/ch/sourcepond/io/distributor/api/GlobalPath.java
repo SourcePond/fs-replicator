@@ -13,6 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.api;
 
+/**
+ * An instance of this class combines a sending-node and a file path to global-path. A global path is
+ * network wide unique.
+ */
 public class GlobalPath {
     private final String sendingNode;
     private final String path;

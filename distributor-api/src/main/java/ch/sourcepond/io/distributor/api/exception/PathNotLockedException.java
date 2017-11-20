@@ -11,9 +11,9 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.api;
+package ch.sourcepond.io.distributor.api.exception;
 
-public class PathNotLockedException extends Exception {
+public class PathNotLockedException extends RuntimeException {
 
     public PathNotLockedException(String message) {
         super(message);

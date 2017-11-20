@@ -20,6 +20,12 @@ import java.nio.ByteBuffer;
 
 public interface Receiver {
 
+    /**
+     * Locks the path specified on the local host.
+     *
+     * @param pPath
+     * @throws IOException
+     */
     void lockLocally(GlobalPath pPath) throws IOException;
 
     void unlockLocally(GlobalPath pPath) throws IOException;
