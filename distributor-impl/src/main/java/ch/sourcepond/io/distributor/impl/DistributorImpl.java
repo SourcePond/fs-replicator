@@ -17,7 +17,6 @@ import ch.sourcepond.io.distributor.api.Distributor;
 import ch.sourcepond.io.distributor.api.exception.DeletionException;
 import ch.sourcepond.io.distributor.api.exception.LockException;
 import ch.sourcepond.io.distributor.api.exception.ModificationException;
-import ch.sourcepond.io.distributor.api.exception.PathNotLockedException;
 import ch.sourcepond.io.distributor.api.exception.StoreException;
 import ch.sourcepond.io.distributor.api.exception.UnlockException;
 import ch.sourcepond.io.distributor.impl.dataflow.DataflowManager;
@@ -28,16 +27,9 @@ import com.hazelcast.core.IMap;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 
 public class DistributorImpl implements Distributor {
-
-    @FunctionalInterface
-    private interface WithinLockExecutable<T, E extends Exception> {
-
-        T execute(String pPath) throws E;
-    }
-
     private static final byte[] EMPTY_CHECKSUM = new byte[0];
     private final HazelcastInstance hci;
     private final IMap<String, byte[]> checksums;
@@ -56,46 +48,36 @@ public class DistributorImpl implements Distributor {
 
     @Override
     public void lock(final String pPath) throws LockException {
-        lockManager.lock(pPath);
+        lockManager.lock(requireNonNull(pPath, "path is null"));
+    }
+
+    @Override
+    public boolean isLocked(final String pPath) {
+        return lockManager.isLocked(requireNonNull(pPath, "path is null"));
     }
 
     @Override
     public void unlock(final String pPath) throws UnlockException {
-        lockManager.unlock(pPath);
-    }
-
-    private <T, E extends Exception> T executeWithinLock(final String pPath, WithinLockExecutable<T, E> pExecutable) throws E {
-        if (!lockManager.isLocked(pPath)) {
-            throw new PathNotLockedException(format("%s is not locked!", pPath));
-        }
-        return pExecutable.execute(pPath);
+        lockManager.unlock(requireNonNull(pPath, "path is null"));
     }
 
     @Override
     public void delete(final String pPath) throws DeletionException {
-        executeWithinLock(pPath, p -> {
-            dataflowManager.delete(p);
-            return null;
-        });
+        dataflowManager.delete(requireNonNull(pPath, "path is null"));
     }
 
     @Override
     public void transfer(final String pPath, final ByteBuffer pData) throws ModificationException {
-        executeWithinLock(pPath, p -> {
-            dataflowManager.transfer(p, pData);
-            return null;
-        });
+        dataflowManager.transfer(requireNonNull(pPath, "path is null"), requireNonNull(pData, "buffer is null"));
     }
 
     @Override
     public void store(final String pPath, final byte[] pChecksum, final IOException pFailureOrNull) throws StoreException {
-        executeWithinLock(pPath, p -> {
-            dataflowManager.store(p, pFailureOrNull);
+        requireNonNull(pChecksum, "checksum is null");
+        dataflowManager.store(requireNonNull(pPath, "path is null"), pFailureOrNull);
 
-            // Do only update the checksum when the store operation was sucessful
-            checksums.put(p, pChecksum);
-            return null;
-        });
+        // Do only update the checksum when the store operation was successful
+        checksums.put(pPath, pChecksum);
     }
 
     @Override
@@ -105,9 +87,7 @@ public class DistributorImpl implements Distributor {
 
     @Override
     public byte[] getChecksum(final String pPath) {
-        return executeWithinLock(pPath, p -> {
-            final byte[] checksum = checksums.get(p);
-            return checksum == null ? EMPTY_CHECKSUM : checksum;
-        });
+        final byte[] checksum = checksums.get(requireNonNull(pPath, "path is null"));
+        return checksum == null ? EMPTY_CHECKSUM : checksum;
     }
 }

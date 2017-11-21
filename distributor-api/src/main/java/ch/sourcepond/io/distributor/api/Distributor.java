@@ -16,7 +16,6 @@ package ch.sourcepond.io.distributor.api;
 import ch.sourcepond.io.distributor.api.exception.DeletionException;
 import ch.sourcepond.io.distributor.api.exception.LockException;
 import ch.sourcepond.io.distributor.api.exception.ModificationException;
-import ch.sourcepond.io.distributor.api.exception.PathNotLockedException;
 import ch.sourcepond.io.distributor.api.exception.StoreException;
 import ch.sourcepond.io.distributor.api.exception.UnlockException;
 
@@ -39,6 +38,15 @@ public interface Distributor {
     void lock(String pPath) throws LockException;
 
     /**
+     * Returns when the path specified is locked network-wide i.e. {@link #lock(String)} was successful and
+     * {@link #unlock(String)} has not been called until now.
+     *
+     * @param pPath Path to check, must not be {@code null}.
+     * @return {@code true} if the path specified is locked, {@code false} otherwise.
+     */
+    boolean isLocked(String pPath);
+
+    /**
      * Unlocks the path specified in the network. The underlying implementation must make its best effort to unlock
      * resources even in failure case. If no exceptions where detected while unlocking, this method simply returns.
      *
@@ -49,38 +57,34 @@ public interface Distributor {
     void unlock(String pPath) throws UnlockException;
 
     /**
-     * Deletes the path specified from the network. If successful, this method simply returns. Before this method can
-     * be called, {@link #lock(String)} must have been executed successfully.
+     * Deletes the path specified from the network. If successful, this method simply returns. Before calling this
+     * method, {@link #lock(String)} should have been executed successfully.
      *
      * @param pPath Path to be deleted, must not be {@code null}.
      * @throws DeletionException      Thrown, if the path specified could not be deleted for some reason
      *                                (timeout, I/O failure etc.)
      * @throws NullPointerException   Thrown, if the path specified is {@code null}.
-     * @throws PathNotLockedException Thrown, if the {@link #lock(String)} was not called prior
-     *                                calling this method.
      */
     void delete(String pPath) throws DeletionException;
 
     /**
      * Transfers the data specified for the path specified to the network. If successful, this method simply returns.
-     * Before this method can be called, {@link #lock(String)} must have been executed successfully. The newly
-     * transferred data is <em>not</em> visible on the clients until {@link #store(String)} has been called.
+     * Before calling this method, {@link #lock(String)} should have been executed successfully. The newly
+     * transferred data is <em>not</em> visible on the clients until {@link #store(String, byte[], IOException)} has been called.
      *
      * @param pPath Path to which the data belongs to, must not be {@code null}.
      * @param pData ByteBuffer containing the data to be transferred, must not be {@code null}
      * @throws ModificationException  Thrown, if the data for the path specified could not be transferred for some reason
      *                                (timeout, I/O failure etc.)
      * @throws NullPointerException   Thrown, if the path specified is {@code null}.
-     * @throws PathNotLockedException Thrown, if the {@link #lock(String)} was not called prior
-     *                                calling this method.
      */
     void transfer(String pPath, ByteBuffer pData) throws ModificationException;
 
     /**
-     * Stores the transferred data to the path specified and updates its checksum. If successful,
-     * this method simply returns. Before this method can be called, {@link #lock(String)} must have been executed
-     * successfully. After calling this method, the newly transferred data is visible on the clients
-     * (see {@link #transfer(String, ByteBuffer)}).
+     * Stores the transferred data to the path specified. If the store was successful, the global
+     * checksum will be updated with the checksum specified and this method returns. Before calling this method,
+     * {@link #lock(String)} should have been executed successfully. After calling this method, the newly transferred
+     * data is visible on the clients (see {@link #transfer(String, ByteBuffer)}).
      *
      * @param pPath     Path to which the data belongs to, must not be {@code null}.
      * @param pChecksum Updated checksum to set, must be not {@code null}.
@@ -88,8 +92,6 @@ public interface Distributor {
      * @throws StoreException         Thrown, if the data for the path specified could not be stored for some reason
      *                                (timeout, I/O failure etc.)
      * @throws NullPointerException   Thrown, if the path specified is {@code null}.
-     * @throws PathNotLockedException Thrown, if the {@link #lock(String)} was not called prior
-     *                                calling this method.
      */
     void store(String pPath, byte[] pChecksum, IOException pFailureOrNull) throws StoreException;
 
@@ -102,8 +104,9 @@ public interface Distributor {
     String getLocalNode();
 
     /**
-     * Returns the checksum of the path specified which was set during the last {@link #store(String, byte[])}
-     * operation. If the path has no checksum yet, an empty array will be returned.
+     * Returns the checksum of the path specified which was set during the last {@link #store(String, byte[], IOException)}
+     * operation. If the path has no checksum yet, an empty array will be returned. Before calling this method,
+     * {@link #lock(String)} should have been executed successfully.
      *
      * @param pPath Path, must not be {@code null}.
      * @return Checksum as byte-array, never {@code null}
