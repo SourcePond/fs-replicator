@@ -23,8 +23,6 @@ import com.hazelcast.core.ILock;
 import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -37,7 +35,6 @@ public class LockManager {
     private static final Logger LOG = getLogger(LockManager.class);
     static final TimeUnit DEFAULT_LEASE_UNIT = MINUTES;
     static final long DEFAULT_LEASE_TIMEOUT = 15;
-    private final ConcurrentMap<String, ILock> globalLocks = new ConcurrentHashMap<>();
     private final HazelcastInstance hci;
     private final TimeoutConfig timeoutConfig;
     private final ITopic<String> lockRequestTopic;
@@ -91,20 +88,17 @@ public class LockManager {
             } catch (final StatusResponseException | TimeoutException e) {
                 LOG.warn(e.getMessage(), e);
             } finally {
-                final ILock globalLock = globalLocks.remove(pPath);
-                assert globalLock != null : "globalLock is null";
-                globalLock.unlock();
+                hci.getLock(pPath).unlock();
             }
         }
     }
 
     public boolean isLocked(final String pPath) {
-        return globalLocks.containsKey(pPath);
+        return hci.getLock(pPath).isLocked();
     }
 
     public void lock(final String pPath) throws LockException {
-        final ILock globalLock = globalLocks.computeIfAbsent(pPath, p -> hci.getLock(p));
-
+        final ILock globalLock = hci.getLock(pPath);
         try {
             // Because timeout-config is mutable we store the current values into
             // variables to make sure that in error case the actual values are included
@@ -126,17 +120,13 @@ public class LockManager {
     }
 
     public void unlock(final String pPath) throws UnlockException {
-        final ILock lock = globalLocks.remove(pPath);
-        if (lock != null) {
-            try {
-                releaseGlobalFileLock(pPath);
-            } catch (final StatusResponseException | TimeoutException e) {
-                throw new UnlockException(format("Exception occurred while releasing file-lock for %s", pPath), e);
-            } finally {
-                lock.unlock();
-            }
-        } else {
-            LOG.warn("No global lock registered for {}, nothing unlocked!", pPath);
+        final ILock lock = hci.getLock(pPath);
+        try {
+            releaseGlobalFileLock(pPath);
+        } catch (final StatusResponseException | TimeoutException e) {
+            throw new UnlockException(format("Exception occurred while releasing file-lock for %s", pPath), e);
+        } finally {
+            lock.unlock();
         }
     }
 }
