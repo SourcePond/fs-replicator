@@ -13,51 +13,101 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl;
 
-import ch.sourcepond.io.distributor.api.exception.DeletionException;
 import ch.sourcepond.io.distributor.api.Distributor;
+import ch.sourcepond.io.distributor.api.exception.DeletionException;
 import ch.sourcepond.io.distributor.api.exception.LockException;
 import ch.sourcepond.io.distributor.api.exception.ModificationException;
+import ch.sourcepond.io.distributor.api.exception.PathNotLockedException;
 import ch.sourcepond.io.distributor.api.exception.StoreException;
 import ch.sourcepond.io.distributor.api.exception.UnlockException;
+import ch.sourcepond.io.distributor.impl.dataflow.DataflowManager;
 import ch.sourcepond.io.distributor.impl.lock.LockManager;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.TimeUnit;
+
+import static java.lang.String.format;
 
 public class DistributorImpl implements Distributor {
 
-    @Override
-    public void lock(String pPath) throws LockException {
+    @FunctionalInterface
+    private interface WithinLockExecutable<T, E extends Exception> {
 
+        T execute(String pPath) throws E;
+    }
+
+    private static final byte[] EMPTY_CHECKSUM = new byte[0];
+    private final HazelcastInstance hci;
+    private final IMap<String, byte[]> checksums;
+    private final LockManager lockManager;
+    private final DataflowManager dataflowManager;
+
+    public DistributorImpl(final HazelcastInstance pHci,
+                           final IMap<String, byte[]> pChecksum,
+                           final LockManager pLockManager,
+                           final DataflowManager pDataflowManager) {
+        hci = pHci;
+        checksums = pChecksum;
+        lockManager = pLockManager;
+        dataflowManager = pDataflowManager;
     }
 
     @Override
-    public void unlock(String pPath) throws UnlockException {
-
+    public void lock(final String pPath) throws LockException {
+        lockManager.lock(pPath);
     }
 
     @Override
-    public void delete(String pPath) throws DeletionException {
+    public void unlock(final String pPath) throws UnlockException {
+        lockManager.unlock(pPath);
+    }
 
+    private <T, E extends Exception> T executeWithinLock(final String pPath, WithinLockExecutable<T, E> pExecutable) throws E {
+        if (!lockManager.isLocked(pPath)) {
+            throw new PathNotLockedException(format("%s is not locked!", pPath));
+        }
+        return pExecutable.execute(pPath);
     }
 
     @Override
-    public void transfer(String pPath, ByteBuffer pData) throws ModificationException {
-
+    public void delete(final String pPath) throws DeletionException {
+        executeWithinLock(pPath, p -> {
+            dataflowManager.delete(p);
+            return null;
+        });
     }
 
     @Override
-    public void store(String pPath, byte[] pChecksum) throws StoreException {
+    public void transfer(final String pPath, final ByteBuffer pData) throws ModificationException {
+        executeWithinLock(pPath, p -> {
+            dataflowManager.transfer(p, pData);
+            return null;
+        });
+    }
 
+    @Override
+    public void store(final String pPath, final byte[] pChecksum, final IOException pFailureOrNull) throws StoreException {
+        executeWithinLock(pPath, p -> {
+            dataflowManager.store(p, pFailureOrNull);
+
+            // Do only update the checksum when the store operation was sucessful
+            checksums.put(p, pChecksum);
+            return null;
+        });
     }
 
     @Override
     public String getLocalNode() {
-        return null;
+        return hci.getLocalEndpoint().getUuid();
     }
 
     @Override
-    public byte[] getChecksum(String pPath) {
-        return new byte[0];
+    public byte[] getChecksum(final String pPath) {
+        return executeWithinLock(pPath, p -> {
+            final byte[] checksum = checksums.get(p);
+            return checksum == null ? EMPTY_CHECKSUM : checksum;
+        });
     }
 }

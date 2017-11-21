@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.response;
 
+import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.spi.TimeoutConfig;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
@@ -38,20 +39,20 @@ import static java.lang.String.format;
 import static java.lang.Thread.currentThread;
 import static java.util.Collections.emptyMap;
 
-class StatusResponseListenerImpl<T extends Serializable> implements MessageListener<StatusResponse>, MembershipListener,
+class StatusResponseListenerImpl<T extends Serializable> implements MessageListener<StatusMessage>, MembershipListener,
         StatusResponseListener<T> {
     private final Lock lock = new ReentrantLock();
     private final Condition answerReceived = lock.newCondition();
     private final String path;
     private final ITopic<T> requestTopic;
-    private final ITopic<StatusResponse> responseTopic;
+    private final ITopic<StatusMessage> responseTopic;
     private final TimeoutConfig timeoutConfig;
     private final Cluster cluster;
     private final Map<Member, Object> responses = new HashMap<>();
 
     public StatusResponseListenerImpl(final String pPath,
                                       final ITopic<T> pRequestTopic,
-                                      final ITopic<StatusResponse> pResponseTopic,
+                                      final ITopic<StatusMessage> pResponseTopic,
                                       final TimeoutConfig pTimeoutConfig,
                                       final Cluster pCluster) {
         path = pPath;
@@ -148,12 +149,12 @@ class StatusResponseListenerImpl<T extends Serializable> implements MessageListe
     }
 
     @Override
-    public final void onMessage(final Message<StatusResponse> pMessage) {
+    public final void onMessage(final Message<StatusMessage> pMessage) {
         // Only do something if the path matches
         if (this.path.equals(pMessage.getMessageObject().getPath())) {
             lock.lock();
             try {
-                final StatusResponse message = pMessage.getMessageObject();
+                final StatusMessage message = pMessage.getMessageObject();
                 final IOException failure = message.getFailureOrNull();
                 responses.replace(pMessage.getPublishingMember(), failure == null ? TRUE : failure);
             } finally {

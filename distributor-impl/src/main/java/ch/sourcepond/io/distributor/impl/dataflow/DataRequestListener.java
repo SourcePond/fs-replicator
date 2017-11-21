@@ -14,9 +14,9 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.dataflow;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.common.client.DataRequest;
+import ch.sourcepond.io.distributor.impl.common.client.TransferRequest;
 import ch.sourcepond.io.distributor.impl.common.client.DistributionMessageClientListener;
-import ch.sourcepond.io.distributor.impl.response.StatusResponse;
+import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
@@ -26,10 +26,10 @@ import java.io.IOException;
 import static java.nio.ByteBuffer.wrap;
 import static org.slf4j.LoggerFactory.getLogger;
 
-final class DataRequestListener extends DistributionMessageClientListener<DataRequest> {
+final class DataRequestListener extends DistributionMessageClientListener<TransferRequest> {
     private static final Logger LOG = getLogger(DataRequestListener.class);
 
-    public DataRequestListener(final Receiver pReceiver, ITopic<StatusResponse> pSendResponseTopic) {
+    public DataRequestListener(final Receiver pReceiver, ITopic<StatusMessage> pSendResponseTopic) {
         super(pReceiver, pSendResponseTopic);
     }
 
@@ -39,7 +39,7 @@ final class DataRequestListener extends DistributionMessageClientListener<DataRe
     }
 
     @Override
-    protected void processMessage(final GlobalPath pPath, final DataRequest pPayload) throws IOException {
+    protected void processMessage(final GlobalPath pPath, final TransferRequest pPayload) throws IOException {
         receiver.receive(pPath, wrap(pPayload.getData()));
     }
 }

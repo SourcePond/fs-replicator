@@ -17,6 +17,7 @@ import ch.sourcepond.io.distributor.api.exception.LockException;
 import ch.sourcepond.io.distributor.api.exception.UnlockException;
 import ch.sourcepond.io.distributor.impl.response.StatusResponseException;
 import ch.sourcepond.io.distributor.impl.response.StatusResponseListenerFactory;
+import ch.sourcepond.io.distributor.spi.TimeoutConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ILock;
 import com.hazelcast.core.ITopic;
@@ -38,15 +39,18 @@ public class LockManager {
     static final long DEFAULT_LEASE_TIMEOUT = 15;
     private final ConcurrentMap<String, ILock> globalLocks = new ConcurrentHashMap<>();
     private final HazelcastInstance hci;
+    private final TimeoutConfig timeoutConfig;
     private final ITopic<String> lockRequestTopic;
     private final ITopic<String> unlockRequestTopic;
     private final StatusResponseListenerFactory factory;
 
     public LockManager(final HazelcastInstance pHci,
+                       final TimeoutConfig pTimeoutConfig,
                        final StatusResponseListenerFactory pFactory,
                        final ITopic<String> pLockRequestTopic,
                        final ITopic<String> pUnlockRequestTopic) {
         hci = pHci;
+        timeoutConfig = pTimeoutConfig;
         factory = pFactory;
         lockRequestTopic = pLockRequestTopic;
         unlockRequestTopic = pUnlockRequestTopic;
@@ -98,15 +102,20 @@ public class LockManager {
         return globalLocks.containsKey(pPath);
     }
 
-    public void lockGlobally(final String pPath, final TimeUnit pTimeoutUnit, final long pTimeout)
-            throws LockException {
+    public void lock(final String pPath) throws LockException {
         final ILock globalLock = globalLocks.computeIfAbsent(pPath, p -> hci.getLock(p));
 
         try {
-            if (globalLock.tryLock(pTimeout, pTimeoutUnit, DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT)) {
+            // Because timeout-config is mutable we store the current values into
+            // variables to make sure that in error case the actual values are included
+            // into the exception message.
+            final long lockTimeout = timeoutConfig.getLockTimeout();
+            final TimeUnit lockTimeUnit = timeoutConfig.getLockTimeoutUnit();
+
+            if (globalLock.tryLock(timeoutConfig.getLockTimeout(), timeoutConfig.getLockTimeoutUnit(), DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT)) {
                 acquireGlobalFileLock(pPath);
             } else {
-                lockAcquisitionFailed(pPath, format("Lock acquisition timed out after %d %s", pTimeout, pTimeoutUnit), null);
+                lockAcquisitionFailed(pPath, format("Lock acquisition timed out after %d %s", lockTimeout, lockTimeUnit), null);
             }
         } catch (final InterruptedException e) {
             currentThread().interrupt();
@@ -116,7 +125,7 @@ public class LockManager {
         }
     }
 
-    public void unlockGlobally(final String pPath) throws UnlockException {
+    public void unlock(final String pPath) throws UnlockException {
         final ILock lock = globalLocks.remove(pPath);
         if (lock != null) {
             try {

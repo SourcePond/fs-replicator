@@ -15,7 +15,7 @@ package ch.sourcepond.io.distributor.impl.lock;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
 import ch.sourcepond.io.distributor.impl.common.client.ClientListener;
-import ch.sourcepond.io.distributor.impl.response.StatusResponse;
+import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.MemberAttributeEvent;
@@ -33,7 +33,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 class ClientLockListener extends ClientListener<String> implements MembershipListener {
     private static final Logger LOG = getLogger(ClientLockListener.class);
 
-    public ClientLockListener(final Receiver pReceiver, final ITopic<StatusResponse> pSendFileLockResponseTopic) {
+    public ClientLockListener(final Receiver pReceiver, final ITopic<StatusMessage> pSendFileLockResponseTopic) {
         super(pReceiver, pSendFileLockResponseTopic);
     }
 

@@ -15,10 +15,10 @@ package ch.sourcepond.io.distributor.impl.common.client;
 
 import ch.sourcepond.io.distributor.impl.common.DistributionMessage;
 
-public class DataRequest extends DistributionMessage {
+public class TransferRequest extends DistributionMessage {
     private final byte[] data;
 
-    public DataRequest(final String pPath, final byte[] pData) {
+    public TransferRequest(final String pPath, final byte[] pData) {
         super(pPath);
         data = pData;
     }

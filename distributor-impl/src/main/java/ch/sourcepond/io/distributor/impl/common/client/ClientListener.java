@@ -14,7 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.common.client;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.response.StatusResponse;
+import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.Message;
@@ -25,9 +25,9 @@ import java.io.IOException;
 
 public abstract class ClientListener<T> implements MessageListener<T> {
     protected final Receiver receiver;
-    private final ITopic<StatusResponse> sendResponseTopic;
+    private final ITopic<StatusMessage> sendResponseTopic;
 
-    public ClientListener(final Receiver pReceiver, final ITopic<StatusResponse> pSendResponseTopic) {
+    public ClientListener(final Receiver pReceiver, final ITopic<StatusMessage> pSendResponseTopic) {
         receiver = pReceiver;
         sendResponseTopic = pSendResponseTopic;
     }
@@ -46,10 +46,10 @@ public abstract class ClientListener<T> implements MessageListener<T> {
 
         try {
             processMessage(globalPath, payload);
-            sendResponseTopic.publish(new StatusResponse(path));
+            sendResponseTopic.publish(new StatusMessage(path));
         } catch (final IOException e) {
             getLog().error(e.getMessage(), e);
-            sendResponseTopic.publish(new StatusResponse(path, e));
+            sendResponseTopic.publish(new StatusMessage(path, e));
         }
     }
 }

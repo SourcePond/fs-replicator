@@ -14,14 +14,14 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.common.client;
 
 import ch.sourcepond.io.distributor.impl.common.DistributionMessage;
-import ch.sourcepond.io.distributor.impl.response.StatusResponse;
+import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 
 public abstract class DistributionMessageClientListener<T extends DistributionMessage> extends ClientListener<T> {
 
     public DistributionMessageClientListener(final Receiver pReceiver,
-                                             final ITopic<StatusResponse> pSendResponseTopic) {
+                                             final ITopic<StatusMessage> pSendResponseTopic) {
         super(pReceiver, pSendResponseTopic);
     }
 

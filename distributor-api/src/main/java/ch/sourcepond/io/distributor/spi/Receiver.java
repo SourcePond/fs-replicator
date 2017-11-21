@@ -42,7 +42,7 @@ public interface Receiver {
      */
     void receive(GlobalPath pPath, ByteBuffer pBuffer);
 
-    void store(GlobalPath pPath) throws IOException;
+    void store(GlobalPath pPath, IOException pFailureOrNull) throws IOException;
 
     /**
      * Unlocks and removes any state which associated with the node-id specified. This method should be called

@@ -15,7 +15,7 @@ package ch.sourcepond.io.distributor.impl.dataflow;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
 import ch.sourcepond.io.distributor.impl.common.client.ClientListener;
-import ch.sourcepond.io.distributor.impl.response.StatusResponse;
+import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
@@ -27,7 +27,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 final class DeleteRequestListener extends ClientListener<String> {
     private static final Logger LOG = getLogger(DeleteRequestListener.class);
 
-    public DeleteRequestListener(final Receiver pReceiver, final ITopic<StatusResponse> pSendResponseTopic) {
+    public DeleteRequestListener(final Receiver pReceiver, final ITopic<StatusMessage> pSendResponseTopic) {
         super(pReceiver, pSendResponseTopic);
     }
 

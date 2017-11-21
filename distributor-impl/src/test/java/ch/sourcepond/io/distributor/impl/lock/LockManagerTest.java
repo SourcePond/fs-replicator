@@ -24,7 +24,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
-import org.mockito.Mockito;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -79,8 +78,8 @@ public class LockManagerTest {
     @Test
     public void keepSameLockInstance() throws Exception {
         when(hci.getLock(EXPECTED_PATH)).thenReturn(lock).thenThrow(AssertionError.class);
-        manager.lockGlobally(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
-        manager.lockGlobally(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
+        manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
+        manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
 
         // Should have been called exactly once
         verify(hci).getLock(EXPECTED_PATH);
@@ -92,11 +91,11 @@ public class LockManagerTest {
         final ILock l2 = setup(mock(ILock.class));
 
         when(hci.getLock(EXPECTED_PATH)).thenReturn(l1).thenReturn(l2);
-        manager.lockGlobally(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
-        manager.unlockGlobally(EXPECTED_PATH);
+        manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
+        manager.unlock(EXPECTED_PATH);
         verify(l1).unlock();
-        manager.lockGlobally(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
-        manager.unlockGlobally(EXPECTED_PATH);
+        manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
+        manager.unlock(EXPECTED_PATH);
         verify(l2).unlock();
     }
 
@@ -106,7 +105,7 @@ public class LockManagerTest {
         final StatusResponseException expected = new StatusResponseException("any");
         doThrow(expected).when(unlockListener).awaitResponse(EXPECTED_PATH);
         try {
-            manager.lockGlobally(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
+            manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
             fail("Exception expected");
         } catch (final LockException e) {
             assertNull(e.getCause());
@@ -123,7 +122,7 @@ public class LockManagerTest {
     public void tryLockReturnedFalse() throws Exception {
         when(lock.tryLock(EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT, DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT)).thenReturn(false);
         try {
-            manager.lockGlobally(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
+            manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
             fail("Exception expected");
         } catch (final LockException e) {
             assertNull(e.getCause());
@@ -137,7 +136,7 @@ public class LockManagerTest {
         final InterruptedException expected = new InterruptedException();
         doThrow(expected).when(lock).tryLock(EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT, DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT);
         try {
-            manager.lockGlobally(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
+            manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
             fail("Exception expected");
         } catch (final LockException e) {
             assertSame(expected, e.getCause());
@@ -152,7 +151,7 @@ public class LockManagerTest {
         doThrow(expected).when(lockListener).awaitResponse(EXPECTED_PATH);
 
         try {
-            manager.lockGlobally(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
+            manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
             fail("Exception expected");
         } catch (final LockException e) {
             assertSame(expected, e.getCause());
@@ -164,15 +163,15 @@ public class LockManagerTest {
     @Test
     public void unlockGloballyNoLockRegistered() throws Exception {
         // No exception should be thrown
-        manager.unlockGlobally("unknown");
+        manager.unlock("unknown");
     }
 
     @Test
     public void lockUnlockGlobally() throws Exception {
         assertFalse(manager.isLocked(EXPECTED_PATH));
-        manager.lockGlobally(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
+        manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
         assertTrue(manager.isLocked(EXPECTED_PATH));
-        manager.unlockGlobally(EXPECTED_PATH);
+        manager.unlock(EXPECTED_PATH);
         assertFalse(manager.isLocked(EXPECTED_PATH));
         final InOrder order = inOrder(lock, lockListener, unlockListener);
         order.verify(lock).tryLock(EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT, DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT);

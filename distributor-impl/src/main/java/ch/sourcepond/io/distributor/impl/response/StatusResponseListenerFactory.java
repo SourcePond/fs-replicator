@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.response;
 
+import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.spi.TimeoutConfig;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
@@ -20,11 +21,11 @@ import com.hazelcast.core.ITopic;
 import java.io.Serializable;
 
 public class StatusResponseListenerFactory {
-    private final ITopic<StatusResponse> responseTopic;
+    private final ITopic<StatusMessage> responseTopic;
     private final TimeoutConfig timeoutConfig;
     private final Cluster cluster;
 
-    public StatusResponseListenerFactory(final ITopic<StatusResponse> pResponseTopic,
+    public StatusResponseListenerFactory(final ITopic<StatusMessage> pResponseTopic,
                                          final TimeoutConfig pTimeoutConfig,
                                          final Cluster pCluster) {
         responseTopic = pResponseTopic;

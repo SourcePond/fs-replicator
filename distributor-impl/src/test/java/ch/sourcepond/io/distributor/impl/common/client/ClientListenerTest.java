@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.common.client;
 
-import ch.sourcepond.io.distributor.impl.response.StatusResponse;
+import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.Member;
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.when;
 
 public abstract class ClientListenerTest<L extends MessageListener<M>, M> {
     protected final Receiver receiver = mock(Receiver.class);
-    protected final ITopic<StatusResponse> sendResponseTopic = mock(ITopic.class);
+    protected final ITopic<StatusMessage> sendResponseTopic = mock(ITopic.class);
     protected final Member member = mock(Member.class);
     protected Message<M> message = mock(Message.class);
     protected M payload;

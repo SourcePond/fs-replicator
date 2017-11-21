@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.common.master;
 
-import ch.sourcepond.io.distributor.impl.response.StatusResponse;
+import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -22,12 +22,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
-public class StatusResponseTest {
+public class StatusMessageTest {
     private static final String EXPECTED_PATH = "somePath";
 
     @Test
     public void success() {
-        final StatusResponse response = new StatusResponse(EXPECTED_PATH);
+        final StatusMessage response = new StatusMessage(EXPECTED_PATH);
         assertEquals(EXPECTED_PATH, response.getPath());
         assertNull(response.getFailureOrNull());
     }
@@ -35,7 +35,7 @@ public class StatusResponseTest {
     @Test
     public void failure() {
         final IOException expected = new IOException();
-        final StatusResponse response = new StatusResponse(EXPECTED_PATH, expected);
+        final StatusMessage response = new StatusMessage(EXPECTED_PATH, expected);
         assertEquals(EXPECTED_PATH, response.getPath());
         assertSame(expected, response.getFailureOrNull());
     }

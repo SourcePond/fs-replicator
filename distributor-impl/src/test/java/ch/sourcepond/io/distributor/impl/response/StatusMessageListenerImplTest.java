@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.response;
 
+import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.spi.TimeoutConfig;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
@@ -44,23 +45,23 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-public class StatusResponseListenerImplTest {
+public class StatusMessageListenerImplTest {
     private static final String EXPECTED_FAILURE_MESSAGE = "someMessage";
     private static final String EXPECTED_PATH = "anyPath";
     private static final long EXPECTED_TIMEOUT = 500;
     private static final TimeUnit EXPECTED_UNIT = MILLISECONDS;
     private final ITopic<String> requestTopic = mock(ITopic.class);
-    private final ITopic<StatusResponse> responseTopic = mock(ITopic.class);
+    private final ITopic<StatusMessage> responseTopic = mock(ITopic.class);
     private final TimeoutConfig timeoutConfig = mock(TimeoutConfig.class);
     private final Member member = mock(Member.class);
     private final Cluster cluster = mock(Cluster.class);
     private final Set<Member> members = new HashSet<>(asList(member));
-    private final Message<StatusResponse> message = mock(Message.class);
+    private final Message<StatusMessage> message = mock(Message.class);
     private final MembershipEvent event = mock(MembershipEvent.class);
     private final ScheduledExecutorService executor = newSingleThreadScheduledExecutor();
     private final StatusResponseListenerImpl<String> listener = new StatusResponseListenerImpl<>(
             EXPECTED_PATH, requestTopic, responseTopic, timeoutConfig, cluster);
-    private StatusResponse payload = new StatusResponse(EXPECTED_PATH);
+    private StatusMessage payload = new StatusMessage(EXPECTED_PATH);
     private volatile boolean run;
 
     @Before
@@ -119,7 +120,7 @@ public class StatusResponseListenerImplTest {
     @Test(timeout = 2000)
     public void validateAnswers() throws Exception {
         final IOException expected = new IOException(EXPECTED_FAILURE_MESSAGE);
-        payload = new StatusResponse(EXPECTED_PATH, expected);
+        payload = new StatusMessage(EXPECTED_PATH, expected);
         when(message.getMessageObject()).thenReturn(payload);
         listener.onMessage(message);
         try {
