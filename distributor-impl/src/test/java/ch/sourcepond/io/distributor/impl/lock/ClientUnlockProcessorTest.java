@@ -14,7 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.spi.Receiver;
+import ch.sourcepond.io.distributor.impl.common.ClientMessageProcessorTest;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -25,10 +25,13 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-public class ClientUnlockProcessorTest {
-    private final Receiver receiver = mock(Receiver.class);
+public class ClientUnlockProcessorTest extends ClientMessageProcessorTest<String, ClientUnlockProcessor> {
     private final GlobalPath globalPath = mock(GlobalPath.class);
-    private final ClientUnlockProcessor processor = new ClientUnlockProcessor(receiver);
+
+    @Override
+    protected ClientUnlockProcessor createProcessor() {
+        return new ClientUnlockProcessor(receiver);
+    }
 
     @Test
     public void toPath() {

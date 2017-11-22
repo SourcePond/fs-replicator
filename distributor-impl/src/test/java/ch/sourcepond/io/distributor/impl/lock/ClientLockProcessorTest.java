@@ -14,8 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.Constants;
-import ch.sourcepond.io.distributor.spi.Receiver;
+import ch.sourcepond.io.distributor.impl.common.ClientMessageProcessorTest;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MembershipEvent;
@@ -31,11 +30,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-public class ClientLockProcessorTest {
-    private final Receiver receiver = mock(Receiver.class);
+public class ClientLockProcessorTest extends ClientMessageProcessorTest<String, ClientLockProcessor> {
     private final GlobalPath globalPath = mock(GlobalPath.class);
     private final Member member = mock(Member.class);
-    private final ClientLockProcessor processor = new ClientLockProcessor(receiver);
+
+    @Override
+    protected ClientLockProcessor createProcessor() {
+        return new ClientLockProcessor(receiver);
+    }
 
     @Test
     public void processSuccess() throws Exception {
