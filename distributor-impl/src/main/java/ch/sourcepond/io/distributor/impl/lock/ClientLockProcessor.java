@@ -19,17 +19,13 @@ import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
-import org.slf4j.Logger;
 
 import java.io.IOException;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Listener to acquire a local file-lock.
  */
 class ClientLockProcessor extends ClientMessageProcessor<String> implements MembershipListener {
-    private static final Logger LOG = getLogger(ClientLockProcessor.class);
 
     public ClientLockProcessor(final Receiver pReceiver) {
         super(pReceiver);
