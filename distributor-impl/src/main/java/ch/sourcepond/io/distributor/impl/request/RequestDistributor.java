@@ -16,9 +16,11 @@ package ch.sourcepond.io.distributor.impl.request;
 import ch.sourcepond.io.distributor.api.exception.DeletionException;
 import ch.sourcepond.io.distributor.api.exception.ModificationException;
 import ch.sourcepond.io.distributor.api.exception.StoreException;
+import ch.sourcepond.io.distributor.impl.common.ClientMessageProcessor;
 import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.impl.response.ResponseException;
 import ch.sourcepond.io.distributor.impl.response.ClusterResponseBarrierFactory;
+import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 
 import java.io.IOException;
@@ -70,5 +72,17 @@ public class RequestDistributor {
         } catch (final TimeoutException | ResponseException e) {
             throw new DeletionException(format("Deletion of %s failed on some node!", pPath), e);
         }
+    }
+
+    public ClientMessageProcessor<String> createDeleteProcessor(final Receiver pReceiver) {
+        return new DeleteRequestProcessor(pReceiver);
+    }
+
+    public ClientMessageProcessor<TransferRequest> createTransferProcessor(final Receiver pReceiver) {
+        return new TransferRequestProcessor(pReceiver);
+    }
+
+    public ClientMessageProcessor<StatusMessage> createStoreProcessor(final Receiver pReceiver) {
+        return new StoreRequestProcessor(pReceiver);
     }
 }

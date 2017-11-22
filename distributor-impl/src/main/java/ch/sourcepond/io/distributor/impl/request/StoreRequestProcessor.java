@@ -15,28 +15,27 @@ package ch.sourcepond.io.distributor.impl.request;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
 import ch.sourcepond.io.distributor.impl.common.ClientMessageProcessor;
+import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 
-import static java.nio.ByteBuffer.wrap;
 import static org.slf4j.LoggerFactory.getLogger;
 
-final class TransferRequestListener extends ClientMessageProcessor<TransferRequest> {
-    private static final Logger LOG = getLogger(TransferRequestListener.class);
+final class StoreRequestProcessor extends ClientMessageProcessor<StatusMessage> {
 
-    public TransferRequestListener(final Receiver pReceiver) {
+    public StoreRequestProcessor(final Receiver pReceiver) {
         super(pReceiver);
     }
 
     @Override
-    protected String toPath(final TransferRequest pMessage) {
+    protected String toPath(final StatusMessage pMessage) {
         return pMessage.getPath();
     }
 
     @Override
-    protected void processMessage(final GlobalPath pPath, final TransferRequest pMessage) throws IOException {
-        receiver.receive(pPath, wrap(pMessage.getData()));
+    protected void processMessage(final GlobalPath pPath, final StatusMessage pMessage) throws IOException {
+        receiver.store(pPath, pMessage.getFailureOrNull());
     }
 }

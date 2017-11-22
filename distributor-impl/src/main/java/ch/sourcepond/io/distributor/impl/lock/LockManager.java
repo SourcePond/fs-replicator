@@ -15,8 +15,10 @@ package ch.sourcepond.io.distributor.impl.lock;
 
 import ch.sourcepond.io.distributor.api.exception.LockException;
 import ch.sourcepond.io.distributor.api.exception.UnlockException;
+import ch.sourcepond.io.distributor.impl.common.ClientMessageProcessor;
 import ch.sourcepond.io.distributor.impl.response.ResponseException;
 import ch.sourcepond.io.distributor.impl.response.ClusterResponseBarrierFactory;
+import ch.sourcepond.io.distributor.spi.Receiver;
 import ch.sourcepond.io.distributor.spi.TimeoutConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ILock;
@@ -128,5 +130,13 @@ public class LockManager {
         } finally {
             lock.unlock();
         }
+    }
+
+    public ClientMessageProcessor<String> createLockProcessor(final Receiver pReceiver) {
+        return new ClientLockProcessor(pReceiver);
+    }
+
+    public ClientMessageProcessor<String> createUnlockProcessor(final Receiver pReceiver) {
+        return new ClientUnlockProcessor(pReceiver);
     }
 }

@@ -14,31 +14,28 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.request;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.common.ClientMessageListener;
 import ch.sourcepond.io.distributor.impl.common.ClientMessageProcessor;
-import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
-import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 
+import static java.nio.ByteBuffer.wrap;
 import static org.slf4j.LoggerFactory.getLogger;
 
-public final class DeleteRequestListener extends ClientMessageProcessor<String> {
-    private static final Logger LOG = getLogger(DeleteRequestListener.class);
+final class TransferRequestProcessor extends ClientMessageProcessor<TransferRequest> {
 
-    public DeleteRequestListener(final Receiver pReceiver) {
+    public TransferRequestProcessor(final Receiver pReceiver) {
         super(pReceiver);
     }
 
     @Override
-    protected void processMessage(final GlobalPath pPath, final String pMessage) throws IOException {
-        receiver.delete(pPath);
+    protected String toPath(final TransferRequest pMessage) {
+        return pMessage.getPath();
     }
 
     @Override
-    protected String toPath(final String pMessage) {
-        return pMessage;
+    protected void processMessage(final GlobalPath pPath, final TransferRequest pMessage) throws IOException {
+        receiver.receive(pPath, wrap(pMessage.getData()));
     }
 }

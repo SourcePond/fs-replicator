@@ -15,28 +15,23 @@ package ch.sourcepond.io.distributor.impl.request;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
 import ch.sourcepond.io.distributor.impl.common.ClientMessageProcessor;
-import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
-import org.slf4j.Logger;
 
 import java.io.IOException;
 
-import static org.slf4j.LoggerFactory.getLogger;
+public final class DeleteRequestProcessor extends ClientMessageProcessor<String> {
 
-final class StoreRequestListener extends ClientMessageProcessor<StatusMessage> {
-    private static final Logger LOG = getLogger(StoreRequestListener.class);
-
-    public StoreRequestListener(final Receiver pReceiver) {
+    public DeleteRequestProcessor(final Receiver pReceiver) {
         super(pReceiver);
     }
 
     @Override
-    protected String toPath(final StatusMessage pMessage) {
-        return pMessage.getPath();
+    protected void processMessage(final GlobalPath pPath, final String pMessage) throws IOException {
+        receiver.delete(pPath);
     }
 
     @Override
-    protected void processMessage(final GlobalPath pPath, final StatusMessage pMessage) throws IOException {
-        receiver.store(pPath, pMessage.getFailureOrNull());
+    protected String toPath(final String pMessage) {
+        return pMessage;
     }
 }

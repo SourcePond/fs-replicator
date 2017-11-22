@@ -18,11 +18,9 @@ import ch.sourcepond.io.distributor.api.DistributorFactory;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import ch.sourcepond.io.distributor.spi.TimeoutConfig;
 import com.hazelcast.config.Config;
-import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
 import java.util.Map;
-import java.util.Objects;
 
 import static com.hazelcast.core.Hazelcast.getHazelcastInstanceByName;
 import static com.hazelcast.core.Hazelcast.getOrCreateHazelcastInstance;
@@ -54,8 +52,6 @@ public class HazelcastDistributorFactory implements DistributorFactory {
             hci = requireNonNull(getHazelcastInstanceByName(name),
                     format("No Hazelcast instance found with name %s", name));
         }
-
-
 
         return null;
     }
