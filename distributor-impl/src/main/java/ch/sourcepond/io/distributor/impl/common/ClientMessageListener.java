@@ -11,44 +11,39 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.common.client;
+package ch.sourcepond.io.distributor.impl.common;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.common.StatusMessage;
-import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.Serializable;
 
-public abstract class ClientListener<T> implements MessageListener<T> {
-    protected final Receiver receiver;
+final class ClientMessageListener<T extends Serializable> implements MessageListener<T> {
+    private static final Logger LOG = LoggerFactory.getLogger(ClientMessageListener.class);
+    private final ClientMessageProcessor<T> processor;
     private final ITopic<StatusMessage> sendResponseTopic;
 
-    public ClientListener(final Receiver pReceiver, final ITopic<StatusMessage> pSendResponseTopic) {
-        receiver = pReceiver;
+    public ClientMessageListener(final ClientMessageProcessor<T> pProcessor, final ITopic<StatusMessage> pSendResponseTopic) {
+        processor = pProcessor;
         sendResponseTopic = pSendResponseTopic;
     }
-
-    protected abstract Logger getLog();
-
-    protected abstract void processMessage(GlobalPath pPath, T pPayload) throws IOException;
-
-    protected abstract String toPath(T pPayload);
 
     @Override
     public final void onMessage(final Message<T> message) {
         final T payload = message.getMessageObject();
-        final String path = toPath(payload);
+        final String path = processor.toPath(payload);
         final GlobalPath globalPath = new GlobalPath(message.getPublishingMember().getUuid(), path);
 
         try {
-            processMessage(globalPath, payload);
+            processor.processMessage(globalPath, payload);
             sendResponseTopic.publish(new StatusMessage(path));
         } catch (final IOException e) {
-            getLog().error(e.getMessage(), e);
+            LOG.error(e.getMessage(), e);
             sendResponseTopic.publish(new StatusMessage(path, e));
         }
     }

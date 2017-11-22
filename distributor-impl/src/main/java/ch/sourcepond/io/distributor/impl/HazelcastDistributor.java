@@ -19,7 +19,7 @@ import ch.sourcepond.io.distributor.api.exception.LockException;
 import ch.sourcepond.io.distributor.api.exception.ModificationException;
 import ch.sourcepond.io.distributor.api.exception.StoreException;
 import ch.sourcepond.io.distributor.api.exception.UnlockException;
-import ch.sourcepond.io.distributor.impl.dataflow.DataflowManager;
+import ch.sourcepond.io.distributor.impl.request.RequestDistributor;
 import ch.sourcepond.io.distributor.impl.lock.LockManager;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
@@ -29,21 +29,24 @@ import java.nio.ByteBuffer;
 
 import static java.util.Objects.requireNonNull;
 
-public class DistributorImpl implements Distributor {
+final class HazelcastDistributor implements Distributor {
     private static final byte[] EMPTY_CHECKSUM = new byte[0];
     private final HazelcastInstance hci;
+    private final boolean shutdownOnClose;
     private final IMap<String, byte[]> checksums;
     private final LockManager lockManager;
-    private final DataflowManager dataflowManager;
+    private final RequestDistributor requestDistributor;
 
-    public DistributorImpl(final HazelcastInstance pHci,
-                           final IMap<String, byte[]> pChecksum,
-                           final LockManager pLockManager,
-                           final DataflowManager pDataflowManager) {
+    public HazelcastDistributor(final HazelcastInstance pHci,
+                                final boolean pShutdownOnClose,
+                                final IMap<String, byte[]> pChecksum,
+                                final LockManager pLockManager,
+                                final RequestDistributor pRequestDistributor) {
         hci = pHci;
+        shutdownOnClose = pShutdownOnClose;
         checksums = pChecksum;
         lockManager = pLockManager;
-        dataflowManager = pDataflowManager;
+        requestDistributor = pRequestDistributor;
     }
 
     @Override
@@ -63,18 +66,18 @@ public class DistributorImpl implements Distributor {
 
     @Override
     public void delete(final String pPath) throws DeletionException {
-        dataflowManager.delete(requireNonNull(pPath, "path is null"));
+        requestDistributor.delete(requireNonNull(pPath, "path is null"));
     }
 
     @Override
     public void transfer(final String pPath, final ByteBuffer pData) throws ModificationException {
-        dataflowManager.transfer(requireNonNull(pPath, "path is null"), requireNonNull(pData, "buffer is null"));
+        requestDistributor.transfer(requireNonNull(pPath, "path is null"), requireNonNull(pData, "buffer is null"));
     }
 
     @Override
     public void store(final String pPath, final byte[] pChecksum, final IOException pFailureOrNull) throws StoreException {
         requireNonNull(pChecksum, "checksum is null");
-        dataflowManager.store(requireNonNull(pPath, "path is null"), pFailureOrNull);
+        requestDistributor.store(requireNonNull(pPath, "path is null"), pFailureOrNull);
 
         // Do only update the checksum when the store operation was successful
         checksums.put(pPath, pChecksum);
@@ -89,5 +92,12 @@ public class DistributorImpl implements Distributor {
     public byte[] getChecksum(final String pPath) {
         final byte[] checksum = checksums.get(requireNonNull(pPath, "path is null"));
         return checksum == null ? EMPTY_CHECKSUM : checksum;
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (shutdownOnClose) {
+            hci.shutdown();
+        }
     }
 }

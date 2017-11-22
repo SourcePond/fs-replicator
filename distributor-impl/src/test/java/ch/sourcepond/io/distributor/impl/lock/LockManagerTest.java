@@ -15,9 +15,9 @@ package ch.sourcepond.io.distributor.impl.lock;
 
 import ch.sourcepond.io.distributor.api.exception.LockException;
 import ch.sourcepond.io.distributor.api.exception.UnlockException;
-import ch.sourcepond.io.distributor.impl.response.StatusResponseException;
-import ch.sourcepond.io.distributor.impl.response.StatusResponseListener;
-import ch.sourcepond.io.distributor.impl.response.StatusResponseListenerFactory;
+import ch.sourcepond.io.distributor.impl.response.ResponseException;
+import ch.sourcepond.io.distributor.impl.response.ClusterResponseBarrier;
+import ch.sourcepond.io.distributor.impl.response.ClusterResponseBarrierFactory;
 import ch.sourcepond.io.distributor.spi.TimeoutConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ILock;
@@ -53,9 +53,9 @@ public class LockManagerTest {
     private final HazelcastInstance hci = mock(HazelcastInstance.class);
     private final ILock lock = mock(ILock.class);
     private final TimeoutConfig timeoutConfig = mock(TimeoutConfig.class);
-    private final StatusResponseListener<String> lockListener = mock(StatusResponseListener.class);
-    private final StatusResponseListener<String> unlockListener = mock(StatusResponseListener.class);
-    private final StatusResponseListenerFactory factory = mock(StatusResponseListenerFactory.class);
+    private final ClusterResponseBarrier<String> lockListener = mock(ClusterResponseBarrier.class);
+    private final ClusterResponseBarrier<String> unlockListener = mock(ClusterResponseBarrier.class);
+    private final ClusterResponseBarrierFactory factory = mock(ClusterResponseBarrierFactory.class);
     private final ITopic<String> lockRequestTopic = mock(ITopic.class);
     private final ITopic<String> unlockRequestTopic = mock(ITopic.class);
     private final LockManager manager = new LockManager(hci, timeoutConfig, factory, lockRequestTopic, unlockRequestTopic);
@@ -83,7 +83,7 @@ public class LockManagerTest {
     @Test
     public void verifyUnlockWhenReleaseFileLockFails() throws Exception {
         when(lock.tryLock(EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT, DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT)).thenReturn(false);
-        final StatusResponseException expected = new StatusResponseException("any");
+        final ResponseException expected = new ResponseException("any");
         doThrow(expected).when(unlockListener).awaitResponse(EXPECTED_PATH);
         try {
             manager.lock(EXPECTED_PATH);

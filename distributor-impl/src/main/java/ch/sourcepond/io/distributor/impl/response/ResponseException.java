@@ -11,19 +11,15 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.common.client;
+package ch.sourcepond.io.distributor.impl.response;
 
-import ch.sourcepond.io.distributor.impl.common.DistributionMessage;
+public class ResponseException extends Exception {
 
-public class TransferRequest extends DistributionMessage {
-    private final byte[] data;
-
-    public TransferRequest(final String pPath, final byte[] pData) {
-        super(pPath);
-        data = pData;
+    public ResponseException(final String pMessage) {
+        super(pMessage);
     }
 
-    public byte[] getData() {
-        return data;
+    public ResponseException(final String pMessage, final Throwable pCause) {
+        super(pMessage, pCause);
     }
 }

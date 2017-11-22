@@ -14,10 +14,8 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.common.client.ClientListener;
-import ch.sourcepond.io.distributor.impl.common.StatusMessage;
+import ch.sourcepond.io.distributor.impl.common.ClientMessageProcessor;
 import ch.sourcepond.io.distributor.spi.Receiver;
-import com.hazelcast.core.ITopic;
 import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
@@ -30,26 +28,21 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Listener to acquire a local file-lock.
  */
-class ClientLockListener extends ClientListener<String> implements MembershipListener {
-    private static final Logger LOG = getLogger(ClientLockListener.class);
+class ClientLockProcessor extends ClientMessageProcessor<String> implements MembershipListener {
+    private static final Logger LOG = getLogger(ClientLockProcessor.class);
 
-    public ClientLockListener(final Receiver pReceiver, final ITopic<StatusMessage> pSendFileLockResponseTopic) {
-        super(pReceiver, pSendFileLockResponseTopic);
+    public ClientLockProcessor(final Receiver pReceiver) {
+        super(pReceiver);
     }
 
     @Override
-    protected Logger getLog() {
-        return LOG;
-    }
-
-    @Override
-    protected void processMessage(final GlobalPath pPath, final String pPayload) throws IOException {
+    public void processMessage(final GlobalPath pPath, final String pMessage) throws IOException {
         receiver.lockLocally(pPath);
     }
 
     @Override
-    protected String toPath(final String pPayload) {
-        return pPayload;
+    public String toPath(final String pMessage) {
+        return pMessage;
     }
 
     @Override

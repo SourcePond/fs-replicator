@@ -25,7 +25,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
-import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -49,7 +48,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-public class StatusResponseListenerImplTest {
+public class ClusterResponseBarrierImplTest {
     private static final String EXPECTED_FAILURE_MESSAGE = "someMessage";
     private static final String EXPECTED_MEMBERSHIP_ID = "someMembershipId";
     private static final String EXPECTED_REGISTRATION_ID = "someRegistrationId";
@@ -66,7 +65,7 @@ public class StatusResponseListenerImplTest {
     private final MembershipEvent event = mock(MembershipEvent.class);
     private final ScheduledExecutorService executor = newSingleThreadScheduledExecutor();
     private StatusMessage payload = new StatusMessage(EXPECTED_PATH);
-    private StatusResponseListenerImpl<String> listener;
+    private ClusterResponseBarrierImpl<String> listener;
     private volatile boolean run;
 
     @Before
@@ -79,7 +78,7 @@ public class StatusResponseListenerImplTest {
         when(message.getPublishingMember()).thenReturn(member);
         when(message.getMessageObject()).thenReturn(payload);
         when(event.getMember()).thenReturn(member);
-        listener = new StatusResponseListenerImpl<>(EXPECTED_PATH, requestTopic, responseTopic, timeoutConfig, cluster);
+        listener = new ClusterResponseBarrierImpl<>(EXPECTED_PATH, requestTopic, responseTopic, timeoutConfig, cluster);
         when(cluster.addMembershipListener(listener)).thenReturn(EXPECTED_MEMBERSHIP_ID);
         when(responseTopic.addMessageListener(listener)).thenReturn(EXPECTED_REGISTRATION_ID);
     }
@@ -120,7 +119,7 @@ public class StatusResponseListenerImplTest {
         try {
             listener.awaitResponse(EXPECTED_PATH);
             fail("Exception expected");
-        } catch (final StatusResponseException e) {
+        } catch (final ResponseException e) {
             final Throwable cause = e.getCause();
             assertNotNull(cause);
             assertSame(InterruptedException.class, cause.getClass());
@@ -136,7 +135,7 @@ public class StatusResponseListenerImplTest {
         try {
             listener.awaitResponse(EXPECTED_PATH);
             fail("Exception expected");
-        } catch (final StatusResponseException e) {
+        } catch (final ResponseException e) {
             assertTrue(expected.getMessage().contains(EXPECTED_FAILURE_MESSAGE));
         }
     }
@@ -144,6 +143,11 @@ public class StatusResponseListenerImplTest {
     @Test(timeout = 5000, expected = TimeoutException.class)
     public void awaitNodeAnswersWaitTimedOut() throws Exception {
         listener.awaitResponse(EXPECTED_PATH);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void awaitResponseMessageIsNull() throws Exception {
+        listener.awaitResponse(null);
     }
 
     @Test

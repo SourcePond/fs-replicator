@@ -20,20 +20,26 @@ import com.hazelcast.core.ITopic;
 
 import java.io.Serializable;
 
-public class StatusResponseListenerFactory {
+/**
+ * Factory to create {@link ClusterResponseBarrier} instances.
+ */
+public class ClusterResponseBarrierFactory {
     private final ITopic<StatusMessage> responseTopic;
     private final TimeoutConfig timeoutConfig;
     private final Cluster cluster;
 
-    public StatusResponseListenerFactory(final ITopic<StatusMessage> pResponseTopic,
+    public ClusterResponseBarrierFactory(final ITopic<StatusMessage> pResponseTopic,
                                          final TimeoutConfig pTimeoutConfig,
                                          final Cluster pCluster) {
+        assert pResponseTopic != null : "pResponseTopic is null";
+        assert pTimeoutConfig != null : "pTimeoutConfig is null";
+        assert pCluster != null : "pCluster cannot be null";
         responseTopic = pResponseTopic;
         timeoutConfig = pTimeoutConfig;
         cluster = pCluster;
     }
 
-    public <T extends Serializable> StatusResponseListener<T> create(final String pPath, final ITopic<T> pRequestTopic) {
-        return new StatusResponseListenerImpl<T>(pPath, pRequestTopic, responseTopic, timeoutConfig, cluster);
+    public <T extends Serializable> ClusterResponseBarrier<T> create(final String pPath, final ITopic<T> pRequestTopic) {
+        return new ClusterResponseBarrierImpl<T>(pPath, pRequestTopic, responseTopic, timeoutConfig, cluster);
     }
 }

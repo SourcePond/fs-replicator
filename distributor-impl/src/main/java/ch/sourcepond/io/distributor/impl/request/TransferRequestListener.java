@@ -11,38 +11,32 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.dataflow;
+package ch.sourcepond.io.distributor.impl.request;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.common.client.ClientListener;
-import ch.sourcepond.io.distributor.impl.common.StatusMessage;
+import ch.sourcepond.io.distributor.impl.common.ClientMessageProcessor;
 import ch.sourcepond.io.distributor.spi.Receiver;
-import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 
+import static java.nio.ByteBuffer.wrap;
 import static org.slf4j.LoggerFactory.getLogger;
 
-final class DeleteRequestListener extends ClientListener<String> {
-    private static final Logger LOG = getLogger(DeleteRequestListener.class);
+final class TransferRequestListener extends ClientMessageProcessor<TransferRequest> {
+    private static final Logger LOG = getLogger(TransferRequestListener.class);
 
-    public DeleteRequestListener(final Receiver pReceiver, final ITopic<StatusMessage> pSendResponseTopic) {
-        super(pReceiver, pSendResponseTopic);
+    public TransferRequestListener(final Receiver pReceiver) {
+        super(pReceiver);
     }
 
     @Override
-    protected Logger getLog() {
-        return LOG;
+    protected String toPath(final TransferRequest pMessage) {
+        return pMessage.getPath();
     }
 
     @Override
-    protected void processMessage(final GlobalPath pPath, final String pPayload) throws IOException {
-        receiver.delete(pPath);
-    }
-
-    @Override
-    protected String toPath(final String pPayload) {
-        return pPayload;
+    protected void processMessage(final GlobalPath pPath, final TransferRequest pMessage) throws IOException {
+        receiver.receive(pPath, wrap(pMessage.getData()));
     }
 }

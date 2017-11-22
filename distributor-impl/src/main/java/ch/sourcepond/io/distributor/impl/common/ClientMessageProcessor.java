@@ -11,22 +11,21 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.common.client;
+package ch.sourcepond.io.distributor.impl.common;
 
-import ch.sourcepond.io.distributor.impl.common.DistributionMessage;
-import ch.sourcepond.io.distributor.impl.common.StatusMessage;
+import ch.sourcepond.io.distributor.api.GlobalPath;
 import ch.sourcepond.io.distributor.spi.Receiver;
-import com.hazelcast.core.ITopic;
 
-public abstract class DistributionMessageClientListener<T extends DistributionMessage> extends ClientListener<T> {
+import java.io.IOException;
 
-    public DistributionMessageClientListener(final Receiver pReceiver,
-                                             final ITopic<StatusMessage> pSendResponseTopic) {
-        super(pReceiver, pSendResponseTopic);
+public abstract class ClientMessageProcessor<T> {
+    protected final Receiver receiver;
+
+    public ClientMessageProcessor(final Receiver pReceiver) {
+        receiver = pReceiver;
     }
 
-    @Override
-    protected String toPath(T pPayload) {
-        return pPayload.getPath();
-    }
+    protected abstract void processMessage(GlobalPath pPath, T pPayload) throws IOException;
+
+    protected abstract String toPath(T pPayload);
 }

@@ -19,13 +19,14 @@ import ch.sourcepond.io.distributor.api.exception.ModificationException;
 import ch.sourcepond.io.distributor.api.exception.StoreException;
 import ch.sourcepond.io.distributor.api.exception.UnlockException;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
  * This interface provides access to the underlying distribution mechanism.
  */
-public interface Distributor {
+public interface Distributor extends AutoCloseable {
 
     /**
      * Tries to lock the path specified in the network. If successful, this method simply returns.

@@ -11,12 +11,19 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.response;
+package ch.sourcepond.io.distributor.impl.request;
 
-import java.io.Serializable;
-import java.util.concurrent.TimeoutException;
+import ch.sourcepond.io.distributor.impl.common.DistributionMessage;
 
-public interface StatusResponseListener<T extends Serializable> {
+public class TransferRequest extends DistributionMessage {
+    private final byte[] data;
 
-    void awaitResponse(final T pMessage)  throws TimeoutException, StatusResponseException;
+    public TransferRequest(final String pPath, final byte[] pData) {
+        super(pPath);
+        data = pData;
+    }
+
+    public byte[] getData() {
+        return data;
+    }
 }

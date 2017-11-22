@@ -15,8 +15,8 @@ package ch.sourcepond.io.distributor.impl.lock;
 
 import ch.sourcepond.io.distributor.api.exception.LockException;
 import ch.sourcepond.io.distributor.api.exception.UnlockException;
-import ch.sourcepond.io.distributor.impl.response.StatusResponseException;
-import ch.sourcepond.io.distributor.impl.response.StatusResponseListenerFactory;
+import ch.sourcepond.io.distributor.impl.response.ResponseException;
+import ch.sourcepond.io.distributor.impl.response.ClusterResponseBarrierFactory;
 import ch.sourcepond.io.distributor.spi.TimeoutConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ILock;
@@ -39,11 +39,11 @@ public class LockManager {
     private final TimeoutConfig timeoutConfig;
     private final ITopic<String> lockRequestTopic;
     private final ITopic<String> unlockRequestTopic;
-    private final StatusResponseListenerFactory factory;
+    private final ClusterResponseBarrierFactory factory;
 
     public LockManager(final HazelcastInstance pHci,
                        final TimeoutConfig pTimeoutConfig,
-                       final StatusResponseListenerFactory pFactory,
+                       final ClusterResponseBarrierFactory pFactory,
                        final ITopic<String> pLockRequestTopic,
                        final ITopic<String> pUnlockRequestTopic) {
         hci = pHci;
@@ -59,10 +59,10 @@ public class LockManager {
      * and locked.
      *
      * @param pPath Path to be locked on all nodes, must not be {@code null}.
-     * @throws StatusResponseException Thrown, if the lock acquisition failed on some node.
+     * @throws ResponseException Thrown, if the lock acquisition failed on some node.
      * @throws LockException           Thrown, if the lock acquisition timed out for a node.
      */
-    private void acquireGlobalFileLock(final String pPath) throws StatusResponseException, TimeoutException {
+    private void acquireGlobalFileLock(final String pPath) throws ResponseException, TimeoutException {
         // In this case, the path is also the request-message
         factory.create(pPath, lockRequestTopic).awaitResponse(pPath);
     }
@@ -73,7 +73,7 @@ public class LockManager {
      *
      * @param pPath Path to be released on all nodes, must not be {@code null}
      */
-    private void releaseGlobalFileLock(final String pPath) throws StatusResponseException, TimeoutException {
+    private void releaseGlobalFileLock(final String pPath) throws ResponseException, TimeoutException {
         // In this case, the path is also the request-message
         factory.create(pPath, unlockRequestTopic).awaitResponse(pPath);
     }
@@ -85,7 +85,7 @@ public class LockManager {
         } finally {
             try {
                 releaseGlobalFileLock(pPath);
-            } catch (final StatusResponseException | TimeoutException e) {
+            } catch (final ResponseException | TimeoutException e) {
                 LOG.warn(e.getMessage(), e);
             } finally {
                 hci.getLock(pPath).unlock();
@@ -114,7 +114,7 @@ public class LockManager {
         } catch (final InterruptedException e) {
             currentThread().interrupt();
             lockAcquisitionFailed(pPath, format("Lock acquisition interrupted for %s!", pPath), e);
-        } catch (final StatusResponseException | TimeoutException e) {
+        } catch (final ResponseException | TimeoutException e) {
             lockAcquisitionFailed(pPath, format("Lock acquisition failed for %s!", pPath), e);
         }
     }
@@ -123,7 +123,7 @@ public class LockManager {
         final ILock lock = hci.getLock(pPath);
         try {
             releaseGlobalFileLock(pPath);
-        } catch (final StatusResponseException | TimeoutException e) {
+        } catch (final ResponseException | TimeoutException e) {
             throw new UnlockException(format("Exception occurred while releasing file-lock for %s", pPath), e);
         } finally {
             lock.unlock();

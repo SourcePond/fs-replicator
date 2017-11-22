@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
@@ -38,9 +39,10 @@ import static java.lang.Boolean.TRUE;
 import static java.lang.String.format;
 import static java.lang.Thread.currentThread;
 import static java.util.Collections.emptyMap;
+import static java.util.Objects.requireNonNull;
 
-class StatusResponseListenerImpl<T extends Serializable> implements MessageListener<StatusMessage>, MembershipListener,
-        StatusResponseListener<T> {
+final class ClusterResponseBarrierImpl<T extends Serializable> implements MessageListener<StatusMessage>, MembershipListener,
+        ClusterResponseBarrier<T> {
     private final Lock lock = new ReentrantLock();
     private final Condition answerReceived = lock.newCondition();
     private final String path;
@@ -50,7 +52,7 @@ class StatusResponseListenerImpl<T extends Serializable> implements MessageListe
     private final Cluster cluster;
     private final Map<Member, Object> responses = new HashMap<>();
 
-    public StatusResponseListenerImpl(final String pPath,
+    public ClusterResponseBarrierImpl(final String pPath,
                                       final ITopic<T> pRequestTopic,
                                       final ITopic<StatusMessage> pResponseTopic,
                                       final TimeoutConfig pTimeoutConfig,
@@ -112,7 +114,7 @@ class StatusResponseListenerImpl<T extends Serializable> implements MessageListe
         return exceptions == null ? emptyMap() : exceptions;
     }
 
-    private void validateAnswers() throws StatusResponseException {
+    private void validateAnswers() throws ResponseException {
         final Map<Member, IOException> memberExceptions = collectMemberExceptions();
         if (!memberExceptions.isEmpty()) {
             final StringBuilder builder = new StringBuilder();
@@ -121,11 +123,11 @@ class StatusResponseListenerImpl<T extends Serializable> implements MessageListe
                 builder.append(entry.getKey()).append(": ").append(entry.getValue().getMessage()).append("\n\t");
             }
             builder.append("See logs on members for further information.");
-            throw new StatusResponseException(builder.toString());
+            throw new ResponseException(builder.toString());
         }
     }
 
-    private void awaitNodeAnswers() throws TimeoutException, StatusResponseException {
+    private void awaitNodeAnswers() throws TimeoutException, ResponseException {
         lock.lock();
         try {
             try {
@@ -140,7 +142,7 @@ class StatusResponseListenerImpl<T extends Serializable> implements MessageListe
                 }
             } catch (final InterruptedException e) {
                 currentThread().interrupt();
-                throw new StatusResponseException("Wait for response interrupted!", e);
+                throw new ResponseException("Wait for response interrupted!", e);
             }
             validateAnswers();
         } finally {
@@ -165,7 +167,8 @@ class StatusResponseListenerImpl<T extends Serializable> implements MessageListe
     }
 
     @Override
-    public void awaitResponse(final T pMessage)  throws TimeoutException, StatusResponseException {
+    public void awaitResponse(final T pMessage)  throws TimeoutException, ResponseException {
+        requireNonNull(pMessage, "message is null");
         final String membershipId = cluster.addMembershipListener(this);
         try {
             final String registrationId = responseTopic.addMessageListener(this);

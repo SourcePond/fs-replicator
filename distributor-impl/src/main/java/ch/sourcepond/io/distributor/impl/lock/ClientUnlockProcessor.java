@@ -14,10 +14,8 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.common.client.ClientListener;
-import ch.sourcepond.io.distributor.impl.common.StatusMessage;
+import ch.sourcepond.io.distributor.impl.common.ClientMessageProcessor;
 import ch.sourcepond.io.distributor.spi.Receiver;
-import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,25 +24,20 @@ import java.io.IOException;
 /**
  * Listener to release a local file-lock.
  */
-class ClientUnlockListener extends ClientListener<String> {
-    private static final Logger LOG = LoggerFactory.getLogger(ClientUnlockListener.class);
+class ClientUnlockProcessor extends ClientMessageProcessor<String> {
+    private static final Logger LOG = LoggerFactory.getLogger(ClientUnlockProcessor.class);
 
-    public ClientUnlockListener(final Receiver pReceiver, final ITopic<StatusMessage> pSendFileUnlockResponseTopic) {
-        super(pReceiver, pSendFileUnlockResponseTopic);
+    public ClientUnlockProcessor(final Receiver pReceiver) {
+        super(pReceiver);
     }
 
     @Override
-    protected Logger getLog() {
-        return LOG;
-    }
-
-    @Override
-    protected void processMessage(final GlobalPath pPath, final String pPayload) throws IOException {
+    protected void processMessage(final GlobalPath pPath, final String pMessage) throws IOException {
         receiver.unlockLocally(pPath);
     }
 
     @Override
-    protected String toPath(final String pPayload) {
-        return pPayload;
+    protected String toPath(final String pMessage) {
+        return pMessage;
     }
 }

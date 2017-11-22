@@ -11,11 +11,11 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.dataflow;
+package ch.sourcepond.io.distributor.impl.request;
 
 import ch.sourcepond.io.distributor.api.GlobalPath;
-import ch.sourcepond.io.distributor.impl.common.client.TransferRequest;
-import ch.sourcepond.io.distributor.impl.common.client.DistributionMessageClientListener;
+import ch.sourcepond.io.distributor.impl.common.ClientMessageListener;
+import ch.sourcepond.io.distributor.impl.common.ClientMessageProcessor;
 import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import com.hazelcast.core.ITopic;
@@ -23,23 +23,22 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 
-import static java.nio.ByteBuffer.wrap;
 import static org.slf4j.LoggerFactory.getLogger;
 
-final class DataRequestListener extends DistributionMessageClientListener<TransferRequest> {
-    private static final Logger LOG = getLogger(DataRequestListener.class);
+public final class DeleteRequestListener extends ClientMessageProcessor<String> {
+    private static final Logger LOG = getLogger(DeleteRequestListener.class);
 
-    public DataRequestListener(final Receiver pReceiver, ITopic<StatusMessage> pSendResponseTopic) {
-        super(pReceiver, pSendResponseTopic);
+    public DeleteRequestListener(final Receiver pReceiver) {
+        super(pReceiver);
     }
 
     @Override
-    protected Logger getLog() {
-        return LOG;
+    protected void processMessage(final GlobalPath pPath, final String pMessage) throws IOException {
+        receiver.delete(pPath);
     }
 
     @Override
-    protected void processMessage(final GlobalPath pPath, final TransferRequest pPayload) throws IOException {
-        receiver.receive(pPath, wrap(pPayload.getData()));
+    protected String toPath(final String pMessage) {
+        return pMessage;
     }
 }
