@@ -14,9 +14,11 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock;
 
 import ch.sourcepond.io.distributor.api.exception.LockException;
+import ch.sourcepond.io.distributor.api.exception.UnlockException;
 import ch.sourcepond.io.distributor.impl.response.StatusResponseException;
 import ch.sourcepond.io.distributor.impl.response.StatusResponseListener;
 import ch.sourcepond.io.distributor.impl.response.StatusResponseListenerFactory;
+import ch.sourcepond.io.distributor.spi.TimeoutConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ILock;
 import com.hazelcast.core.ITopic;
@@ -50,15 +52,18 @@ public class LockManagerTest {
     private static final long EXPECTED_TIMEOUT = 500;
     private final HazelcastInstance hci = mock(HazelcastInstance.class);
     private final ILock lock = mock(ILock.class);
+    private final TimeoutConfig timeoutConfig = mock(TimeoutConfig.class);
     private final StatusResponseListener<String> lockListener = mock(StatusResponseListener.class);
     private final StatusResponseListener<String> unlockListener = mock(StatusResponseListener.class);
     private final StatusResponseListenerFactory factory = mock(StatusResponseListenerFactory.class);
     private final ITopic<String> lockRequestTopic = mock(ITopic.class);
     private final ITopic<String> unlockRequestTopic = mock(ITopic.class);
-    private final LockManager manager = new LockManager(hci, factory, lockRequestTopic, unlockRequestTopic);
+    private final LockManager manager = new LockManager(hci, timeoutConfig, factory, lockRequestTopic, unlockRequestTopic);
 
     @Before
     public void setup() throws Exception {
+        when(timeoutConfig.getLockTimeoutUnit()).thenReturn(EXPECTED_TIME_UNIT);
+        when(timeoutConfig.getLockTimeout()).thenReturn(EXPECTED_TIMEOUT);
         when(hci.getLock(EXPECTED_PATH)).thenReturn(lock);
         when(factory.create(EXPECTED_PATH, lockRequestTopic)).thenReturn(lockListener);
         when(factory.create(EXPECTED_PATH, unlockRequestTopic)).thenReturn(unlockListener);
@@ -70,33 +75,9 @@ public class LockManagerTest {
         interrupted();
     }
 
-    private ILock setup(final ILock pLock) throws  Exception {
+    private ILock setup(final ILock pLock) throws Exception {
         when(pLock.tryLock(EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT, DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT)).thenReturn(true);
         return pLock;
-    }
-
-    @Test
-    public void keepSameLockInstance() throws Exception {
-        when(hci.getLock(EXPECTED_PATH)).thenReturn(lock).thenThrow(AssertionError.class);
-        manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
-        manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
-
-        // Should have been called exactly once
-        verify(hci).getLock(EXPECTED_PATH);
-    }
-
-    @Test
-    public void freshLockAfterUnlock() throws Exception {
-        final ILock l1 = setup(mock(ILock.class));
-        final ILock l2 = setup(mock(ILock.class));
-
-        when(hci.getLock(EXPECTED_PATH)).thenReturn(l1).thenReturn(l2);
-        manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
-        manager.unlock(EXPECTED_PATH);
-        verify(l1).unlock();
-        manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
-        manager.unlock(EXPECTED_PATH);
-        verify(l2).unlock();
     }
 
     @Test
@@ -105,7 +86,7 @@ public class LockManagerTest {
         final StatusResponseException expected = new StatusResponseException("any");
         doThrow(expected).when(unlockListener).awaitResponse(EXPECTED_PATH);
         try {
-            manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
+            manager.lock(EXPECTED_PATH);
             fail("Exception expected");
         } catch (final LockException e) {
             assertNull(e.getCause());
@@ -122,7 +103,7 @@ public class LockManagerTest {
     public void tryLockReturnedFalse() throws Exception {
         when(lock.tryLock(EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT, DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT)).thenReturn(false);
         try {
-            manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
+            manager.lock(EXPECTED_PATH);
             fail("Exception expected");
         } catch (final LockException e) {
             assertNull(e.getCause());
@@ -136,7 +117,7 @@ public class LockManagerTest {
         final InterruptedException expected = new InterruptedException();
         doThrow(expected).when(lock).tryLock(EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT, DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT);
         try {
-            manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
+            manager.lock(EXPECTED_PATH);
             fail("Exception expected");
         } catch (final LockException e) {
             assertSame(expected, e.getCause());
@@ -151,7 +132,7 @@ public class LockManagerTest {
         doThrow(expected).when(lockListener).awaitResponse(EXPECTED_PATH);
 
         try {
-            manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
+            manager.lock(EXPECTED_PATH);
             fail("Exception expected");
         } catch (final LockException e) {
             assertSame(expected, e.getCause());
@@ -161,18 +142,31 @@ public class LockManagerTest {
     }
 
     @Test
-    public void unlockGloballyNoLockRegistered() throws Exception {
-        // No exception should be thrown
-        manager.unlock("unknown");
+    public void releaseGlobalFileLockFailed() throws Exception {
+        final TimeoutException expected = new TimeoutException();
+        doThrow(expected).when(unlockListener).awaitResponse(EXPECTED_PATH);
+
+        try {
+            manager.unlock(EXPECTED_PATH);
+            fail("Exception expected");
+        } catch (final UnlockException e) {
+            assertSame(expected, e.getCause());
+        }
+        verifyLockReleaseAfterFailure();
+        assertFalse(currentThread().isInterrupted());
     }
 
     @Test
-    public void lockUnlockGlobally() throws Exception {
-        assertFalse(manager.isLocked(EXPECTED_PATH));
-        manager.lock(EXPECTED_PATH, EXPECTED_TIME_UNIT, EXPECTED_TIMEOUT);
+    public void verifyIsLocked() throws Exception {
+        when(lock.isLocked()).thenReturn(true).thenReturn(false);
         assertTrue(manager.isLocked(EXPECTED_PATH));
-        manager.unlock(EXPECTED_PATH);
         assertFalse(manager.isLocked(EXPECTED_PATH));
+    }
+
+    @Test
+    public void lockUnlock() throws Exception {
+        manager.lock(EXPECTED_PATH);
+        manager.unlock(EXPECTED_PATH);
         final InOrder order = inOrder(lock, lockListener, unlockListener);
         order.verify(lock).tryLock(EXPECTED_TIMEOUT, EXPECTED_TIME_UNIT, DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT);
         order.verify(lockListener).awaitResponse(EXPECTED_PATH);
