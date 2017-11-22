@@ -25,7 +25,6 @@ import java.io.IOException;
  * Listener to release a local file-lock.
  */
 class ClientUnlockProcessor extends ClientMessageProcessor<String> {
-    private static final Logger LOG = LoggerFactory.getLogger(ClientUnlockProcessor.class);
 
     public ClientUnlockProcessor(final Receiver pReceiver) {
         super(pReceiver);
