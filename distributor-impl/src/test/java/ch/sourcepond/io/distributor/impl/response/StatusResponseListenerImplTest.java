@@ -24,6 +24,8 @@ import com.hazelcast.core.Message;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InOrder;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -41,12 +43,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-public class StatusMessageListenerImplTest {
+public class StatusResponseListenerImplTest {
     private static final String EXPECTED_FAILURE_MESSAGE = "someMessage";
+    private static final String EXPECTED_MEMBERSHIP_ID = "someMembershipId";
+    private static final String EXPECTED_REGISTRATION_ID = "someRegistrationId";
     private static final String EXPECTED_PATH = "anyPath";
     private static final long EXPECTED_TIMEOUT = 500;
     private static final TimeUnit EXPECTED_UNIT = MILLISECONDS;
@@ -59,25 +65,29 @@ public class StatusMessageListenerImplTest {
     private final Message<StatusMessage> message = mock(Message.class);
     private final MembershipEvent event = mock(MembershipEvent.class);
     private final ScheduledExecutorService executor = newSingleThreadScheduledExecutor();
-    private final StatusResponseListenerImpl<String> listener = new StatusResponseListenerImpl<>(
-            EXPECTED_PATH, requestTopic, responseTopic, timeoutConfig, cluster);
     private StatusMessage payload = new StatusMessage(EXPECTED_PATH);
+    private StatusResponseListenerImpl<String> listener;
     private volatile boolean run;
 
     @Before
     public void setup() {
+        when(cluster.getMembers()).thenReturn(members);
         when(timeoutConfig.getLockTimeout()).thenReturn(EXPECTED_TIMEOUT);
         when(timeoutConfig.getLockTimeoutUnit()).thenReturn(EXPECTED_UNIT);
+        when(timeoutConfig.getResponseTimeout()).thenReturn(EXPECTED_TIMEOUT);
+        when(timeoutConfig.getResponseTimeoutUnit()).thenReturn(EXPECTED_UNIT);
         when(message.getPublishingMember()).thenReturn(member);
         when(message.getMessageObject()).thenReturn(payload);
         when(event.getMember()).thenReturn(member);
-        when(cluster.getMembers()).thenReturn(members);
-        interrupted();
+        listener = new StatusResponseListenerImpl<>(EXPECTED_PATH, requestTopic, responseTopic, timeoutConfig, cluster);
+        when(cluster.addMembershipListener(listener)).thenReturn(EXPECTED_MEMBERSHIP_ID);
+        when(responseTopic.addMessageListener(listener)).thenReturn(EXPECTED_REGISTRATION_ID);
     }
 
     @After
     public void tearDown() {
         executor.shutdown();
+        interrupted();
     }
 
     @Test//(timeout = 2000)
@@ -85,7 +95,7 @@ public class StatusMessageListenerImplTest {
         executor.schedule(() -> {
             listener.memberRemoved(event);
             run = true;
-        }, 500, MILLISECONDS);
+        }, 200, MILLISECONDS);
         listener.awaitResponse(EXPECTED_PATH);
         assertTrue(run);
     }
@@ -106,7 +116,7 @@ public class StatusMessageListenerImplTest {
     @Test(timeout = 2000)
     public void awaitNodeAnswersWaitInterrupted() throws Exception {
         final Thread thread = currentThread();
-        executor.schedule(() -> thread.interrupt(), 500, MILLISECONDS);
+        executor.schedule(() -> thread.interrupt(), 200, MILLISECONDS);
         try {
             listener.awaitResponse(EXPECTED_PATH);
             fail("Exception expected");
@@ -141,8 +151,13 @@ public class StatusMessageListenerImplTest {
         executor.schedule(() -> {
             listener.onMessage(message);
             run = true;
-        }, 500, MILLISECONDS);
+        }, 200, MILLISECONDS);
         listener.awaitResponse(EXPECTED_PATH);
         assertTrue(run);
+        final InOrder order = inOrder(cluster, responseTopic);
+        verify(cluster).addMembershipListener(listener);
+        verify(responseTopic).addMessageListener(listener);
+        verify(responseTopic).removeMessageListener(EXPECTED_REGISTRATION_ID);
+        verify(cluster).removeMembershipListener(EXPECTED_MEMBERSHIP_ID);
     }
 }
