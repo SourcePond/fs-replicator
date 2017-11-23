@@ -35,7 +35,7 @@ public interface Receiver {
     /**
      * Receives the data specified and temporarily store it. The temporary file is not yet visible
      * and needs to be moved to its destination location after all data has been received
-     * (see {@link #store(GlobalPath)}).
+     * (see {@link #store(GlobalPath, IOException)}).
      *
      * @param pPath
      * @param pBuffer

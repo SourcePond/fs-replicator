@@ -15,43 +15,30 @@ package ch.sourcepond.io.distributor.impl;
 
 import ch.sourcepond.io.distributor.api.Distributor;
 import ch.sourcepond.io.distributor.api.DistributorFactory;
+import ch.sourcepond.io.distributor.impl.response.ClusterResponseBarrierFactory;
+import ch.sourcepond.io.distributor.impl.topics.Topics;
+import ch.sourcepond.io.distributor.impl.topics.TopicsFactory;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import ch.sourcepond.io.distributor.spi.TimeoutConfig;
-import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
 
 import java.util.Map;
 
-import static com.hazelcast.core.Hazelcast.getHazelcastInstanceByName;
-import static com.hazelcast.core.Hazelcast.getOrCreateHazelcastInstance;
-import static java.lang.String.format;
-import static java.util.Objects.requireNonNull;
-
 public class HazelcastDistributorFactory implements DistributorFactory {
-    public static final String HAZELCAST_INSTANCE_NAME = "hazelcast.instance.name";
-    public static final String HAZELCAST_NEW_INSTANCE_CONFIG = "hazelcast.new.instance.config";
+    private final TopicsFactory topicsFactory;
 
-    private static <T> T validateType(final Object pValue, final Class<?> pExpectedType) {
-        if (!pExpectedType.equals(pValue.getClass())) {
-            throw new IllegalArgumentException(format("Value of property with key %s must be of type %s",
-                    HAZELCAST_NEW_INSTANCE_CONFIG, Config.class.getName()));
-        }
-        return (T) pValue;
+    public HazelcastDistributorFactory(final  TopicsFactory pTopicsFactory) {
+        topicsFactory = pTopicsFactory;
     }
 
+
     @Override
-    public Distributor create(final Receiver pReceiver, final TimeoutConfig pTimeoutConfig, final Map<String, Object> pInstantiationProperties) {
-        final Object nameObject = requireNonNull(pInstantiationProperties.get(HAZELCAST_INSTANCE_NAME),
-                format("No property set with key %s", HAZELCAST_INSTANCE_NAME));
-        final String name = validateType(nameObject, String.class);
-        final Object configObject = pInstantiationProperties.get(HAZELCAST_NEW_INSTANCE_CONFIG);
-        final HazelcastInstance hci;
-        if (configObject != null) {
-            hci = getOrCreateHazelcastInstance(validateType(configObject, Config.class));
-        } else {
-            hci = requireNonNull(getHazelcastInstanceByName(name),
-                    format("No Hazelcast instance found with name %s", name));
-        }
+    public Distributor create(final Receiver pReceiver, final TimeoutConfig pTimeoutConfig, final Map<String, String> pInstantiationProperties) {
+        final Topics topics = topicsFactory.create(pInstantiationProperties);
+        final HazelcastInstance hci = topics.getHci();
+
+        final ClusterResponseBarrierFactory clusterResponseBarrierFactory = new ClusterResponseBarrierFactory(topics.getResponseTopic(), pTimeoutConfig, hci.getCluster());
+
 
         return null;
     }

@@ -25,14 +25,14 @@ import java.util.Map;
 public interface DistributorFactory {
 
     /**
-     * Creates a new {@link Distributor} instance. The instantiation properites specified are implementation depending
-     * and therefore not specified in this API.
+     * Creates a new {@link Distributor} instance. The key/value pairs of the instantiation properties specified are
+     * implementation depending and therefore not specified in this API.
      *
      * @param pReceiver
-     * @param pTimeoutConfig Mutable config which manages timeouts/time-units, must not be {@code null}
+     * @param pTimeoutConfig Mutable topics which manages timeouts/time-units, must not be {@code null}
      * @param pInstantiationProperties Properties necessary to instantiate the distributor, must not be {@code null}
      * @return New distributor instance, never {@code null}
      * @throws NullPointerException Thrown, if either parameter is {@code null}.
      */
-    Distributor create(Receiver pReceiver, TimeoutConfig pTimeoutConfig, Map<String, Object> pInstantiationProperties);
+    Distributor create(Receiver pReceiver, TimeoutConfig pTimeoutConfig, Map<String, String> pInstantiationProperties);
 }

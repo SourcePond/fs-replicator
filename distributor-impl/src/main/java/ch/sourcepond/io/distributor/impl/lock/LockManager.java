@@ -102,7 +102,7 @@ public class LockManager {
     public void lock(final String pPath) throws LockException {
         final ILock globalLock = hci.getLock(pPath);
         try {
-            // Because timeout-config is mutable we store the current values into
+            // Because timeout-topics is mutable we store the current values into
             // variables to make sure that in error case the actual values are included
             // into the exception message.
             final long lockTimeout = timeoutConfig.getLockTimeout();
