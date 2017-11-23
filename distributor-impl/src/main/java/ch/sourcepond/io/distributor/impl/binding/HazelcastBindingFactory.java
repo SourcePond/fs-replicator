@@ -11,29 +11,34 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.topics;
+package ch.sourcepond.io.distributor.impl.binding;
 
 import com.hazelcast.core.HazelcastInstance;
 
 import java.util.Map;
 
-import static ch.sourcepond.io.distributor.impl.topics.Validations.mandatory;
+import static ch.sourcepond.io.distributor.impl.binding.Validations.mandatory;
 import static com.hazelcast.core.Hazelcast.getHazelcastInstanceByName;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
-public class TopicsFactory {
+public class HazelcastBindingFactory {
     static final String EXISTING_INSTANCE_NAME = "hazelcast.existing.instance.name";
-    private final TopicConfigsFactory factory;
+    private final TopicConfigsFactory topicConfigsFactory;
+    private final TimeoutConfigFactory timeoutConfigFactory;
 
-    public TopicsFactory(final TopicConfigsFactory pFactory) {
-        factory = pFactory;
+    public HazelcastBindingFactory(final TopicConfigsFactory pFactory, final TimeoutConfigFactory pTimeoutConfigFactory) {
+        topicConfigsFactory = pFactory;
+        timeoutConfigFactory = pTimeoutConfigFactory;
     }
 
-    public Topics create(final Map<String, String> pInstantiationProperties) {
+    public HazelcastBinding create(final Map<String, String> pInstantiationProperties) {
         final String name = mandatory(EXISTING_INSTANCE_NAME, pInstantiationProperties, Validations::same);
         final HazelcastInstance hci = requireNonNull(getHazelcastInstanceByName(name),
                 format("No Hazelcast instance found with name %s, property %s must specify an existing instance", name, EXISTING_INSTANCE_NAME));
-        return new Topics(hci, factory.create(pInstantiationProperties));
+        return new HazelcastBinding(hci, topicConfigsFactory.create(pInstantiationProperties),
+                timeoutConfigFactory.createLockConfig(pInstantiationProperties),
+                timeoutConfigFactory.createUnlockConfig(pInstantiationProperties),
+                timeoutConfigFactory.createResponseConfig(pInstantiationProperties));
     }
 }

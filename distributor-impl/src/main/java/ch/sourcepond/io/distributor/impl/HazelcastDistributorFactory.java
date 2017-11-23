@@ -16,8 +16,8 @@ package ch.sourcepond.io.distributor.impl;
 import ch.sourcepond.io.distributor.api.Distributor;
 import ch.sourcepond.io.distributor.api.DistributorFactory;
 import ch.sourcepond.io.distributor.impl.response.ClusterResponseBarrierFactory;
-import ch.sourcepond.io.distributor.impl.topics.Topics;
-import ch.sourcepond.io.distributor.impl.topics.TopicsFactory;
+import ch.sourcepond.io.distributor.impl.binding.HazelcastBinding;
+import ch.sourcepond.io.distributor.impl.binding.HazelcastBindingFactory;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import ch.sourcepond.io.distributor.spi.TimeoutConfig;
 import com.hazelcast.core.HazelcastInstance;
@@ -25,19 +25,19 @@ import com.hazelcast.core.HazelcastInstance;
 import java.util.Map;
 
 public class HazelcastDistributorFactory implements DistributorFactory {
-    private final TopicsFactory topicsFactory;
+    private final HazelcastBindingFactory hazelcastBindingFactory;
 
-    public HazelcastDistributorFactory(final  TopicsFactory pTopicsFactory) {
-        topicsFactory = pTopicsFactory;
+    public HazelcastDistributorFactory(final HazelcastBindingFactory pHazelcastBindingFactory) {
+        hazelcastBindingFactory = pHazelcastBindingFactory;
     }
 
 
     @Override
     public Distributor create(final Receiver pReceiver, final TimeoutConfig pTimeoutConfig, final Map<String, String> pInstantiationProperties) {
-        final Topics topics = topicsFactory.create(pInstantiationProperties);
-        final HazelcastInstance hci = topics.getHci();
+        final HazelcastBinding hazelcastBinding = hazelcastBindingFactory.create(pInstantiationProperties);
+        final HazelcastInstance hci = hazelcastBinding.getHci();
 
-        final ClusterResponseBarrierFactory clusterResponseBarrierFactory = new ClusterResponseBarrierFactory(topics.getResponseTopic(), pTimeoutConfig, hci.getCluster());
+        final ClusterResponseBarrierFactory clusterResponseBarrierFactory = new ClusterResponseBarrierFactory(hazelcastBinding.getResponseTopic(), pTimeoutConfig, hci.getCluster());
 
 
         return null;

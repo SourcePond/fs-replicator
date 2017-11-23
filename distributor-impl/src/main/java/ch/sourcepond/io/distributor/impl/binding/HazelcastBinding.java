@@ -11,7 +11,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.topics;
+package ch.sourcepond.io.distributor.impl.binding;
 
 import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.impl.request.TransferRequest;
@@ -21,13 +21,23 @@ import com.hazelcast.core.ITopic;
 
 import java.io.Serializable;
 
-public class Topics {
+public class HazelcastBinding {
     private final HazelcastInstance hci;
     private final TopicConfigs configs;
+    private final TimeoutConfig lockConfig;
+    private final TimeoutConfig unlockConfig;
+    private final TimeoutConfig responseConfig;
 
-    public Topics(final HazelcastInstance pHci, final TopicConfigs pConfigs) {
+    public HazelcastBinding(final HazelcastInstance pHci,
+                            final TopicConfigs pConfigs,
+                            final TimeoutConfig pLockConfig,
+                            final TimeoutConfig pUnlockConfig,
+                            final TimeoutConfig pResponseConfig) {
         hci = pHci;
         configs = pConfigs;
+        lockConfig = pLockConfig;
+        unlockConfig = pUnlockConfig;
+        responseConfig = pResponseConfig;
     }
 
     private <T extends Serializable> ITopic<T> getTopic(final ReliableTopicConfig pConfig) {
@@ -36,6 +46,18 @@ public class Topics {
 
     public HazelcastInstance getHci() {
         return hci;
+    }
+
+    public TimeoutConfig getLockConfig() {
+        return lockConfig;
+    }
+
+    public TimeoutConfig getUnlockConfig() {
+        return unlockConfig;
+    }
+
+    public TimeoutConfig getResponseConfig() {
+        return responseConfig;
     }
 
     public ITopic<StatusMessage> getResponseTopic() {

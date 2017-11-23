@@ -29,7 +29,7 @@ public interface DistributorFactory {
      * implementation depending and therefore not specified in this API.
      *
      * @param pReceiver
-     * @param pTimeoutConfig Mutable topics which manages timeouts/time-units, must not be {@code null}
+     * @param pTimeoutConfig Mutable binding which manages timeouts/time-units, must not be {@code null}
      * @param pInstantiationProperties Properties necessary to instantiate the distributor, must not be {@code null}
      * @return New distributor instance, never {@code null}
      * @throws NullPointerException Thrown, if either parameter is {@code null}.

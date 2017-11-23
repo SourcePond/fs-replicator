@@ -11,7 +11,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.topics;
+package ch.sourcepond.io.distributor.impl.binding;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.config.ReliableTopicConfig;
@@ -19,7 +19,7 @@ import com.hazelcast.topic.TopicOverloadPolicy;
 
 import java.util.Map;
 
-import static ch.sourcepond.io.distributor.impl.topics.Validations.optional;
+import static ch.sourcepond.io.distributor.impl.binding.Validations.optional;
 import static com.hazelcast.topic.TopicOverloadPolicy.BLOCK;
 
 class TopicConfigsFactory {
