@@ -13,22 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.binding;
 
-import java.util.concurrent.TimeUnit;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-public class TimeoutConfig {
-    private final TimeUnit unit;
-    private final long timeout;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-    TimeoutConfig(final TimeUnit pUnit, long pTimeout) {
-        unit = pUnit;
-        timeout = pTimeout;
-    }
-
-    public TimeUnit getUnit() {
-        return unit;
-    }
-
-    public long getTimeout() {
-        return timeout;
-    }
+@Target(METHOD)
+@Retention(RUNTIME)
+public @interface LockTimeoutConfig {
 }

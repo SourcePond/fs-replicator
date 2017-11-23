@@ -34,8 +34,9 @@ final class Validations {
     }
 
     public static <T> T optional(final String pKey, final T pDefault, final Map<String, String> pValues, final Function<String, T> pConverter) {
-        if (pValues != null) {
-            return validateType(pKey, pValues.get(pKey), pConverter);
+        final String value = pValues.get(pKey);
+        if (value != null) {
+            return validateType(pKey, value, pConverter);
         }
         return pDefault;
     }

@@ -13,31 +13,25 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl;
 
+import ch.sourcepond.io.distributor.api.CreationException;
 import ch.sourcepond.io.distributor.api.Distributor;
 import ch.sourcepond.io.distributor.api.DistributorFactory;
-import ch.sourcepond.io.distributor.impl.binding.HazelcastBinding;
-import ch.sourcepond.io.distributor.impl.binding.HazelcastBindingFactory;
-import ch.sourcepond.io.distributor.impl.lock.LockManager;
-import ch.sourcepond.io.distributor.impl.request.RequestDistributor;
-import ch.sourcepond.io.distributor.impl.response.ClusterResponseBarrierFactory;
 import ch.sourcepond.io.distributor.spi.Receiver;
-import ch.sourcepond.io.distributor.spi.TimeoutConfig;
 
 import java.util.Map;
 
-public class HazelcastDistributorFactory implements DistributorFactory {
-    private final HazelcastBindingFactory hazelcastBindingFactory;
+import static com.google.inject.Guice.createInjector;
+import static java.lang.String.format;
 
-    public HazelcastDistributorFactory(final HazelcastBindingFactory pHazelcastBindingFactory) {
-        hazelcastBindingFactory = pHazelcastBindingFactory;
-    }
+public class HazelcastDistributorFactory implements DistributorFactory {
 
     @Override
-    public Distributor create(final Receiver pReceiver, final TimeoutConfig pTimeoutConfig, final Map<String, String> pInstantiationProperties) {
-        final HazelcastBinding hazelcastBinding = hazelcastBindingFactory.create(pInstantiationProperties);
-        final ClusterResponseBarrierFactory clusterResponseBarrierFactory = new ClusterResponseBarrierFactory(hazelcastBinding);
-        final LockManager lockManager = new LockManager(clusterResponseBarrierFactory, hazelcastBinding);
-        final RequestDistributor requestDistributor = new RequestDistributor(clusterResponseBarrierFactory, hazelcastBinding);
-        return new HazelcastDistributor(hazelcastBinding, lockManager, requestDistributor);
+    public Distributor create(final Receiver pReceiver, final Map<String, String> pInstantiationProperties) throws CreationException {
+        try {
+            return createInjector(new HazelcastDistributorModule(pReceiver, pInstantiationProperties)).
+                    getInstance(HazelcastDistributor.class);
+        } catch (final Exception e) {
+            throw new CreationException(format("Instance could not be create with properties %s", pInstantiationProperties), e);
+        }
     }
 }

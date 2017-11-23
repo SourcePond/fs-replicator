@@ -13,13 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.api;
 
-import ch.sourcepond.io.distributor.api.exception.DeletionException;
-import ch.sourcepond.io.distributor.api.exception.LockException;
-import ch.sourcepond.io.distributor.api.exception.ModificationException;
-import ch.sourcepond.io.distributor.api.exception.StoreException;
-import ch.sourcepond.io.distributor.api.exception.UnlockException;
-
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 

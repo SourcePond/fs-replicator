@@ -11,17 +11,18 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.api.exception;
+package ch.sourcepond.io.distributor.impl.annotations;
 
-import java.io.IOException;
+import javax.inject.Qualifier;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-public class DeletionException extends IOException {
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-    public DeletionException(final String message) {
-        super(message);
-    }
-
-    public DeletionException(final String message, final Throwable cause) {
-        super(message, cause);
-    }
+@Target({METHOD, PARAMETER})
+@Retention(RUNTIME)
+@Qualifier
+public @interface Unlock {
 }

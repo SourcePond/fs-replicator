@@ -13,43 +13,39 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.request;
 
-import ch.sourcepond.io.distributor.api.exception.DeletionException;
-import ch.sourcepond.io.distributor.api.exception.ModificationException;
-import ch.sourcepond.io.distributor.api.exception.StoreException;
-import ch.sourcepond.io.distributor.impl.ListenerRegistrar;
-import ch.sourcepond.io.distributor.impl.binding.HazelcastBinding;
-import ch.sourcepond.io.distributor.impl.common.ClientMessageListenerFactory;
+import ch.sourcepond.io.distributor.api.DeletionException;
+import ch.sourcepond.io.distributor.api.ModificationException;
+import ch.sourcepond.io.distributor.api.StoreException;
+import ch.sourcepond.io.distributor.impl.annotations.Delete;
+import ch.sourcepond.io.distributor.impl.annotations.Store;
+import ch.sourcepond.io.distributor.impl.annotations.Transfer;
 import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.impl.response.ClusterResponseBarrierFactory;
 import ch.sourcepond.io.distributor.impl.response.ResponseException;
-import ch.sourcepond.io.distributor.spi.Receiver;
+import com.hazelcast.core.ITopic;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeoutException;
 
 import static java.lang.String.format;
 
-public class RequestDistributor implements ListenerRegistrar {
+public class RequestDistributor {
     private final ClusterResponseBarrierFactory clusterResponseBarrierFactory;
-    private final RequestListenerFactory requestListenerFactory;
-    private final HazelcastBinding binding;
+    private final ITopic<String> deleteRequestTopic;
+    private final ITopic<TransferRequest> transferRequestTopic;
+    private final ITopic<StatusMessage> storeRequestTopic;
 
-    // Constructor for testing
+    @Inject
     RequestDistributor(final ClusterResponseBarrierFactory pClusterResponseBarrierFactory,
-                       final RequestListenerFactory pRequestListenerFactory,
-                       final HazelcastBinding pBinding) {
+                       @Delete final ITopic<String> pDeleteRequestTopic,
+                       @Transfer final ITopic<TransferRequest> pTransferRequestTopic,
+                       @Store final ITopic<StatusMessage> pStoreRequestTopic) {
         clusterResponseBarrierFactory = pClusterResponseBarrierFactory;
-        requestListenerFactory = pRequestListenerFactory;
-        binding = pBinding;
-    }
-
-
-    public RequestDistributor(final ClusterResponseBarrierFactory pClusterResponseBarrierFactory,
-                              final HazelcastBinding pBinding) {
-        this(pClusterResponseBarrierFactory,
-                new RequestListenerFactory(new ClientMessageListenerFactory(pBinding)),
-                pBinding);
+        deleteRequestTopic = pDeleteRequestTopic;
+        transferRequestTopic = pTransferRequestTopic;
+        storeRequestTopic = pStoreRequestTopic;
     }
 
     public void transfer(final String pPath, final ByteBuffer pData) throws ModificationException {
@@ -59,7 +55,7 @@ public class RequestDistributor implements ListenerRegistrar {
 
         try {
             // ...and distribute it
-            clusterResponseBarrierFactory.create(pPath, binding.getTransferRequestTopic()).awaitResponse(new TransferRequest(pPath, data));
+            clusterResponseBarrierFactory.create(pPath, transferRequestTopic).awaitResponse(new TransferRequest(pPath, data));
         } catch (final TimeoutException | ResponseException e) {
             throw new ModificationException(format("Modification of %s failed on some node!", pPath), e);
         }
@@ -67,7 +63,7 @@ public class RequestDistributor implements ListenerRegistrar {
 
     public void store(final String pPath, final IOException pFailureOrNull) throws StoreException {
         try {
-            clusterResponseBarrierFactory.create(pPath, binding.getStoreRequestTopic()).awaitResponse(new StatusMessage(pPath, pFailureOrNull));
+            clusterResponseBarrierFactory.create(pPath, storeRequestTopic).awaitResponse(new StatusMessage(pPath, pFailureOrNull));
         } catch (final TimeoutException | ResponseException e) {
             throw new StoreException(format("Storing or reverting %s failed on some node!", pPath), e);
         }
@@ -75,16 +71,9 @@ public class RequestDistributor implements ListenerRegistrar {
 
     public void delete(final String pPath) throws DeletionException {
         try {
-            clusterResponseBarrierFactory.create(pPath, binding.getDeleteRequestTopic()).awaitResponse(pPath);
+            clusterResponseBarrierFactory.create(pPath, deleteRequestTopic).awaitResponse(pPath);
         } catch (final TimeoutException | ResponseException e) {
             throw new DeletionException(format("Deletion of %s failed on some node!", pPath), e);
         }
-    }
-
-    @Override
-    public void registerListeners(final Receiver pReceiver) {
-        binding.getDeleteRequestTopic().addMessageListener(requestListenerFactory.createDeleteListener(pReceiver));
-        binding.getTransferRequestTopic().addMessageListener(requestListenerFactory.createTransferListener(pReceiver));
-        binding.getStoreRequestTopic().addMessageListener(requestListenerFactory.createStoreListener(pReceiver));
     }
 }

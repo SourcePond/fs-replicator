@@ -13,18 +13,19 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock;
 
-import ch.sourcepond.io.distributor.api.exception.LockException;
-import ch.sourcepond.io.distributor.api.exception.UnlockException;
-import ch.sourcepond.io.distributor.impl.ListenerRegistrar;
-import ch.sourcepond.io.distributor.impl.binding.HazelcastBinding;
+import ch.sourcepond.io.distributor.api.LockException;
+import ch.sourcepond.io.distributor.api.UnlockException;
+import ch.sourcepond.io.distributor.impl.annotations.Lock;
+import ch.sourcepond.io.distributor.impl.annotations.Unlock;
 import ch.sourcepond.io.distributor.impl.binding.TimeoutConfig;
-import ch.sourcepond.io.distributor.impl.common.ClientMessageListenerFactory;
 import ch.sourcepond.io.distributor.impl.response.ClusterResponseBarrierFactory;
 import ch.sourcepond.io.distributor.impl.response.ResponseException;
-import ch.sourcepond.io.distributor.spi.Receiver;
+import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ILock;
+import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -33,26 +34,27 @@ import static java.lang.Thread.currentThread;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class LockManager implements ListenerRegistrar {
+public class LockManager {
     private static final Logger LOG = getLogger(LockManager.class);
     static final TimeUnit DEFAULT_LEASE_UNIT = MINUTES;
     static final long DEFAULT_LEASE_TIMEOUT = 15;
-    private final HazelcastBinding binding;
-    private final LockListenerFactory lockListenerFactory;
     private final ClusterResponseBarrierFactory factory;
+    private final HazelcastInstance hci;
+    private final ITopic<String> lockRequestTopic;
+    private final ITopic<String> unlockRequestTopic;
+    private final TimeoutConfig lockTimeoutConfig;
 
-    // Constructor for testing
-    LockManager(final ClusterResponseBarrierFactory pFactory,
-                final LockListenerFactory pLockListenerFactory,
-                final HazelcastBinding pBinding) {
-        factory = pFactory;
-        lockListenerFactory = pLockListenerFactory;
-        binding = pBinding;
-    }
-
+    @Inject
     public LockManager(final ClusterResponseBarrierFactory pFactory,
-                       final HazelcastBinding pBinding) {
-        this(pFactory, new LockListenerFactory(new ClientMessageListenerFactory(pBinding)), pBinding);
+                       final HazelcastInstance pHci,
+                       @Lock final ITopic<String> pLockRequestTopic,
+                       @Unlock final ITopic<String> pUnlockRequestTopic,
+                       @Lock final TimeoutConfig pLockTimeoutConfig) {
+        factory = pFactory;
+        hci = pHci;
+        lockRequestTopic = pLockRequestTopic;
+        unlockRequestTopic = pUnlockRequestTopic;
+        lockTimeoutConfig = pLockTimeoutConfig;
     }
 
     /**
@@ -66,7 +68,7 @@ public class LockManager implements ListenerRegistrar {
      */
     private void acquireGlobalFileLock(final String pPath) throws ResponseException, TimeoutException {
         // In this case, the path is also the request-message
-        factory.create(pPath, binding.getLockRequestTopic()).awaitResponse(pPath);
+        factory.create(pPath, lockRequestTopic).awaitResponse(pPath);
     }
 
     /**
@@ -77,7 +79,7 @@ public class LockManager implements ListenerRegistrar {
      */
     private void releaseGlobalFileLock(final String pPath) throws ResponseException, TimeoutException {
         // In this case, the path is also the request-message
-        factory.create(pPath, binding.getUnlockRequestTopic()).awaitResponse(pPath);
+        factory.create(pPath, unlockRequestTopic).awaitResponse(pPath);
     }
 
     private void lockAcquisitionFailed(final String pPath, final String pMessage, final Exception pCause)
@@ -90,25 +92,23 @@ public class LockManager implements ListenerRegistrar {
             } catch (final ResponseException | TimeoutException e) {
                 LOG.warn(e.getMessage(), e);
             } finally {
-                binding.getHci().getLock(pPath).unlock();
+                hci.getLock(pPath).unlock();
             }
         }
     }
 
     public boolean isLocked(final String pPath) {
-        return binding.getHci().getLock(pPath).isLocked();
+        return hci.getLock(pPath).isLocked();
     }
 
     public void lock(final String pPath) throws LockException {
-        final ILock globalLock = binding.getHci().getLock(pPath);
+        final ILock globalLock = hci.getLock(pPath);
         try {
-            final TimeoutConfig timeoutConfig = binding.getLockConfig();
-
-            if (globalLock.tryLock(timeoutConfig.getTimeout(), timeoutConfig.getUnit(), DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT)) {
+            if (globalLock.tryLock(lockTimeoutConfig.getTimeout(), lockTimeoutConfig.getUnit(), DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT)) {
                 acquireGlobalFileLock(pPath);
             } else {
                 lockAcquisitionFailed(pPath, format("Lock acquisition timed out after %d %s",
-                        timeoutConfig.getTimeout(), timeoutConfig.getUnit()), null);
+                        lockTimeoutConfig.getTimeout(), lockTimeoutConfig.getUnit()), null);
             }
         } catch (final InterruptedException e) {
             currentThread().interrupt();
@@ -119,7 +119,7 @@ public class LockManager implements ListenerRegistrar {
     }
 
     public void unlock(final String pPath) throws UnlockException {
-        final ILock lock = binding.getHci().getLock(pPath);
+        final ILock lock = hci.getLock(pPath);
         try {
             releaseGlobalFileLock(pPath);
         } catch (final ResponseException | TimeoutException e) {
@@ -127,11 +127,5 @@ public class LockManager implements ListenerRegistrar {
         } finally {
             lock.unlock();
         }
-    }
-
-    @Override
-    public void registerListeners(final Receiver pReceiver) {
-        binding.getLockRequestTopic().addMessageListener(lockListenerFactory.createLockListener(pReceiver));
-        binding.getUnlockRequestTopic().addMessageListener(lockListenerFactory.createUnlockListener(pReceiver));
     }
 }

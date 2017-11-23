@@ -11,17 +11,17 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.api.exception;
+package ch.sourcepond.io.distributor.api;
 
 import java.io.IOException;
 
-public class UnlockException extends IOException {
+public class LockException extends IOException {
 
-    public UnlockException(String message) {
+    public LockException(String message) {
         super(message);
     }
 
-    public UnlockException(String message, Throwable cause) {
+    public LockException(String message, Throwable cause) {
         super(message, cause);
     }
 }

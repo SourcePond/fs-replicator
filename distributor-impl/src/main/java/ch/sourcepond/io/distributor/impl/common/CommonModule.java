@@ -13,22 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.common;
 
-import ch.sourcepond.io.distributor.impl.annotations.Response;
-import com.hazelcast.core.ITopic;
-import com.hazelcast.core.MessageListener;
+import com.google.inject.AbstractModule;
 
-import javax.inject.Inject;
-import java.io.Serializable;
+public class CommonModule extends AbstractModule {
 
-public class ClientMessageListenerFactory {
-    private final ITopic<StatusMessage> responseTopic;
-
-    @Inject
-    ClientMessageListenerFactory(@Response final ITopic<StatusMessage> pResponseTopic) {
-        responseTopic = pResponseTopic;
-    }
-
-    public <T extends Serializable> MessageListener<T> createListener(final ClientMessageProcessor<T> pProcessor) {
-        return new ClientMessageListener<>(pProcessor, responseTopic);
+    @Override
+    protected void configure() {
+        bind(ClientMessageListenerFactory.class);
     }
 }

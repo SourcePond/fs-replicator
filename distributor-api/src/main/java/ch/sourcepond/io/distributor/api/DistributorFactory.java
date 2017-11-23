@@ -14,7 +14,6 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.api;
 
 import ch.sourcepond.io.distributor.spi.Receiver;
-import ch.sourcepond.io.distributor.spi.TimeoutConfig;
 
 import java.util.Map;
 
@@ -29,10 +28,10 @@ public interface DistributorFactory {
      * implementation depending and therefore not specified in this API.
      *
      * @param pReceiver
-     * @param pTimeoutConfig Mutable binding which manages timeouts/time-units, must not be {@code null}
      * @param pInstantiationProperties Properties necessary to instantiate the distributor, must not be {@code null}
      * @return New distributor instance, never {@code null}
+     * @throws CreationException Thrown, if the distributor instance could not be instantiated for some reason.
      * @throws NullPointerException Thrown, if either parameter is {@code null}.
      */
-    Distributor create(Receiver pReceiver, TimeoutConfig pTimeoutConfig, Map<String, String> pInstantiationProperties);
+    Distributor create(Receiver pReceiver, Map<String, String> pInstantiationProperties) throws CreationException;
 }

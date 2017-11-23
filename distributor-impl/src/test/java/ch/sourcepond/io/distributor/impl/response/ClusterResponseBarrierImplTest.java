@@ -13,9 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.response;
 
+import ch.sourcepond.io.distributor.impl.binding.TimeoutConfig;
 import ch.sourcepond.io.distributor.impl.common.StatusMessage;
-import ch.sourcepond.io.distributor.spi.TimeoutConfig;
 import com.hazelcast.core.Cluster;
+import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberAttributeEvent;
@@ -58,6 +59,7 @@ public class ClusterResponseBarrierImplTest {
     private final ITopic<String> requestTopic = mock(ITopic.class);
     private final ITopic<StatusMessage> responseTopic = mock(ITopic.class);
     private final TimeoutConfig timeoutConfig = mock(TimeoutConfig.class);
+    private final HazelcastInstance hci = mock(HazelcastInstance.class);
     private final Member member = mock(Member.class);
     private final Cluster cluster = mock(Cluster.class);
     private final Set<Member> members = new HashSet<>(asList(member));
@@ -70,15 +72,14 @@ public class ClusterResponseBarrierImplTest {
 
     @Before
     public void setup() {
+        when(hci.getCluster()).thenReturn(cluster);
         when(cluster.getMembers()).thenReturn(members);
-        when(timeoutConfig.getLockTimeout()).thenReturn(EXPECTED_TIMEOUT);
-        when(timeoutConfig.getLockTimeoutUnit()).thenReturn(EXPECTED_UNIT);
-        when(timeoutConfig.getResponseTimeout()).thenReturn(EXPECTED_TIMEOUT);
-        when(timeoutConfig.getResponseTimeoutUnit()).thenReturn(EXPECTED_UNIT);
+        when(timeoutConfig.getTimeout()).thenReturn(EXPECTED_TIMEOUT);
+        when(timeoutConfig.getUnit()).thenReturn(EXPECTED_UNIT);
         when(message.getPublishingMember()).thenReturn(member);
         when(message.getMessageObject()).thenReturn(payload);
         when(event.getMember()).thenReturn(member);
-        listener = new ClusterResponseBarrierImpl<>(EXPECTED_PATH, requestTopic, responseTopic, timeoutConfig, cluster);
+        listener = new ClusterResponseBarrierImpl<>(EXPECTED_PATH, hci, responseTopic, requestTopic, timeoutConfig);
         when(cluster.addMembershipListener(listener)).thenReturn(EXPECTED_MEMBERSHIP_ID);
         when(responseTopic.addMessageListener(listener)).thenReturn(EXPECTED_REGISTRATION_ID);
     }

@@ -18,6 +18,7 @@ import ch.sourcepond.io.distributor.impl.common.ClientMessageProcessor;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
 import java.io.IOException;
 
 import static java.nio.ByteBuffer.wrap;
@@ -25,7 +26,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 final class TransferRequestProcessor extends ClientMessageProcessor<TransferRequest> {
 
-    public TransferRequestProcessor(final Receiver pReceiver) {
+    @Inject
+    TransferRequestProcessor(final Receiver pReceiver) {
         super(pReceiver);
     }
 

@@ -20,13 +20,15 @@ import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 
+import javax.inject.Inject;
 import java.io.IOException;
 
 /**
  * Listener to acquire a local file-lock.
  */
-class ClientLockProcessor extends ClientMessageProcessor<String> implements MembershipListener {
+final class ClientLockProcessor extends ClientMessageProcessor<String> implements MembershipListener {
 
+    @Inject
     public ClientLockProcessor(final Receiver pReceiver) {
         super(pReceiver);
     }

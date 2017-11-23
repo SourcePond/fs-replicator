@@ -17,11 +17,13 @@ import ch.sourcepond.io.distributor.api.GlobalPath;
 import ch.sourcepond.io.distributor.impl.common.ClientMessageProcessor;
 import ch.sourcepond.io.distributor.spi.Receiver;
 
+import javax.inject.Inject;
 import java.io.IOException;
 
-public final class DeleteRequestProcessor extends ClientMessageProcessor<String> {
+final class DeleteRequestProcessor extends ClientMessageProcessor<String> {
 
-    public DeleteRequestProcessor(final Receiver pReceiver) {
+    @Inject
+    DeleteRequestProcessor(final Receiver pReceiver) {
         super(pReceiver);
     }
 

@@ -19,13 +19,15 @@ import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
 import java.io.IOException;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 final class StoreRequestProcessor extends ClientMessageProcessor<StatusMessage> {
 
-    public StoreRequestProcessor(final Receiver pReceiver) {
+    @Inject
+    StoreRequestProcessor(final Receiver pReceiver) {
         super(pReceiver);
     }
 

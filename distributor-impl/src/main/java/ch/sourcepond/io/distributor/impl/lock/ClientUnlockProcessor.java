@@ -19,13 +19,15 @@ import ch.sourcepond.io.distributor.spi.Receiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.IOException;
 
 /**
  * Listener to release a local file-lock.
  */
-class ClientUnlockProcessor extends ClientMessageProcessor<String> {
+final class ClientUnlockProcessor extends ClientMessageProcessor<String> {
 
+    @Inject
     public ClientUnlockProcessor(final Receiver pReceiver) {
         super(pReceiver);
     }

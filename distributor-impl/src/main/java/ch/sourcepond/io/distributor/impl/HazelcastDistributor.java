@@ -14,17 +14,17 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl;
 
 import ch.sourcepond.io.distributor.api.Distributor;
-import ch.sourcepond.io.distributor.api.exception.DeletionException;
-import ch.sourcepond.io.distributor.api.exception.LockException;
-import ch.sourcepond.io.distributor.api.exception.ModificationException;
-import ch.sourcepond.io.distributor.api.exception.StoreException;
-import ch.sourcepond.io.distributor.api.exception.UnlockException;
-import ch.sourcepond.io.distributor.impl.binding.HazelcastBinding;
-import ch.sourcepond.io.distributor.impl.request.RequestDistributor;
+import ch.sourcepond.io.distributor.api.DeletionException;
+import ch.sourcepond.io.distributor.api.LockException;
+import ch.sourcepond.io.distributor.api.ModificationException;
+import ch.sourcepond.io.distributor.api.StoreException;
+import ch.sourcepond.io.distributor.api.UnlockException;
 import ch.sourcepond.io.distributor.impl.lock.LockManager;
+import ch.sourcepond.io.distributor.impl.request.RequestDistributor;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -32,14 +32,18 @@ import static java.util.Objects.requireNonNull;
 
 final class HazelcastDistributor implements Distributor {
     private static final byte[] EMPTY_CHECKSUM = new byte[0];
-    private final HazelcastBinding binding;
+    private final HazelcastInstance hci;
+    private final IMap<String, byte[]> checksums;
     private final LockManager lockManager;
     private final RequestDistributor requestDistributor;
 
-    public HazelcastDistributor(final HazelcastBinding pBinding,
-                                final LockManager pLockManager,
-                                final RequestDistributor pRequestDistributor) {
-        binding = pBinding;
+    @Inject
+    HazelcastDistributor(final HazelcastInstance pHci,
+                         final IMap<String, byte[]> pChecksums,
+                         final LockManager pLockManager,
+                         final RequestDistributor pRequestDistributor) {
+        hci = pHci;
+        checksums = pChecksums;
         lockManager = pLockManager;
         requestDistributor = pRequestDistributor;
     }
@@ -75,17 +79,17 @@ final class HazelcastDistributor implements Distributor {
         requestDistributor.store(requireNonNull(pPath, "path is null"), pFailureOrNull);
 
         // Do only update the checksum when the store operation was successful
-        binding.getChecksums().put(pPath, pChecksum);
+        checksums.put(pPath, pChecksum);
     }
 
     @Override
     public String getLocalNode() {
-        return binding.getHci().getLocalEndpoint().getUuid();
+        return hci.getLocalEndpoint().getUuid();
     }
 
     @Override
     public byte[] getChecksum(final String pPath) {
-        final byte[] checksum = binding.getChecksums().get(requireNonNull(pPath, "path is null"));
+        final byte[] checksum = checksums.get(requireNonNull(pPath, "path is null"));
         return checksum == null ? EMPTY_CHECKSUM : checksum;
     }
 

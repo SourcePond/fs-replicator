@@ -13,12 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock;
 
-import ch.sourcepond.io.distributor.api.exception.LockException;
-import ch.sourcepond.io.distributor.api.exception.UnlockException;
-import ch.sourcepond.io.distributor.impl.response.ResponseException;
+import ch.sourcepond.io.distributor.api.LockException;
+import ch.sourcepond.io.distributor.api.UnlockException;
+import ch.sourcepond.io.distributor.impl.binding.TimeoutConfig;
 import ch.sourcepond.io.distributor.impl.response.ClusterResponseBarrier;
 import ch.sourcepond.io.distributor.impl.response.ClusterResponseBarrierFactory;
-import ch.sourcepond.io.distributor.spi.TimeoutConfig;
+import ch.sourcepond.io.distributor.impl.response.ResponseException;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ILock;
 import com.hazelcast.core.ITopic;
@@ -58,12 +58,12 @@ public class LockManagerTest {
     private final ClusterResponseBarrierFactory factory = mock(ClusterResponseBarrierFactory.class);
     private final ITopic<String> lockRequestTopic = mock(ITopic.class);
     private final ITopic<String> unlockRequestTopic = mock(ITopic.class);
-    private final LockManager manager = new LockManager(hci, timeoutConfig, factory, lockRequestTopic, unlockRequestTopic);
+    private final LockManager manager = new LockManager(factory, hci, lockRequestTopic, unlockRequestTopic, timeoutConfig);
 
     @Before
     public void setup() throws Exception {
-        when(timeoutConfig.getLockTimeoutUnit()).thenReturn(EXPECTED_TIME_UNIT);
-        when(timeoutConfig.getLockTimeout()).thenReturn(EXPECTED_TIMEOUT);
+        when(timeoutConfig.getUnit()).thenReturn(EXPECTED_TIME_UNIT);
+        when(timeoutConfig.getTimeout()).thenReturn(EXPECTED_TIMEOUT);
         when(hci.getLock(EXPECTED_PATH)).thenReturn(lock);
         when(factory.create(EXPECTED_PATH, lockRequestTopic)).thenReturn(lockListener);
         when(factory.create(EXPECTED_PATH, unlockRequestTopic)).thenReturn(unlockListener);

@@ -13,23 +13,33 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.response;
 
-import ch.sourcepond.io.distributor.impl.binding.HazelcastBinding;
+import ch.sourcepond.io.distributor.impl.annotations.Response;
+import ch.sourcepond.io.distributor.impl.binding.TimeoutConfig;
+import ch.sourcepond.io.distributor.impl.common.StatusMessage;
+import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
 
+import javax.inject.Inject;
 import java.io.Serializable;
 
 /**
  * Factory to create {@link ClusterResponseBarrier} instances.
  */
 public class ClusterResponseBarrierFactory {
-    private final HazelcastBinding binding;
+    private final HazelcastInstance hci;
+    private final ITopic<StatusMessage> responseTopic;
+    private final TimeoutConfig responseTimeoutConfig;
 
-    public ClusterResponseBarrierFactory(final HazelcastBinding pBinding) {
-        assert pBinding != null : "pBinding is null";
-        binding = pBinding;
+    @Inject
+    ClusterResponseBarrierFactory(final HazelcastInstance pHci,
+                                  @Response final ITopic<StatusMessage> pResponseTopic,
+                                  @Response final TimeoutConfig pResponseTimeoutConfig) {
+        hci = pHci;
+        responseTopic = pResponseTopic;
+        responseTimeoutConfig = pResponseTimeoutConfig;
     }
 
     public <T extends Serializable> ClusterResponseBarrier<T> create(final String pPath, final ITopic<T> pRequestTopic) {
-        return new ClusterResponseBarrierImpl<T>(pPath, pRequestTopic, binding);
+        return new ClusterResponseBarrierImpl<T>(pPath, hci, responseTopic, pRequestTopic, responseTimeoutConfig);
     }
 }
