@@ -15,12 +15,13 @@ package ch.sourcepond.io.distributor.impl;
 
 import ch.sourcepond.io.distributor.api.Distributor;
 import ch.sourcepond.io.distributor.api.DistributorFactory;
-import ch.sourcepond.io.distributor.impl.response.ClusterResponseBarrierFactory;
 import ch.sourcepond.io.distributor.impl.binding.HazelcastBinding;
 import ch.sourcepond.io.distributor.impl.binding.HazelcastBindingFactory;
+import ch.sourcepond.io.distributor.impl.lock.LockManager;
+import ch.sourcepond.io.distributor.impl.request.RequestDistributor;
+import ch.sourcepond.io.distributor.impl.response.ClusterResponseBarrierFactory;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import ch.sourcepond.io.distributor.spi.TimeoutConfig;
-import com.hazelcast.core.HazelcastInstance;
 
 import java.util.Map;
 
@@ -31,15 +32,12 @@ public class HazelcastDistributorFactory implements DistributorFactory {
         hazelcastBindingFactory = pHazelcastBindingFactory;
     }
 
-
     @Override
     public Distributor create(final Receiver pReceiver, final TimeoutConfig pTimeoutConfig, final Map<String, String> pInstantiationProperties) {
         final HazelcastBinding hazelcastBinding = hazelcastBindingFactory.create(pInstantiationProperties);
-        final HazelcastInstance hci = hazelcastBinding.getHci();
-
-        final ClusterResponseBarrierFactory clusterResponseBarrierFactory = new ClusterResponseBarrierFactory(hazelcastBinding.getResponseTopic(), pTimeoutConfig, hci.getCluster());
-
-
-        return null;
+        final ClusterResponseBarrierFactory clusterResponseBarrierFactory = new ClusterResponseBarrierFactory(hazelcastBinding);
+        final LockManager lockManager = new LockManager(clusterResponseBarrierFactory, hazelcastBinding);
+        final RequestDistributor requestDistributor = new RequestDistributor(clusterResponseBarrierFactory, hazelcastBinding);
+        return new HazelcastDistributor(hazelcastBinding, lockManager, requestDistributor);
     }
 }

@@ -17,31 +17,36 @@ import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.impl.request.TransferRequest;
 import com.hazelcast.config.ReliableTopicConfig;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
 import com.hazelcast.core.ITopic;
 
 import java.io.Serializable;
 
 public class HazelcastBinding {
     private final HazelcastInstance hci;
+    private final IMap<String, byte[]> checksumMap;
     private final TopicConfigs configs;
     private final TimeoutConfig lockConfig;
-    private final TimeoutConfig unlockConfig;
     private final TimeoutConfig responseConfig;
 
     public HazelcastBinding(final HazelcastInstance pHci,
+                            final IMap<String, byte[]> pChecksumMap,
                             final TopicConfigs pConfigs,
                             final TimeoutConfig pLockConfig,
-                            final TimeoutConfig pUnlockConfig,
                             final TimeoutConfig pResponseConfig) {
         hci = pHci;
+        checksumMap = pChecksumMap;
         configs = pConfigs;
         lockConfig = pLockConfig;
-        unlockConfig = pUnlockConfig;
         responseConfig = pResponseConfig;
     }
 
     private <T extends Serializable> ITopic<T> getTopic(final ReliableTopicConfig pConfig) {
         return hci.getTopic(pConfig.getName());
+    }
+
+    public IMap<String, byte[]> getChecksums() {
+        return checksumMap;
     }
 
     public HazelcastInstance getHci() {
@@ -52,10 +57,6 @@ public class HazelcastBinding {
         return lockConfig;
     }
 
-    public TimeoutConfig getUnlockConfig() {
-        return unlockConfig;
-    }
-
     public TimeoutConfig getResponseConfig() {
         return responseConfig;
     }
@@ -64,23 +65,23 @@ public class HazelcastBinding {
         return getTopic(configs.getResponseTopicConfig());
     }
 
-    public ITopic<String> getDeleteTopic() {
+    public ITopic<String> getDeleteRequestTopic() {
         return getTopic(configs.getDeleteTopicConfig());
     }
 
-    public ITopic<TransferRequest> getTransferTopic() {
+    public ITopic<TransferRequest> getTransferRequestTopic() {
         return getTopic(configs.getTransferTopicConfig());
     }
 
-    public ITopic<String> getStoreTopic() {
+    public ITopic<StatusMessage> getStoreRequestTopic() {
         return getTopic(configs.getStoreTopicConfig());
     }
 
-    public ITopic<String> getLockTopic() {
+    public ITopic<String> getLockRequestTopic() {
         return getTopic(configs.getLockTopicConfig());
     }
 
-    public ITopic<String> getUnlockTopic() {
+    public ITopic<String> getUnlockRequestTopic() {
         return getTopic(configs.getUnlockTopicConfig());
     }
 }

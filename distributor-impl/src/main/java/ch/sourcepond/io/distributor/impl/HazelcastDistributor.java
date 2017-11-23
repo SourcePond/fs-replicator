@@ -19,6 +19,7 @@ import ch.sourcepond.io.distributor.api.exception.LockException;
 import ch.sourcepond.io.distributor.api.exception.ModificationException;
 import ch.sourcepond.io.distributor.api.exception.StoreException;
 import ch.sourcepond.io.distributor.api.exception.UnlockException;
+import ch.sourcepond.io.distributor.impl.binding.HazelcastBinding;
 import ch.sourcepond.io.distributor.impl.request.RequestDistributor;
 import ch.sourcepond.io.distributor.impl.lock.LockManager;
 import com.hazelcast.core.HazelcastInstance;
@@ -31,20 +32,14 @@ import static java.util.Objects.requireNonNull;
 
 final class HazelcastDistributor implements Distributor {
     private static final byte[] EMPTY_CHECKSUM = new byte[0];
-    private final HazelcastInstance hci;
-    private final boolean shutdownOnClose;
-    private final IMap<String, byte[]> checksums;
+    private final HazelcastBinding binding;
     private final LockManager lockManager;
     private final RequestDistributor requestDistributor;
 
-    public HazelcastDistributor(final HazelcastInstance pHci,
-                                final boolean pShutdownOnClose,
-                                final IMap<String, byte[]> pChecksum,
+    public HazelcastDistributor(final HazelcastBinding pBinding,
                                 final LockManager pLockManager,
                                 final RequestDistributor pRequestDistributor) {
-        hci = pHci;
-        shutdownOnClose = pShutdownOnClose;
-        checksums = pChecksum;
+        binding = pBinding;
         lockManager = pLockManager;
         requestDistributor = pRequestDistributor;
     }
@@ -80,24 +75,22 @@ final class HazelcastDistributor implements Distributor {
         requestDistributor.store(requireNonNull(pPath, "path is null"), pFailureOrNull);
 
         // Do only update the checksum when the store operation was successful
-        checksums.put(pPath, pChecksum);
+        binding.getChecksums().put(pPath, pChecksum);
     }
 
     @Override
     public String getLocalNode() {
-        return hci.getLocalEndpoint().getUuid();
+        return binding.getHci().getLocalEndpoint().getUuid();
     }
 
     @Override
     public byte[] getChecksum(final String pPath) {
-        final byte[] checksum = checksums.get(requireNonNull(pPath, "path is null"));
+        final byte[] checksum = binding.getChecksums().get(requireNonNull(pPath, "path is null"));
         return checksum == null ? EMPTY_CHECKSUM : checksum;
     }
 
     @Override
-    public void close() throws Exception {
-        if (shutdownOnClose) {
-            hci.shutdown();
-        }
+    public void close() {
+        // noop
     }
 }

@@ -13,8 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.response;
 
+import ch.sourcepond.io.distributor.impl.binding.HazelcastBinding;
+import ch.sourcepond.io.distributor.impl.binding.TimeoutConfig;
 import ch.sourcepond.io.distributor.impl.common.StatusMessage;
-import ch.sourcepond.io.distributor.spi.TimeoutConfig;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.Member;
@@ -28,8 +29,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -46,23 +45,17 @@ final class ClusterResponseBarrierImpl<T extends Serializable> implements Messag
     private final Lock lock = new ReentrantLock();
     private final Condition answerReceived = lock.newCondition();
     private final String path;
+    private final HazelcastBinding binding;
     private final ITopic<T> requestTopic;
-    private final ITopic<StatusMessage> responseTopic;
-    private final TimeoutConfig timeoutConfig;
-    private final Cluster cluster;
     private final Map<Member, Object> responses = new HashMap<>();
 
     public ClusterResponseBarrierImpl(final String pPath,
                                       final ITopic<T> pRequestTopic,
-                                      final ITopic<StatusMessage> pResponseTopic,
-                                      final TimeoutConfig pTimeoutConfig,
-                                      final Cluster pCluster) {
+                                      final HazelcastBinding pBinding) {
         path = pPath;
         requestTopic = pRequestTopic;
-        responseTopic = pResponseTopic;
-        timeoutConfig = pTimeoutConfig;
-        cluster = pCluster;
-        for (final Member member : pCluster.getMembers()) {
+        binding = pBinding;
+        for (final Member member : pBinding.getHci().getCluster().getMembers()) {
             responses.put(member, null);
         }
     }
@@ -131,13 +124,12 @@ final class ClusterResponseBarrierImpl<T extends Serializable> implements Messag
         lock.lock();
         try {
             try {
-                final TimeUnit responseTimeoutUnit = timeoutConfig.getResponseTimeoutUnit();
-                final long responseTimeout = timeoutConfig.getResponseTimeout();
+                final TimeoutConfig timeoutConfig = binding.getResponseConfig();
 
                 while (hasOpenAnswers()) {
-                    if (!answerReceived.await(responseTimeout, responseTimeoutUnit)) {
+                    if (!answerReceived.await(timeoutConfig.getTimeout(), timeoutConfig.getUnit())) {
                         throw new TimeoutException(format("Waiting for node responses timed-out after %d %s",
-                                responseTimeout, responseTimeoutUnit));
+                                timeoutConfig.getTimeout(), timeoutConfig.getTimeout()));
                     }
                 }
             } catch (final InterruptedException e) {
@@ -169,8 +161,10 @@ final class ClusterResponseBarrierImpl<T extends Serializable> implements Messag
     @Override
     public void awaitResponse(final T pMessage)  throws TimeoutException, ResponseException {
         requireNonNull(pMessage, "message is null");
+        final Cluster cluster = binding.getHci().getCluster();
         final String membershipId = cluster.addMembershipListener(this);
         try {
+            final ITopic<StatusMessage> responseTopic = binding.getResponseTopic();
             final String registrationId = responseTopic.addMessageListener(this);
             try {
                 requestTopic.publish(pMessage);

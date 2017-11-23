@@ -14,16 +14,20 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.binding;
 
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
 
 import java.util.Map;
 
 import static ch.sourcepond.io.distributor.impl.binding.Validations.mandatory;
+import static ch.sourcepond.io.distributor.impl.binding.Validations.optional;
 import static com.hazelcast.core.Hazelcast.getHazelcastInstanceByName;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
 public class HazelcastBindingFactory {
     static final String EXISTING_INSTANCE_NAME = "hazelcast.existing.instance.name";
+    static final String DEFAULT_CHECKSUM_MAP_NAME = "__fs_replicator.checksums";
+    static final String CHECKSUM_MAP_NAME = "hazelcast.checksum.mapName";
     private final TopicConfigsFactory topicConfigsFactory;
     private final TimeoutConfigFactory timeoutConfigFactory;
 
@@ -36,9 +40,11 @@ public class HazelcastBindingFactory {
         final String name = mandatory(EXISTING_INSTANCE_NAME, pInstantiationProperties, Validations::same);
         final HazelcastInstance hci = requireNonNull(getHazelcastInstanceByName(name),
                 format("No Hazelcast instance found with name %s, property %s must specify an existing instance", name, EXISTING_INSTANCE_NAME));
-        return new HazelcastBinding(hci, topicConfigsFactory.create(pInstantiationProperties),
+
+        return new HazelcastBinding(hci,
+                hci.getMap(optional(CHECKSUM_MAP_NAME, DEFAULT_CHECKSUM_MAP_NAME, pInstantiationProperties, Validations::same)),
+                topicConfigsFactory.create(pInstantiationProperties),
                 timeoutConfigFactory.createLockConfig(pInstantiationProperties),
-                timeoutConfigFactory.createUnlockConfig(pInstantiationProperties),
                 timeoutConfigFactory.createResponseConfig(pInstantiationProperties));
     }
 }

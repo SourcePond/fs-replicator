@@ -21,8 +21,6 @@ import static ch.sourcepond.io.distributor.impl.binding.Validations.mandatory;
 class TimeoutConfigFactory {
     static final String LOCK_TIMEOUT_UNIT = "hazelcast.lock.timeoutUnit";
     static final String LOCK_TIMEOUT = "hazelcast.lock.timeout";
-    static final String UNLOCK_TIMEOUT_UNIT = "hazelcast.unlock.timeoutUnit";
-    static final String UNLOCK_TIMEOUT = "hazelcast.unlock.timeout";
     static final String RESPONSE_TIMEOUT_UNIT = "hazelcast.response.timeoutUnit";
     static final String RESPONSE_TIMEOUT = "hazelcast.response.timeout";
 
@@ -33,10 +31,6 @@ class TimeoutConfigFactory {
 
     public TimeoutConfig createLockConfig(final Map<String, String> pInstantiationProperties) {
         return create(LOCK_TIMEOUT_UNIT, LOCK_TIMEOUT, pInstantiationProperties);
-    }
-
-    public TimeoutConfig createUnlockConfig(final Map<String, String> pInstantiationProperties) {
-        return create(UNLOCK_TIMEOUT_UNIT, UNLOCK_TIMEOUT, pInstantiationProperties);
     }
 
     public TimeoutConfig createResponseConfig(final Map<String, String> pInstantiationProperties) {

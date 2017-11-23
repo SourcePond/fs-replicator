@@ -15,14 +15,14 @@ package ch.sourcepond.io.distributor.impl.lock;
 
 import ch.sourcepond.io.distributor.api.exception.LockException;
 import ch.sourcepond.io.distributor.api.exception.UnlockException;
-import ch.sourcepond.io.distributor.impl.common.ClientMessageProcessor;
-import ch.sourcepond.io.distributor.impl.response.ResponseException;
+import ch.sourcepond.io.distributor.impl.ListenerRegistrar;
+import ch.sourcepond.io.distributor.impl.binding.HazelcastBinding;
+import ch.sourcepond.io.distributor.impl.binding.TimeoutConfig;
+import ch.sourcepond.io.distributor.impl.common.ClientMessageListenerFactory;
 import ch.sourcepond.io.distributor.impl.response.ClusterResponseBarrierFactory;
+import ch.sourcepond.io.distributor.impl.response.ResponseException;
 import ch.sourcepond.io.distributor.spi.Receiver;
-import ch.sourcepond.io.distributor.spi.TimeoutConfig;
-import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ILock;
-import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
 
 import java.util.concurrent.TimeUnit;
@@ -33,26 +33,26 @@ import static java.lang.Thread.currentThread;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class LockManager {
+public class LockManager implements ListenerRegistrar {
     private static final Logger LOG = getLogger(LockManager.class);
     static final TimeUnit DEFAULT_LEASE_UNIT = MINUTES;
     static final long DEFAULT_LEASE_TIMEOUT = 15;
-    private final HazelcastInstance hci;
-    private final TimeoutConfig timeoutConfig;
-    private final ITopic<String> lockRequestTopic;
-    private final ITopic<String> unlockRequestTopic;
+    private final HazelcastBinding binding;
+    private final LockListenerFactory lockListenerFactory;
     private final ClusterResponseBarrierFactory factory;
 
-    public LockManager(final HazelcastInstance pHci,
-                       final TimeoutConfig pTimeoutConfig,
-                       final ClusterResponseBarrierFactory pFactory,
-                       final ITopic<String> pLockRequestTopic,
-                       final ITopic<String> pUnlockRequestTopic) {
-        hci = pHci;
-        timeoutConfig = pTimeoutConfig;
+    // Constructor for testing
+    LockManager(final ClusterResponseBarrierFactory pFactory,
+                final LockListenerFactory pLockListenerFactory,
+                final HazelcastBinding pBinding) {
         factory = pFactory;
-        lockRequestTopic = pLockRequestTopic;
-        unlockRequestTopic = pUnlockRequestTopic;
+        lockListenerFactory = pLockListenerFactory;
+        binding = pBinding;
+    }
+
+    public LockManager(final ClusterResponseBarrierFactory pFactory,
+                       final HazelcastBinding pBinding) {
+        this(pFactory, new LockListenerFactory(new ClientMessageListenerFactory(pBinding)), pBinding);
     }
 
     /**
@@ -62,11 +62,11 @@ public class LockManager {
      *
      * @param pPath Path to be locked on all nodes, must not be {@code null}.
      * @throws ResponseException Thrown, if the lock acquisition failed on some node.
-     * @throws LockException           Thrown, if the lock acquisition timed out for a node.
+     * @throws LockException     Thrown, if the lock acquisition timed out for a node.
      */
     private void acquireGlobalFileLock(final String pPath) throws ResponseException, TimeoutException {
         // In this case, the path is also the request-message
-        factory.create(pPath, lockRequestTopic).awaitResponse(pPath);
+        factory.create(pPath, binding.getLockRequestTopic()).awaitResponse(pPath);
     }
 
     /**
@@ -77,7 +77,7 @@ public class LockManager {
      */
     private void releaseGlobalFileLock(final String pPath) throws ResponseException, TimeoutException {
         // In this case, the path is also the request-message
-        factory.create(pPath, unlockRequestTopic).awaitResponse(pPath);
+        factory.create(pPath, binding.getUnlockRequestTopic()).awaitResponse(pPath);
     }
 
     private void lockAcquisitionFailed(final String pPath, final String pMessage, final Exception pCause)
@@ -90,28 +90,25 @@ public class LockManager {
             } catch (final ResponseException | TimeoutException e) {
                 LOG.warn(e.getMessage(), e);
             } finally {
-                hci.getLock(pPath).unlock();
+                binding.getHci().getLock(pPath).unlock();
             }
         }
     }
 
     public boolean isLocked(final String pPath) {
-        return hci.getLock(pPath).isLocked();
+        return binding.getHci().getLock(pPath).isLocked();
     }
 
     public void lock(final String pPath) throws LockException {
-        final ILock globalLock = hci.getLock(pPath);
+        final ILock globalLock = binding.getHci().getLock(pPath);
         try {
-            // Because timeout-binding is mutable we store the current values into
-            // variables to make sure that in error case the actual values are included
-            // into the exception message.
-            final long lockTimeout = timeoutConfig.getLockTimeout();
-            final TimeUnit lockTimeUnit = timeoutConfig.getLockTimeoutUnit();
+            final TimeoutConfig timeoutConfig = binding.getLockConfig();
 
-            if (globalLock.tryLock(timeoutConfig.getLockTimeout(), timeoutConfig.getLockTimeoutUnit(), DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT)) {
+            if (globalLock.tryLock(timeoutConfig.getTimeout(), timeoutConfig.getUnit(), DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT)) {
                 acquireGlobalFileLock(pPath);
             } else {
-                lockAcquisitionFailed(pPath, format("Lock acquisition timed out after %d %s", lockTimeout, lockTimeUnit), null);
+                lockAcquisitionFailed(pPath, format("Lock acquisition timed out after %d %s",
+                        timeoutConfig.getTimeout(), timeoutConfig.getUnit()), null);
             }
         } catch (final InterruptedException e) {
             currentThread().interrupt();
@@ -122,7 +119,7 @@ public class LockManager {
     }
 
     public void unlock(final String pPath) throws UnlockException {
-        final ILock lock = hci.getLock(pPath);
+        final ILock lock = binding.getHci().getLock(pPath);
         try {
             releaseGlobalFileLock(pPath);
         } catch (final ResponseException | TimeoutException e) {
@@ -132,11 +129,9 @@ public class LockManager {
         }
     }
 
-    public ClientMessageProcessor<String> createLockProcessor(final Receiver pReceiver) {
-        return new ClientLockProcessor(pReceiver);
-    }
-
-    public ClientMessageProcessor<String> createUnlockProcessor(final Receiver pReceiver) {
-        return new ClientUnlockProcessor(pReceiver);
+    @Override
+    public void registerListeners(final Receiver pReceiver) {
+        binding.getLockRequestTopic().addMessageListener(lockListenerFactory.createLockListener(pReceiver));
+        binding.getUnlockRequestTopic().addMessageListener(lockListenerFactory.createUnlockListener(pReceiver));
     }
 }
