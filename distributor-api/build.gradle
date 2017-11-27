@@ -2,6 +2,7 @@ group 'ch.sourcepond.io'
 version '0.1-SNAPSHOT'
 
 apply plugin: 'java'
+apply plugin: 'osgi'
 
 sourceCompatibility = 1.8
 

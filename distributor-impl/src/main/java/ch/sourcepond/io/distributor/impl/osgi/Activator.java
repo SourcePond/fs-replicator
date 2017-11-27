@@ -13,5 +13,20 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.osgi;
 
-public class Activator {
+import ch.sourcepond.io.distributor.api.DistributorFactory;
+import ch.sourcepond.io.distributor.impl.HazelcastDistributorFactory;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+
+public class Activator implements BundleActivator {
+
+    @Override
+    public void start(final BundleContext context) {
+        context.registerService(DistributorFactory.class, new HazelcastDistributorFactory(), null);
+    }
+
+    @Override
+    public void stop(final BundleContext context) {
+        // noop
+    }
 }
