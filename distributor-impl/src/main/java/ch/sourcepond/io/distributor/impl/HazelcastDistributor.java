@@ -33,7 +33,7 @@ import java.util.Set;
 import static java.util.Objects.requireNonNull;
 
 final class HazelcastDistributor implements Distributor {
-    private static final byte[] EMPTY_CHECKSUM = new byte[0];
+    static final byte[] EMPTY_CHECKSUM = new byte[0];
     private final HazelcastInstance hci;
     private final IMap<String, byte[]> checksums;
     private final LockManager lockManager;
