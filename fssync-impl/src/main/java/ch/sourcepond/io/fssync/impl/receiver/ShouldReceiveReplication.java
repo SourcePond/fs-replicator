@@ -181,7 +181,7 @@ public class ShouldReceiveReplication implements Receiver {
     }
 
     @Override
-    public void discard(final GlobalPath pPath, final IOException pFailureOrNull) throws IOException {
+    public void discard(final GlobalPath pPath, final IOException pFailure) throws IOException {
         synchronized (failures) {
 
         }
