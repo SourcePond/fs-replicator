@@ -14,6 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.impl.request;
 
 import ch.sourcepond.io.fssync.distributor.impl.annotations.Delete;
+import ch.sourcepond.io.fssync.distributor.impl.annotations.Discard;
 import ch.sourcepond.io.fssync.distributor.impl.annotations.Store;
 import ch.sourcepond.io.fssync.distributor.impl.annotations.Transfer;
 import ch.sourcepond.io.fssync.distributor.impl.common.ClientMessageListenerFactory;
@@ -34,6 +35,7 @@ public class RequestModule extends AbstractModule {
     protected void configure() {
         bind(DeleteRequestProcessor.class);
         bind(TransferRequestProcessor.class);
+        bind(DiscardRequestProcessor.class);
         bind(StoreRequestProcessor.class);
         bind(RequestDistributor.class);
     }
@@ -55,7 +57,14 @@ public class RequestModule extends AbstractModule {
     @Provides
     @Singleton
     @Store
-    MessageListener<StatusMessage> storeListener(final ClientMessageListenerFactory pFactory, final StoreRequestProcessor pProcessor) {
+    MessageListener<String> storeListener(final ClientMessageListenerFactory pFactory, final StoreRequestProcessor pProcessor) {
+        return pFactory.createListener(pProcessor);
+    }
+
+    @Provides
+    @Singleton
+    @Discard
+    MessageListener<StatusMessage> discardListener(final ClientMessageListenerFactory pFactory, final DiscardRequestProcessor pProcessor) {
         return pFactory.createListener(pProcessor);
     }
 
@@ -75,8 +84,15 @@ public class RequestModule extends AbstractModule {
 
     @Provides
     @Singleton
+    @Discard
+    MessageListenerRegistration registerDiscardListener(final @Discard ITopic<StatusMessage> pDiscardTopic, final @Discard MessageListener<StatusMessage> pDiscardListener) {
+        return register(pDiscardTopic, pDiscardListener);
+    }
+
+    @Provides
+    @Singleton
     @Store
-    MessageListenerRegistration registerStoreListener(final @Store ITopic<StatusMessage> pStoreTopic, final @Store MessageListener<StatusMessage> pStoreListener) {
+    MessageListenerRegistration registerStoreListener(final @Store ITopic<String> pStoreTopic, final @Store MessageListener<String> pStoreListener) {
         return register(pStoreTopic, pStoreListener);
     }
 }

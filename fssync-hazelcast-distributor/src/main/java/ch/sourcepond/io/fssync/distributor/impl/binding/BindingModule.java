@@ -14,6 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.impl.binding;
 
 import ch.sourcepond.io.fssync.distributor.impl.annotations.Delete;
+import ch.sourcepond.io.fssync.distributor.impl.annotations.Discard;
 import ch.sourcepond.io.fssync.distributor.impl.annotations.Lock;
 import ch.sourcepond.io.fssync.distributor.impl.annotations.Response;
 import ch.sourcepond.io.fssync.distributor.impl.annotations.Store;
@@ -74,6 +75,14 @@ public class BindingModule extends AbstractModule {
     public static final String TRANSFER_TOPIC_READ_BATCH_SIZE = "hazelcast.transfer.topic.readBatchSize";
     public static final boolean TRANSFER_TOPIC_DEFAULT_STATISTICS_ENABLED = false;
     public static final String TRANSFER_TOPIC_STATISTICS_ENABLED = "hazelcast.transfer.topic.statisticsEnabled";
+
+    public static final String DISCARD_TOPIC_DEFAULT_NAME = "__fs_distributor.discard";
+    public static final String DISCARD_TOPIC_NAME = "hazelcast.discard.topic.name";
+    public static final String DISCARD_TOPIC_OVERLOAD_POLICY = "hazelcast.discard.topic.policy";
+    public static final int DISCARD_TOPIC_DEFAULT_READ_BATCH_SIZE = 50;
+    public static final String DISCARD_TOPIC_READ_BATCH_SIZE = "hazelcast.discard.topic.readBatchSize";
+    public static final boolean DISCARD_TOPIC_DEFAULT_STATISTICS_ENABLED = false;
+    public static final String DISCARD_TOPIC_STATISTICS_ENABLED = "hazelcast.discard.topic.statisticsEnabled";
 
     public static final String STORE_TOPIC_DEFAULT_NAME = "__fs_distributor.store";
     public static final String STORE_TOPIC_NAME = "hazelcast.store.topic.name";
@@ -187,6 +196,17 @@ public class BindingModule extends AbstractModule {
 
     @Provides
     @Singleton
+    @Discard
+    ReliableTopicConfig discardTopicConfig(final HazelcastInstance pHci, final Map<String, String> pInstantiationProperties) {
+        return createTopicConfig(pHci,
+                optional(DISCARD_TOPIC_NAME, DISCARD_TOPIC_DEFAULT_NAME, instantiationProperties, Validations::same),
+                optional(DISCARD_TOPIC_OVERLOAD_POLICY, BLOCK, instantiationProperties, TopicOverloadPolicy::valueOf),
+                optional(DISCARD_TOPIC_READ_BATCH_SIZE, DISCARD_TOPIC_DEFAULT_READ_BATCH_SIZE, instantiationProperties, Integer::valueOf),
+                optional(DISCARD_TOPIC_STATISTICS_ENABLED, DISCARD_TOPIC_DEFAULT_STATISTICS_ENABLED, instantiationProperties, Boolean::valueOf));
+    }
+
+    @Provides
+    @Singleton
     @Store
     ReliableTopicConfig storeTopicConfig(final HazelcastInstance pHci, final Map<String, String> pInstantiationProperties) {
         return createTopicConfig(pHci,
@@ -241,8 +261,15 @@ public class BindingModule extends AbstractModule {
 
     @Provides
     @Singleton
+    @Discard
+    ITopic<StatusMessage> discardRequestTopic(final HazelcastInstance pHci, @Discard final ReliableTopicConfig pConfig) {
+        return getTopic(pHci, pConfig);
+    }
+
+    @Provides
+    @Singleton
     @Store
-    ITopic<StatusMessage> storeRequestTopic(final HazelcastInstance pHci, @Store final ReliableTopicConfig pConfig) {
+    ITopic<String> storeRequestTopic(final HazelcastInstance pHci, @Store final ReliableTopicConfig pConfig) {
         return getTopic(pHci, pConfig);
     }
 

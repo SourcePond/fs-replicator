@@ -14,6 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.impl;
 
 import ch.sourcepond.io.fssync.distributor.impl.annotations.Delete;
+import ch.sourcepond.io.fssync.distributor.impl.annotations.Discard;
 import ch.sourcepond.io.fssync.distributor.impl.annotations.Lock;
 import ch.sourcepond.io.fssync.distributor.impl.annotations.Store;
 import ch.sourcepond.io.fssync.distributor.impl.annotations.Transfer;
@@ -56,6 +57,7 @@ public class HazelcastDistributorModule extends AbstractModule {
         registrations.addBinding().to(get(MessageListenerRegistration.class, Unlock.class));
         registrations.addBinding().to(get(MessageListenerRegistration.class, Delete.class));
         registrations.addBinding().to(get(MessageListenerRegistration.class, Transfer.class));
+        registrations.addBinding().to(get(MessageListenerRegistration.class, Discard.class));
         registrations.addBinding().to(get(MessageListenerRegistration.class, Store.class));
 
         bind(HazelcastDistributor.class);

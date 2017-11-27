@@ -14,28 +14,35 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.impl.request;
 
 import ch.sourcepond.io.fssync.distributor.impl.common.ClientMessageProcessorTest;
+import ch.sourcepond.io.fssync.distributor.impl.common.StatusMessage;
 import org.junit.Test;
 
 import java.io.IOException;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-public class StoreRequestProcessorTest extends ClientMessageProcessorTest<String, StoreRequestProcessor> {
+public class DiscardRequestProcessorTest extends ClientMessageProcessorTest<StatusMessage, DiscardRequestProcessor> {
 
     @Override
-    protected StoreRequestProcessor createProcessor() {
-        return new StoreRequestProcessor(receiver);
+    protected DiscardRequestProcessor createProcessor() {
+        return new DiscardRequestProcessor(receiver);
     }
 
     @Override
-    protected String createMessage() {
-        return EXPECTED_PATH;
+    protected StatusMessage createMessage() {
+        final StatusMessage message = mock(StatusMessage.class);
+        when(message.getPath()).thenReturn(EXPECTED_PATH);
+        return message;
     }
 
     @Test
     @Override
     public void processMessage() throws IOException {
+        final IOException expected = new IOException();
+        when(message.getFailureOrNull()).thenReturn(expected);
         processor.processMessage(path, message);
-        verify(receiver).store(path);
+        verify(receiver).discard(path, expected);
     }
 }

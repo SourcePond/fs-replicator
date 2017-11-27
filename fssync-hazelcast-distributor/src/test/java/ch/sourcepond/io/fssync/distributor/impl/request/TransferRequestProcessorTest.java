@@ -45,6 +45,6 @@ public class TransferRequestProcessorTest extends ClientMessageProcessorTest<Tra
     @Override
     public void processMessage() throws IOException {
         processor.processMessage(path, message);
-        verify(receiver).receive(eq(path), argThat(data -> Arrays.equals(EXPECTED_DATA, data.array())));
+        verify(receiver).transfer(eq(path), argThat(data -> Arrays.equals(EXPECTED_DATA, data.array())));
     }
 }

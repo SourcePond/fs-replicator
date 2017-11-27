@@ -161,7 +161,7 @@ public class ShouldReceiveReplication implements Receiver {
     }
 
     @Override
-    public void receive(final GlobalPath pPath, final ByteBuffer pBuffer) {
+    public void transfer(final GlobalPath pPath, final ByteBuffer pBuffer) {
         final WritableByteChannel ch = getChannel(pPath);
         synchronized (failures) {
             final String path = pPath.getPath();
@@ -181,7 +181,14 @@ public class ShouldReceiveReplication implements Receiver {
     }
 
     @Override
-    public void store(final GlobalPath pPath, final IOException pFailureOrNull) throws IOException {
+    public void discard(final GlobalPath pPath, final IOException pFailureOrNull) throws IOException {
+        synchronized (failures) {
+
+        }
+    }
+
+    @Override
+    public void store(final GlobalPath pPath) throws IOException {
         synchronized (failures) {
 
         }

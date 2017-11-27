@@ -15,15 +15,12 @@ package ch.sourcepond.io.fssync.distributor.impl.request;
 
 import ch.sourcepond.io.fssync.distributor.api.GlobalPath;
 import ch.sourcepond.io.fssync.distributor.impl.common.ClientMessageProcessor;
-import ch.sourcepond.io.fssync.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.fssync.distributor.spi.Receiver;
 
 import javax.inject.Inject;
 import java.io.IOException;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-final class StoreRequestProcessor extends ClientMessageProcessor<StatusMessage> {
+final class StoreRequestProcessor extends ClientMessageProcessor<String> {
 
     @Inject
     StoreRequestProcessor(final Receiver pReceiver) {
@@ -31,12 +28,12 @@ final class StoreRequestProcessor extends ClientMessageProcessor<StatusMessage> 
     }
 
     @Override
-    protected String toPath(final StatusMessage pMessage) {
-        return pMessage.getPath();
+    protected String toPath(final String pMessage) {
+        return pMessage;
     }
 
     @Override
-    protected void processMessage(final GlobalPath pPath, final StatusMessage pMessage) throws IOException {
-        receiver.store(pPath, pMessage.getFailureOrNull());
+    protected void processMessage(final GlobalPath pPath, final String pMessage) throws IOException {
+        receiver.store(pPath);
     }
 }

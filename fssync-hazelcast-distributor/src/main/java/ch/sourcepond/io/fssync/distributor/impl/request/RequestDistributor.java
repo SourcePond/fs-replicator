@@ -18,6 +18,7 @@ import ch.sourcepond.io.fssync.distributor.api.DiscardException;
 import ch.sourcepond.io.fssync.distributor.api.TransferException;
 import ch.sourcepond.io.fssync.distributor.api.StoreException;
 import ch.sourcepond.io.fssync.distributor.impl.annotations.Delete;
+import ch.sourcepond.io.fssync.distributor.impl.annotations.Discard;
 import ch.sourcepond.io.fssync.distributor.impl.annotations.Store;
 import ch.sourcepond.io.fssync.distributor.impl.annotations.Transfer;
 import ch.sourcepond.io.fssync.distributor.impl.common.StatusMessage;
@@ -36,16 +37,19 @@ public class RequestDistributor {
     private final ClusterResponseBarrierFactory clusterResponseBarrierFactory;
     private final ITopic<String> deleteRequestTopic;
     private final ITopic<TransferRequest> transferRequestTopic;
-    private final ITopic<StatusMessage> storeRequestTopic;
+    private final ITopic<StatusMessage> discardRequestTopic;
+    private final ITopic<String> storeRequestTopic;
 
     @Inject
     RequestDistributor(final ClusterResponseBarrierFactory pClusterResponseBarrierFactory,
                        @Delete final ITopic<String> pDeleteRequestTopic,
                        @Transfer final ITopic<TransferRequest> pTransferRequestTopic,
-                       @Store final ITopic<StatusMessage> pStoreRequestTopic) {
+                       @Discard final ITopic<StatusMessage> pDiscardRequestTopic,
+                       @Store final ITopic<String> pStoreRequestTopic) {
         clusterResponseBarrierFactory = pClusterResponseBarrierFactory;
         deleteRequestTopic = pDeleteRequestTopic;
         transferRequestTopic = pTransferRequestTopic;
+        discardRequestTopic = pDiscardRequestTopic;
         storeRequestTopic = pStoreRequestTopic;
     }
 
@@ -64,7 +68,7 @@ public class RequestDistributor {
 
     public void discard(final String pPath, final IOException pFailureOrNull) throws DiscardException {
         try {
-            clusterResponseBarrierFactory.create(pPath, storeRequestTopic).awaitResponse(new StatusMessage(pPath, pFailureOrNull));
+            clusterResponseBarrierFactory.create(pPath, discardRequestTopic).awaitResponse(new StatusMessage(pPath, pFailureOrNull));
         } catch (final TimeoutException | ResponseException e) {
             throw new DiscardException(format("Storing or reverting %s failed on some node!", pPath), e);
         }
@@ -72,7 +76,7 @@ public class RequestDistributor {
 
     public void store(final String pPath) throws StoreException {
         try {
-            clusterResponseBarrierFactory.create(pPath, storeRequestTopic).awaitResponse(new StatusMessage(pPath, null));
+            clusterResponseBarrierFactory.create(pPath, storeRequestTopic).awaitResponse(pPath);
         } catch (final TimeoutException | ResponseException e) {
             throw new StoreException(format("Storing or reverting %s failed on some node!", pPath), e);
         }

@@ -45,21 +45,23 @@ public class RequestDistributorTest {
     private static final IOException EXPECTED_FAILURE = new IOException();
     private static ArgumentMatcher<TransferRequest> TRANSFER_REQUEST_MATCHER = message -> EXPECTED_PATH.equals(message.getPath()) && Arrays.equals(EXPECTED_DATA, message.getData());
     private static ArgumentMatcher<StatusMessage> DISCARD_REQUEST_MATCHER = message -> EXPECTED_PATH.equals(message.getPath()) && message.getFailureOrNull() == EXPECTED_FAILURE;
-    private static ArgumentMatcher<StatusMessage> STORE_REQUEST_MATCHER = message -> EXPECTED_PATH.equals(message.getPath()) && message.getFailureOrNull() == null;
     private final ClusterResponseBarrierFactory clusterResponseBarrierFactory = mock(ClusterResponseBarrierFactory.class);
     private final ITopic<String> deleteRequestTopic = mock(ITopic.class);
     private final ITopic<TransferRequest> transferRequestTopic = mock(ITopic.class);
-    private final ITopic<StatusMessage> storeRequestTopic = mock(ITopic.class);
+    private final ITopic<StatusMessage> discardRequestTopic = mock(ITopic.class);
+    private final ITopic<String> storeRequestTopic = mock(ITopic.class);
     private final ClusterResponseBarrier<String> deleteRequestBarrier = mock(ClusterResponseBarrier.class);
     private final ClusterResponseBarrier<TransferRequest> transferRequestBarrier = mock(ClusterResponseBarrier.class);
-    private final ClusterResponseBarrier<StatusMessage> storeRequestBarrier = mock(ClusterResponseBarrier.class);
+    private final ClusterResponseBarrier<StatusMessage> discardRequestBarrier = mock(ClusterResponseBarrier.class);
+    private final ClusterResponseBarrier<String> storeRequestBarrier = mock(ClusterResponseBarrier.class);
     private final RequestDistributor distributor = new RequestDistributor(clusterResponseBarrierFactory,
-            deleteRequestTopic, transferRequestTopic, storeRequestTopic);
+            deleteRequestTopic, transferRequestTopic, discardRequestTopic, storeRequestTopic);
 
     @Before
     public void setup() {
         when(clusterResponseBarrierFactory.create(EXPECTED_PATH, deleteRequestTopic)).thenReturn(deleteRequestBarrier);
         when(clusterResponseBarrierFactory.create(EXPECTED_PATH, transferRequestTopic)).thenReturn(transferRequestBarrier);
+        when(clusterResponseBarrierFactory.create(EXPECTED_PATH, discardRequestTopic)).thenReturn(discardRequestBarrier);
         when(clusterResponseBarrierFactory.create(EXPECTED_PATH, storeRequestTopic)).thenReturn(storeRequestBarrier);
     }
 
@@ -85,13 +87,13 @@ public class RequestDistributorTest {
     @Test
     public void discard() throws Exception {
         distributor.discard(EXPECTED_PATH, EXPECTED_FAILURE);
-        verify(storeRequestBarrier).awaitResponse(argThat(DISCARD_REQUEST_MATCHER));
+        verify(discardRequestBarrier).awaitResponse(argThat(DISCARD_REQUEST_MATCHER));
     }
 
     @Test
     public void discardFailed() throws Exception {
         final ResponseException expected = new ResponseException("any");
-        doThrow(expected).when(storeRequestBarrier).awaitResponse(argThat(DISCARD_REQUEST_MATCHER));
+        doThrow(expected).when(discardRequestBarrier).awaitResponse(argThat(DISCARD_REQUEST_MATCHER));
         try {
             distributor.discard(EXPECTED_PATH, EXPECTED_FAILURE);
             fail("Exception expected!");
@@ -103,13 +105,13 @@ public class RequestDistributorTest {
     @Test
     public void store() throws Exception {
         distributor.store(EXPECTED_PATH);
-        verify(storeRequestBarrier).awaitResponse(argThat(STORE_REQUEST_MATCHER));
+        verify(storeRequestBarrier).awaitResponse(EXPECTED_PATH);
     }
 
     @Test
     public void storeFailed() throws Exception {
         final ResponseException expected = new ResponseException("any");
-        doThrow(expected).when(storeRequestBarrier).awaitResponse(argThat(STORE_REQUEST_MATCHER));
+        doThrow(expected).when(storeRequestBarrier).awaitResponse(EXPECTED_PATH);
         try {
             distributor.store(EXPECTED_PATH);
             fail("Exception expected!");

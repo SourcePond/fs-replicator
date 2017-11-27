@@ -35,14 +35,16 @@ public interface Receiver {
     /**
      * Receives the data specified and temporarily store it. The temporary file is not yet visible
      * and needs to be moved to its destination location after all data has been received
-     * (see {@link #store(GlobalPath, IOException)}).
+     * (see {@link #store(GlobalPath)}).
      *
      * @param pPath
      * @param pBuffer
      */
-    void receive(GlobalPath pPath, ByteBuffer pBuffer);
+    void transfer(GlobalPath pPath, ByteBuffer pBuffer);
 
-    void store(GlobalPath pPath, IOException pFailureOrNull) throws IOException;
+    void discard(GlobalPath pPath, IOException pFailure) throws IOException;
+
+    void store(GlobalPath pPath) throws IOException;
 
     /**
      * Unlocks and removes any state which associated with the node-id specified. This method should be called
