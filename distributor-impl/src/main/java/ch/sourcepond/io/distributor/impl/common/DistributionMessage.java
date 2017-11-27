@@ -15,7 +15,7 @@ package ch.sourcepond.io.distributor.impl.common;
 
 import java.io.Serializable;
 
-public class DistributionMessage implements Serializable {
+public abstract class DistributionMessage implements Serializable {
     private final String path;
 
     public DistributionMessage(final String pPath) {

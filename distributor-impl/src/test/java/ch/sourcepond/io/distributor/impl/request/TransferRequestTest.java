@@ -11,21 +11,15 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl;
+package ch.sourcepond.io.distributor.impl.request;
 
-import ch.sourcepond.io.distributor.impl.common.DistributionMessage;
-import org.junit.Test;
+import ch.sourcepond.io.distributor.impl.DistributionMessageTest;
 
-import static org.junit.Assert.assertEquals;
+public class TransferRequestTest extends DistributionMessageTest<TransferRequest> {
+    private static final byte[] EXPECTED_DATA = new byte[0];
 
-public abstract class DistributionMessageTest<T extends DistributionMessage> {
-    public static final String EXPECTED_PATH = "somePath";
-    protected final T message = createMessage();
-
-    protected abstract T createMessage();
-
-    @Test
-    public void getPath() {
-        assertEquals(EXPECTED_PATH, message.getPath());
+    @Override
+    protected TransferRequest createMessage() {
+        return new TransferRequest(EXPECTED_PATH, EXPECTED_DATA);
     }
 }
