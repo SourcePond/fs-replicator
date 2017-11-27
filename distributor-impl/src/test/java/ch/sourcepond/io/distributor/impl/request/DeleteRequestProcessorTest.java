@@ -11,7 +11,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.lock;
+package ch.sourcepond.io.distributor.impl.request;
 
 import ch.sourcepond.io.distributor.impl.common.ClientMessageProcessorTest;
 import org.junit.Test;
@@ -20,11 +20,11 @@ import java.io.IOException;
 
 import static org.mockito.Mockito.verify;
 
-public class ClientUnlockProcessorTest extends ClientMessageProcessorTest<String, ClientUnlockProcessor> {
+public class DeleteRequestProcessorTest extends ClientMessageProcessorTest<String, DeleteRequestProcessor> {
 
     @Override
-    protected ClientUnlockProcessor createProcessor() {
-        return new ClientUnlockProcessor(receiver);
+    protected DeleteRequestProcessor createProcessor() {
+        return new DeleteRequestProcessor(receiver);
     }
 
     @Override
@@ -35,7 +35,7 @@ public class ClientUnlockProcessorTest extends ClientMessageProcessorTest<String
     @Test
     @Override
     public void processMessage() throws IOException {
-        processor.processMessage(path, message);
-        verify(receiver).unlockLocally(path);
+        processor.processMessage(path, EXPECTED_PATH);
+        verify(receiver).delete(path);
     }
 }

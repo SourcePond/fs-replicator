@@ -13,26 +13,43 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.common;
 
+import ch.sourcepond.io.distributor.api.GlobalPath;
 import ch.sourcepond.io.distributor.spi.Receiver;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.mock;
 
 public abstract class ClientMessageProcessorTest<M, T extends ClientMessageProcessor<M>> {
+    public static final String EXPECTED_PATH = "somePath";
     protected final Receiver receiver = mock(Receiver.class);
+    protected final GlobalPath path = new GlobalPath("any", EXPECTED_PATH);
+    protected M message;
     protected T processor;
 
     @Before
     public void setup() {
+        message = createMessage();
         processor = createProcessor();
     }
+
+    public abstract void processMessage() throws IOException;
 
     @Test
     public void verifyReceiver() {
         assertSame(receiver, processor.receiver);
     }
 
+    protected abstract M createMessage();
+
     protected abstract T createProcessor();
+
+    @Test
+    public void toPath() {
+        assertEquals(EXPECTED_PATH, processor.toPath(message));
+    }
 }

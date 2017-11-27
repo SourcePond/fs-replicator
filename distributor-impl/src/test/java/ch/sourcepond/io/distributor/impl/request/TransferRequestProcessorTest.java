@@ -11,31 +11,40 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.distributor.impl.lock;
+package ch.sourcepond.io.distributor.impl.request;
 
 import ch.sourcepond.io.distributor.impl.common.ClientMessageProcessorTest;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
 
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-public class ClientUnlockProcessorTest extends ClientMessageProcessorTest<String, ClientUnlockProcessor> {
+public class TransferRequestProcessorTest extends ClientMessageProcessorTest<TransferRequest, TransferRequestProcessor> {
+    private final byte[] EXPECTED_DATA = new byte[]{1, 2, 3, 4, 5};
 
     @Override
-    protected ClientUnlockProcessor createProcessor() {
-        return new ClientUnlockProcessor(receiver);
+    protected TransferRequestProcessor createProcessor() {
+        return new TransferRequestProcessor(receiver);
     }
 
     @Override
-    protected String createMessage() {
-        return EXPECTED_PATH;
+    protected TransferRequest createMessage() {
+        final TransferRequest message = mock(TransferRequest.class);
+        when(message.getPath()).thenReturn(EXPECTED_PATH);
+        when(message.getData()).thenReturn(EXPECTED_DATA);
+        return message;
     }
 
     @Test
     @Override
     public void processMessage() throws IOException {
         processor.processMessage(path, message);
-        verify(receiver).unlockLocally(path);
+        verify(receiver).receive(eq(path), argThat(data -> Arrays.equals(EXPECTED_DATA, data.array())));
     }
 }

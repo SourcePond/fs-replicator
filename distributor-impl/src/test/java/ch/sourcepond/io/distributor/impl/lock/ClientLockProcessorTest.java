@@ -13,25 +13,23 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.lock;
 
-import ch.sourcepond.io.distributor.api.GlobalPath;
 import ch.sourcepond.io.distributor.impl.common.ClientMessageProcessorTest;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MembershipEvent;
 import org.junit.Test;
 
+import java.io.IOException;
+
 import static ch.sourcepond.io.distributor.impl.Constants.EXPECTED_NODE;
-import static ch.sourcepond.io.distributor.impl.Constants.EXPECTED_PATH;
 import static com.hazelcast.core.MembershipEvent.MEMBER_REMOVED;
 import static java.util.Collections.emptySet;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 public class ClientLockProcessorTest extends ClientMessageProcessorTest<String, ClientLockProcessor> {
-    private final GlobalPath globalPath = mock(GlobalPath.class);
     private final Member member = mock(Member.class);
 
     @Override
@@ -39,15 +37,9 @@ public class ClientLockProcessorTest extends ClientMessageProcessorTest<String, 
         return new ClientLockProcessor(receiver);
     }
 
-    @Test
-    public void processSuccess() throws Exception {
-        processor.processMessage(globalPath, EXPECTED_PATH);
-        verify(receiver).lockLocally(globalPath);
-    }
-
-    @Test
-    public void toPath() {
-        assertEquals(EXPECTED_PATH, processor.toPath(EXPECTED_PATH));
+    @Override
+    protected String createMessage() {
+        return EXPECTED_PATH;
     }
 
     @Test
@@ -68,5 +60,12 @@ public class ClientLockProcessorTest extends ClientMessageProcessorTest<String, 
     public void memberAttributeChanged() {
         processor.memberAttributeChanged(null);
         verifyZeroInteractions(receiver);
+    }
+
+    @Test
+    @Override
+    public void processMessage() throws IOException {
+        processor.processMessage(path, message);
+        verify(receiver).lockLocally(path);
     }
 }
