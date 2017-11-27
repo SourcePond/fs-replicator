@@ -16,11 +16,16 @@ package ch.sourcepond.io.distributor.impl.lock;
 import ch.sourcepond.io.distributor.impl.annotations.Lock;
 import ch.sourcepond.io.distributor.impl.annotations.Unlock;
 import ch.sourcepond.io.distributor.impl.common.ClientMessageListenerFactory;
+import ch.sourcepond.io.distributor.impl.common.MessageListenerRegistration;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.ITopic;
 import com.hazelcast.core.MessageListener;
 
 import javax.inject.Singleton;
+
+import static ch.sourcepond.io.distributor.impl.common.MessageListenerRegistration.register;
 
 public class LockModule extends AbstractModule {
 
@@ -43,5 +48,19 @@ public class LockModule extends AbstractModule {
     @Unlock
     public MessageListener<String> unlockListener(final ClientMessageListenerFactory pFactory, final ClientUnlockProcessor pProcessor) {
         return pFactory.createListener(pProcessor);
+    }
+
+    @Provides
+    @Singleton
+    @Lock
+    public MessageListenerRegistration registerLockListener(final @Lock ITopic<String> pLockTopic, final @Lock MessageListener<String> pLockListener) {
+        return register(pLockTopic, pLockListener);
+    }
+
+    @Provides
+    @Singleton
+    @Unlock
+    public MessageListenerRegistration registerUnlockListener(final @Unlock ITopic<String> pUnlockTopic, final @Unlock MessageListener<String> pUnlockListener) {
+        return register(pUnlockTopic, pUnlockListener);
     }
 }

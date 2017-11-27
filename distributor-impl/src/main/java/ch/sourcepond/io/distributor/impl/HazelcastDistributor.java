@@ -13,12 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.distributor.impl;
 
-import ch.sourcepond.io.distributor.api.Distributor;
 import ch.sourcepond.io.distributor.api.DeletionException;
+import ch.sourcepond.io.distributor.api.Distributor;
 import ch.sourcepond.io.distributor.api.LockException;
 import ch.sourcepond.io.distributor.api.ModificationException;
 import ch.sourcepond.io.distributor.api.StoreException;
 import ch.sourcepond.io.distributor.api.UnlockException;
+import ch.sourcepond.io.distributor.impl.common.MessageListenerRegistration;
 import ch.sourcepond.io.distributor.impl.lock.LockManager;
 import ch.sourcepond.io.distributor.impl.request.RequestDistributor;
 import com.hazelcast.core.HazelcastInstance;
@@ -27,6 +28,7 @@ import com.hazelcast.core.IMap;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 
@@ -36,16 +38,19 @@ final class HazelcastDistributor implements Distributor {
     private final IMap<String, byte[]> checksums;
     private final LockManager lockManager;
     private final RequestDistributor requestDistributor;
+    private final Set<MessageListenerRegistration> listenerRegistrations;
 
     @Inject
     HazelcastDistributor(final HazelcastInstance pHci,
                          final IMap<String, byte[]> pChecksums,
                          final LockManager pLockManager,
-                         final RequestDistributor pRequestDistributor) {
+                         final RequestDistributor pRequestDistributor,
+                         final Set<MessageListenerRegistration> pListenerRegistrations) {
         hci = pHci;
         checksums = pChecksums;
         lockManager = pLockManager;
         requestDistributor = pRequestDistributor;
+        listenerRegistrations = pListenerRegistrations;
     }
 
     @Override
@@ -95,6 +100,6 @@ final class HazelcastDistributor implements Distributor {
 
     @Override
     public void close() {
-        // noop
+        listenerRegistrations.forEach(r -> r.close());
     }
 }

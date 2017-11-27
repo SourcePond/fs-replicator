@@ -17,12 +17,16 @@ import ch.sourcepond.io.distributor.impl.annotations.Delete;
 import ch.sourcepond.io.distributor.impl.annotations.Store;
 import ch.sourcepond.io.distributor.impl.annotations.Transfer;
 import ch.sourcepond.io.distributor.impl.common.ClientMessageListenerFactory;
+import ch.sourcepond.io.distributor.impl.common.MessageListenerRegistration;
 import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.hazelcast.core.ITopic;
 import com.hazelcast.core.MessageListener;
 
 import javax.inject.Singleton;
+
+import static ch.sourcepond.io.distributor.impl.common.MessageListenerRegistration.register;
 
 public class RequestModule extends AbstractModule {
 
@@ -53,5 +57,26 @@ public class RequestModule extends AbstractModule {
     @Store
     MessageListener<StatusMessage> storeListener(final ClientMessageListenerFactory pFactory, final StoreRequestProcessor pProcessor) {
         return pFactory.createListener(pProcessor);
+    }
+
+    @Provides
+    @Singleton
+    @Delete
+    MessageListenerRegistration registerDeleteListener(final @Delete ITopic<String> pDeleteTopic, final @Delete MessageListener<String> pDeleteListener) {
+        return register(pDeleteTopic, pDeleteListener);
+    }
+
+    @Provides
+    @Singleton
+    @Transfer
+    MessageListenerRegistration registerTransferListener(final @Transfer ITopic<TransferRequest> pTransferTopic, final @Transfer MessageListener<TransferRequest> pTransferListener) {
+            return register(pTransferTopic, pTransferListener);
+    }
+
+    @Provides
+    @Singleton
+    @Store
+    MessageListenerRegistration registerStoreListener(final @Store ITopic<StatusMessage> pStoreTopic, final @Store MessageListener<StatusMessage> pStoreListener) {
+        return register(pStoreTopic, pStoreListener);
     }
 }
