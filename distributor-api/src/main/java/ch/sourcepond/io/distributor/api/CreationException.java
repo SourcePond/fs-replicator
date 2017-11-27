@@ -15,18 +15,11 @@ package ch.sourcepond.io.distributor.api;
 
 public class CreationException extends Exception {
 
-    public CreationException() {
-    }
-
     public CreationException(String message) {
         super(message);
     }
 
     public CreationException(String message, Throwable cause) {
         super(message, cause);
-    }
-
-    public CreationException(Throwable cause) {
-        super(cause);
     }
 }
