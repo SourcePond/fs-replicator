@@ -67,6 +67,7 @@ public class ClusterResponseBarrierImplTest {
     private final MembershipEvent event = mock(MembershipEvent.class);
     private final ScheduledExecutorService executor = newSingleThreadScheduledExecutor();
     private StatusMessage payload = new StatusMessage(EXPECTED_PATH);
+    private final ClusterResponseBarrierFactory factory = new ClusterResponseBarrierFactory(hci, responseTopic, timeoutConfig);
     private ClusterResponseBarrierImpl<String> listener;
     private volatile boolean run;
 
@@ -79,7 +80,7 @@ public class ClusterResponseBarrierImplTest {
         when(message.getPublishingMember()).thenReturn(member);
         when(message.getMessageObject()).thenReturn(payload);
         when(event.getMember()).thenReturn(member);
-        listener = new ClusterResponseBarrierImpl<>(EXPECTED_PATH, hci, responseTopic, requestTopic, timeoutConfig);
+        listener = (ClusterResponseBarrierImpl<String>)factory.create(EXPECTED_PATH, requestTopic);
         when(cluster.addMembershipListener(listener)).thenReturn(EXPECTED_MEMBERSHIP_ID);
         when(responseTopic.addMessageListener(listener)).thenReturn(EXPECTED_REGISTRATION_ID);
     }
