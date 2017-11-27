@@ -17,6 +17,7 @@ import ch.sourcepond.io.distributor.api.GlobalPath;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.Message;
+import com.hazelcast.core.MessageListener;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -40,7 +41,8 @@ public class ClientMessageListenerTest {
     private final Message<String> message = mock(Message.class);
     private final Member member = mock(Member.class);
     private final ITopic<StatusMessage> sendResponseTopic = mock(ITopic.class);
-    private final ClientMessageListener<String> listener = new ClientMessageListener<>(processor, sendResponseTopic);
+    private final ClientMessageListenerFactory factory = new ClientMessageListenerFactory(sendResponseTopic);
+    private final MessageListener<String> listener = factory.createListener(processor);
 
     @Before
     public void setup() {
