@@ -14,7 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.request;
 
 import ch.sourcepond.io.distributor.api.DeletionException;
-import ch.sourcepond.io.distributor.api.ModificationException;
+import ch.sourcepond.io.distributor.api.TransferException;
 import ch.sourcepond.io.distributor.api.StoreException;
 import ch.sourcepond.io.distributor.impl.annotations.Delete;
 import ch.sourcepond.io.distributor.impl.annotations.Store;
@@ -48,7 +48,7 @@ public class RequestDistributor {
         storeRequestTopic = pStoreRequestTopic;
     }
 
-    public void transfer(final String pPath, final ByteBuffer pData) throws ModificationException {
+    public void transfer(final String pPath, final ByteBuffer pData) throws TransferException {
         // Transfer data into a byte array...
         final byte[] data = new byte[pData.limit()];
         pData.get(data);
@@ -57,7 +57,7 @@ public class RequestDistributor {
             // ...and distribute it
             clusterResponseBarrierFactory.create(pPath, transferRequestTopic).awaitResponse(new TransferRequest(pPath, data));
         } catch (final TimeoutException | ResponseException e) {
-            throw new ModificationException(format("Modification of %s failed on some node!", pPath), e);
+            throw new TransferException(format("Modification of %s failed on some node!", pPath), e);
         }
     }
 

@@ -15,13 +15,13 @@ package ch.sourcepond.io.distributor.api;
 
 import java.io.IOException;
 
-public class ModificationException extends IOException {
+public class TransferException extends IOException {
 
-    public ModificationException(String message) {
+    public TransferException(String message) {
         super(message);
     }
 
-    public ModificationException(String message, Throwable cause) {
+    public TransferException(String message, Throwable cause) {
         super(message, cause);
     }
 }

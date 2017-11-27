@@ -14,7 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.distributor.impl.request;
 
 import ch.sourcepond.io.distributor.api.DeletionException;
-import ch.sourcepond.io.distributor.api.ModificationException;
+import ch.sourcepond.io.distributor.api.TransferException;
 import ch.sourcepond.io.distributor.api.StoreException;
 import ch.sourcepond.io.distributor.impl.common.StatusMessage;
 import ch.sourcepond.io.distributor.impl.response.ClusterResponseBarrier;
@@ -74,7 +74,7 @@ public class RequestDistributorTest {
         try {
             distributor.transfer(EXPECTED_PATH, wrap(EXPECTED_DATA));
             fail("Exception expected!");
-        } catch (final ModificationException e) {
+        } catch (final TransferException e) {
             assertSame(expected, e.getCause());
         }
     }

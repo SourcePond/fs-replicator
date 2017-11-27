@@ -16,7 +16,7 @@ package ch.sourcepond.io.distributor.impl;
 import ch.sourcepond.io.distributor.api.DeletionException;
 import ch.sourcepond.io.distributor.api.Distributor;
 import ch.sourcepond.io.distributor.api.LockException;
-import ch.sourcepond.io.distributor.api.ModificationException;
+import ch.sourcepond.io.distributor.api.TransferException;
 import ch.sourcepond.io.distributor.api.StoreException;
 import ch.sourcepond.io.distributor.api.UnlockException;
 import ch.sourcepond.io.distributor.impl.common.MessageListenerRegistration;
@@ -74,7 +74,7 @@ final class HazelcastDistributor implements Distributor {
     }
 
     @Override
-    public void transfer(final String pPath, final ByteBuffer pData) throws ModificationException {
+    public void transfer(final String pPath, final ByteBuffer pData) throws TransferException {
         requestDistributor.transfer(requireNonNull(pPath, "path is null"), requireNonNull(pData, "buffer is null"));
     }
 

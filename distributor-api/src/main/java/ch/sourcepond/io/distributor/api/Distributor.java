@@ -68,11 +68,11 @@ public interface Distributor extends AutoCloseable {
      *
      * @param pPath Path to which the data belongs to, must not be {@code null}.
      * @param pData ByteBuffer containing the data to be transferred, must not be {@code null}
-     * @throws ModificationException  Thrown, if the data for the path specified could not be transferred for some reason
+     * @throws TransferException  Thrown, if the data for the path specified could not be transferred for some reason
      *                                (timeout, I/O failure etc.)
      * @throws NullPointerException   Thrown, if the path specified is {@code null}.
      */
-    void transfer(String pPath, ByteBuffer pData) throws ModificationException;
+    void transfer(String pPath, ByteBuffer pData) throws TransferException;
 
     /**
      * Stores the transferred data to the path specified. If the store was successful, the global
