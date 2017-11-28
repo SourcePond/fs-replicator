@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.api;
 
-import ch.sourcepond.io.fssync.distributor.spi.Receiver;
+import ch.sourcepond.io.fssync.distributor.spi.Client;
 
 import java.util.Map;
 
@@ -27,11 +27,11 @@ public interface DistributorFactory {
      * Creates a new {@link Distributor} instance. The key/value pairs of the instantiation properties specified are
      * implementation depending and therefore not specified in this API.
      *
-     * @param pReceiver
+     * @param pClient
      * @param pInstantiationProperties Properties necessary to instantiate the distributor, must not be {@code null}
      * @return New distributor instance, never {@code null}
      * @throws CreationException Thrown, if the distributor instance could not be instantiated for some reason.
      * @throws NullPointerException Thrown, if either parameter is {@code null}.
      */
-    Distributor create(Receiver pReceiver, Map<String, String> pInstantiationProperties) throws CreationException;
+    Distributor create(Client pClient, Map<String, String> pInstantiationProperties) throws CreationException;
 }

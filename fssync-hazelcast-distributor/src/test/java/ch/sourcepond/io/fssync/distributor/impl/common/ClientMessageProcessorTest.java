@@ -14,7 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.impl.common;
 
 import ch.sourcepond.io.fssync.distributor.api.GlobalPath;
-import ch.sourcepond.io.fssync.distributor.spi.Receiver;
+import ch.sourcepond.io.fssync.distributor.spi.Client;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,7 +26,7 @@ import static org.mockito.Mockito.mock;
 
 public abstract class ClientMessageProcessorTest<M, T extends ClientMessageProcessor<M>> {
     public static final String EXPECTED_PATH = "somePath";
-    protected final Receiver receiver = mock(Receiver.class);
+    protected final Client client = mock(Client.class);
     protected final GlobalPath path = new GlobalPath("any", EXPECTED_PATH);
     protected M message;
     protected T processor;
@@ -41,7 +41,7 @@ public abstract class ClientMessageProcessorTest<M, T extends ClientMessageProce
 
     @Test
     public void verifyReceiver() {
-        assertSame(receiver, processor.receiver);
+        assertSame(client, processor.client);
     }
 
     protected abstract M createMessage();

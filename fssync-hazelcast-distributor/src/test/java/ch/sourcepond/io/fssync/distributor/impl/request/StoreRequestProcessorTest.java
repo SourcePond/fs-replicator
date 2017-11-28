@@ -24,7 +24,7 @@ public class StoreRequestProcessorTest extends ClientMessageProcessorTest<String
 
     @Override
     protected StoreRequestProcessor createProcessor() {
-        return new StoreRequestProcessor(receiver);
+        return new StoreRequestProcessor(client);
     }
 
     @Override
@@ -36,6 +36,6 @@ public class StoreRequestProcessorTest extends ClientMessageProcessorTest<String
     @Override
     public void processMessage() throws IOException {
         processor.processMessage(path, message);
-        verify(receiver).store(path);
+        verify(client).store(path);
     }
 }

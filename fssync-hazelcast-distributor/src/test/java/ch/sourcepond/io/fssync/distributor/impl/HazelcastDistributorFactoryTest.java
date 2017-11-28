@@ -1,7 +1,7 @@
 package ch.sourcepond.io.fssync.distributor.impl;
 
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
-import ch.sourcepond.io.fssync.distributor.spi.Receiver;
+import ch.sourcepond.io.fssync.distributor.spi.Client;
 import ch.sourcepond.io.fssync.distributor.impl.binding.BindingModule;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
@@ -35,7 +35,7 @@ limitations under the License.*/
 public class HazelcastDistributorFactoryTest {
     private static final String TEST_INSTANCE_NAME = UUID.randomUUID().toString();
     private static final String TIMEOUT = "10";
-    private final Receiver receiver = mock(Receiver.class);
+    private final Client client = mock(Client.class);
     private final Map<String, String> instantiationProperties = new HashMap<>();
     private final HazelcastDistributorFactory factory = new HazelcastDistributorFactory();
     private HazelcastInstance instance;
@@ -57,9 +57,9 @@ public class HazelcastDistributorFactoryTest {
 
     @Test
     public void create() throws Exception {
-        final Distributor i1 = factory.create(receiver, instantiationProperties);
+        final Distributor i1 = factory.create(client, instantiationProperties);
         assertNotNull(i1);
-        final Distributor i2 = factory.create(receiver, instantiationProperties);
+        final Distributor i2 = factory.create(client, instantiationProperties);
         assertNotNull(i2);
         assertNotSame(i1, i2);
     }

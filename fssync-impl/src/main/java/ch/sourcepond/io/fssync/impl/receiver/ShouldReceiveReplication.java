@@ -15,7 +15,7 @@ package ch.sourcepond.io.fssync.impl.receiver;
 
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.io.fssync.distributor.api.GlobalPath;
-import ch.sourcepond.io.fssync.distributor.spi.Receiver;
+import ch.sourcepond.io.fssync.distributor.spi.Client;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -34,7 +34,7 @@ import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class ShouldReceiveReplication implements Receiver {
+public class ShouldReceiveReplication implements Client {
 
     private static final WritableByteChannel NOOP_CHANNEL = new WritableByteChannel() {
 
@@ -82,7 +82,7 @@ public class ShouldReceiveReplication implements Receiver {
     }
 
     @Override
-    public void lockLocally(final GlobalPath pPath) throws IOException {
+    public void lock(final GlobalPath pPath) throws IOException {
         if (isRemoteNode(pPath)) {
             synchronized (channnels) {
                 if (channnels.containsKey(pPath)) {
@@ -97,7 +97,7 @@ public class ShouldReceiveReplication implements Receiver {
     }
 
     @Override
-    public void kill(final String pSendingNode) {
+    public void cancel(final String pSendingNode) {
         synchronized (channnels) {
             final Map<String, WritableByteChannel> storagesPerNode = channnels.remove(pSendingNode);
             if (storagesPerNode != null && !storagesPerNode.isEmpty()) {
@@ -114,14 +114,14 @@ public class ShouldReceiveReplication implements Receiver {
         }
     }
 
-    public void unlockLocally(final GlobalPath pPath) throws IOException {
+    public void unlock(final GlobalPath pPath) throws IOException {
         if (isRemoteNode(pPath)) {
             final WritableByteChannel ch;
             synchronized (channnels) {
                 ch = getNodeChannels(pPath).remove(pPath.getPath());
             }
             if (ch == null) {
-                LOG.warn("unlockLocally: no storage registered for {}", pPath);
+                LOG.warn("unlock: no storage registered for {}", pPath);
             } else {
                 close(ch);
             }

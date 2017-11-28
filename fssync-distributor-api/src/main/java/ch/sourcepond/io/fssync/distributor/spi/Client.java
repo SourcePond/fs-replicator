@@ -18,7 +18,7 @@ import ch.sourcepond.io.fssync.distributor.api.GlobalPath;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public interface Receiver {
+public interface Client {
 
     /**
      * Locks the path specified on the local host.
@@ -26,9 +26,9 @@ public interface Receiver {
      * @param pPath
      * @throws IOException
      */
-    void lockLocally(GlobalPath pPath) throws IOException;
+    void lock(GlobalPath pPath) throws IOException;
 
-    void unlockLocally(GlobalPath pPath) throws IOException;
+    void unlock(GlobalPath pPath) throws IOException;
 
     void delete(GlobalPath pPath) throws IOException;
 
@@ -52,5 +52,5 @@ public interface Receiver {
      *
      * @param pNode
      */
-    void kill(String pNode);
+    void cancel(String pNode);
 }

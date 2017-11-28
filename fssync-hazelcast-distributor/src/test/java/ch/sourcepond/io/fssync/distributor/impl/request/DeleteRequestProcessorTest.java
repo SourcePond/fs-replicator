@@ -24,7 +24,7 @@ public class DeleteRequestProcessorTest extends ClientMessageProcessorTest<Strin
 
     @Override
     protected DeleteRequestProcessor createProcessor() {
-        return new DeleteRequestProcessor(receiver);
+        return new DeleteRequestProcessor(client);
     }
 
     @Override
@@ -36,6 +36,6 @@ public class DeleteRequestProcessorTest extends ClientMessageProcessorTest<Strin
     @Override
     public void processMessage() throws IOException {
         processor.processMessage(path, EXPECTED_PATH);
-        verify(receiver).delete(path);
+        verify(client).delete(path);
     }
 }

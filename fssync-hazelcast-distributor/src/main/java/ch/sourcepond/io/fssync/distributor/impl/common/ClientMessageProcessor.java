@@ -14,15 +14,15 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.impl.common;
 
 import ch.sourcepond.io.fssync.distributor.api.GlobalPath;
-import ch.sourcepond.io.fssync.distributor.spi.Receiver;
+import ch.sourcepond.io.fssync.distributor.spi.Client;
 
 import java.io.IOException;
 
 public abstract class ClientMessageProcessor<T> {
-    protected final Receiver receiver;
+    protected final Client client;
 
-    public ClientMessageProcessor(final Receiver pReceiver) {
-        receiver = pReceiver;
+    public ClientMessageProcessor(final Client pClient) {
+        client = pClient;
     }
 
     protected abstract void processMessage(GlobalPath pPath, T pPayload) throws IOException;

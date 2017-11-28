@@ -27,7 +27,7 @@ public class DiscardRequestProcessorTest extends ClientMessageProcessorTest<Stat
 
     @Override
     protected DiscardRequestProcessor createProcessor() {
-        return new DiscardRequestProcessor(receiver);
+        return new DiscardRequestProcessor(client);
     }
 
     @Override
@@ -43,6 +43,6 @@ public class DiscardRequestProcessorTest extends ClientMessageProcessorTest<Stat
         final IOException expected = new IOException();
         when(message.getFailureOrNull()).thenReturn(expected);
         processor.processMessage(path, message);
-        verify(receiver).discard(path, expected);
+        verify(client).discard(path, expected);
     }
 }

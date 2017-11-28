@@ -15,7 +15,7 @@ package ch.sourcepond.io.fssync.distributor.impl.lock;
 
 import ch.sourcepond.io.fssync.distributor.api.GlobalPath;
 import ch.sourcepond.io.fssync.distributor.impl.common.ClientMessageProcessor;
-import ch.sourcepond.io.fssync.distributor.spi.Receiver;
+import ch.sourcepond.io.fssync.distributor.spi.Client;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -26,13 +26,13 @@ import java.io.IOException;
 final class ClientUnlockProcessor extends ClientMessageProcessor<String> {
 
     @Inject
-    public ClientUnlockProcessor(final Receiver pReceiver) {
-        super(pReceiver);
+    public ClientUnlockProcessor(final Client pClient) {
+        super(pClient);
     }
 
     @Override
     protected void processMessage(final GlobalPath pPath, final String pMessage) throws IOException {
-        receiver.unlockLocally(pPath);
+        client.unlock(pPath);
     }
 
     @Override

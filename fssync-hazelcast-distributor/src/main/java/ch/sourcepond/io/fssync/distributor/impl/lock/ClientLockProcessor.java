@@ -15,7 +15,7 @@ package ch.sourcepond.io.fssync.distributor.impl.lock;
 
 import ch.sourcepond.io.fssync.distributor.api.GlobalPath;
 import ch.sourcepond.io.fssync.distributor.impl.common.ClientMessageProcessor;
-import ch.sourcepond.io.fssync.distributor.spi.Receiver;
+import ch.sourcepond.io.fssync.distributor.spi.Client;
 import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
@@ -29,13 +29,13 @@ import java.io.IOException;
 final class ClientLockProcessor extends ClientMessageProcessor<String> implements MembershipListener {
 
     @Inject
-    public ClientLockProcessor(final Receiver pReceiver) {
-        super(pReceiver);
+    public ClientLockProcessor(final Client pClient) {
+        super(pClient);
     }
 
     @Override
     public void processMessage(final GlobalPath pPath, final String pMessage) throws IOException {
-        receiver.lockLocally(pPath);
+        client.lock(pPath);
     }
 
     @Override
@@ -50,7 +50,7 @@ final class ClientLockProcessor extends ClientMessageProcessor<String> implement
 
     @Override
     public void memberRemoved(final MembershipEvent membershipEvent) {
-        receiver.kill(membershipEvent.getMember().getUuid());
+        client.cancel(membershipEvent.getMember().getUuid());
     }
 
     @Override

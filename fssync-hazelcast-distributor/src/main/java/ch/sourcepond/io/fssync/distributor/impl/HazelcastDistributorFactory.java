@@ -16,7 +16,7 @@ package ch.sourcepond.io.fssync.distributor.impl;
 import ch.sourcepond.io.fssync.distributor.api.CreationException;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.io.fssync.distributor.api.DistributorFactory;
-import ch.sourcepond.io.fssync.distributor.spi.Receiver;
+import ch.sourcepond.io.fssync.distributor.spi.Client;
 
 import java.util.Map;
 
@@ -26,9 +26,9 @@ import static java.lang.String.format;
 public class HazelcastDistributorFactory implements DistributorFactory {
 
     @Override
-    public Distributor create(final Receiver pReceiver, final Map<String, String> pInstantiationProperties) throws CreationException {
+    public Distributor create(final Client pClient, final Map<String, String> pInstantiationProperties) throws CreationException {
         try {
-            return createInjector(new HazelcastDistributorModule(pReceiver, pInstantiationProperties)).
+            return createInjector(new HazelcastDistributorModule(pClient, pInstantiationProperties)).
                     getInstance(HazelcastDistributor.class);
         } catch (final Exception e) {
             throw new CreationException(format("Instance could not be create with properties %s", pInstantiationProperties), e);

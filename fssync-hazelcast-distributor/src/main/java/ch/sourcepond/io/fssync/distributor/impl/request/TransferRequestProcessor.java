@@ -15,7 +15,7 @@ package ch.sourcepond.io.fssync.distributor.impl.request;
 
 import ch.sourcepond.io.fssync.distributor.api.GlobalPath;
 import ch.sourcepond.io.fssync.distributor.impl.common.ClientMessageProcessor;
-import ch.sourcepond.io.fssync.distributor.spi.Receiver;
+import ch.sourcepond.io.fssync.distributor.spi.Client;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -26,8 +26,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 final class TransferRequestProcessor extends ClientMessageProcessor<TransferRequest> {
 
     @Inject
-    TransferRequestProcessor(final Receiver pReceiver) {
-        super(pReceiver);
+    TransferRequestProcessor(final Client pClient) {
+        super(pClient);
     }
 
     @Override
@@ -37,6 +37,6 @@ final class TransferRequestProcessor extends ClientMessageProcessor<TransferRequ
 
     @Override
     protected void processMessage(final GlobalPath pPath, final TransferRequest pMessage) throws IOException {
-        receiver.transfer(pPath, wrap(pMessage.getData()));
+        client.transfer(pPath, wrap(pMessage.getData()));
     }
 }

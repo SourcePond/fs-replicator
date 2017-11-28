@@ -30,7 +30,7 @@ public class TransferRequestProcessorTest extends ClientMessageProcessorTest<Tra
 
     @Override
     protected TransferRequestProcessor createProcessor() {
-        return new TransferRequestProcessor(receiver);
+        return new TransferRequestProcessor(client);
     }
 
     @Override
@@ -45,6 +45,6 @@ public class TransferRequestProcessorTest extends ClientMessageProcessorTest<Tra
     @Override
     public void processMessage() throws IOException {
         processor.processMessage(path, message);
-        verify(receiver).transfer(eq(path), argThat(data -> Arrays.equals(EXPECTED_DATA, data.array())));
+        verify(client).transfer(eq(path), argThat(data -> Arrays.equals(EXPECTED_DATA, data.array())));
     }
 }

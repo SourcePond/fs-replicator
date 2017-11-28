@@ -15,7 +15,7 @@ package ch.sourcepond.io.fssync.distributor.impl.request;
 
 import ch.sourcepond.io.fssync.distributor.api.GlobalPath;
 import ch.sourcepond.io.fssync.distributor.impl.common.ClientMessageProcessor;
-import ch.sourcepond.io.fssync.distributor.spi.Receiver;
+import ch.sourcepond.io.fssync.distributor.spi.Client;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -23,13 +23,13 @@ import java.io.IOException;
 final class DeleteRequestProcessor extends ClientMessageProcessor<String> {
 
     @Inject
-    DeleteRequestProcessor(final Receiver pReceiver) {
-        super(pReceiver);
+    DeleteRequestProcessor(final Client pClient) {
+        super(pClient);
     }
 
     @Override
     protected void processMessage(final GlobalPath pPath, final String pMessage) throws IOException {
-        receiver.delete(pPath);
+        client.delete(pPath);
     }
 
     @Override

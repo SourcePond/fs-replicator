@@ -16,7 +16,7 @@ package ch.sourcepond.io.fssync.distributor.impl.request;
 import ch.sourcepond.io.fssync.distributor.api.GlobalPath;
 import ch.sourcepond.io.fssync.distributor.impl.common.ClientMessageProcessor;
 import ch.sourcepond.io.fssync.distributor.impl.common.StatusMessage;
-import ch.sourcepond.io.fssync.distributor.spi.Receiver;
+import ch.sourcepond.io.fssync.distributor.spi.Client;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -24,13 +24,13 @@ import java.io.IOException;
 final class DiscardRequestProcessor extends ClientMessageProcessor<StatusMessage> {
 
     @Inject
-    DiscardRequestProcessor(final Receiver pReceiver) {
-        super(pReceiver);
+    DiscardRequestProcessor(final Client pClient) {
+        super(pClient);
     }
 
     @Override
     protected void processMessage(final GlobalPath pPath, final StatusMessage pMessage) throws IOException {
-        receiver.discard(pPath, pMessage.getFailureOrNull());
+        client.discard(pPath, pMessage.getFailureOrNull());
     }
 
     @Override

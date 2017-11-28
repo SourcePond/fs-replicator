@@ -16,11 +16,49 @@ package ch.sourcepond.io.fssync.distributor.api;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 public class GlobalPathTest {
     private static final String EXPECTED_SENDING_NODE = "expectedNode";
     private static final String EXPECTED_PATH = "expectedPath";
     private final GlobalPath path = new GlobalPath(EXPECTED_SENDING_NODE, EXPECTED_PATH);
+
+    @Test
+    public void hashCodeShouldBeConsistent() {
+        final int hashCode = path.hashCode();
+        for (int i = 0 ; i < 10000000 ; i++) {
+            assertEquals(hashCode, path.hashCode());
+        }
+    }
+
+    @Test
+    public void hashCodeMustBeEqualOnEqualPaths() {
+        assertEquals(path.hashCode(), new GlobalPath(EXPECTED_SENDING_NODE, EXPECTED_PATH).hashCode());
+    }
+
+    @Test
+    public void hashCodeShouldNotBeEqualOnNonEqualPaths() {
+        assertNotEquals(path.hashCode(), new GlobalPath("otherNode", EXPECTED_PATH));
+        assertNotEquals(path.hashCode(), new GlobalPath(EXPECTED_SENDING_NODE, "otherPath"));
+        assertNotEquals(path.hashCode(), new GlobalPath("otherNode", "otherPath"));
+    }
+
+    @Test
+    public void verifyEquals() {
+        assertTrue(path.equals(path));
+        assertTrue(path.equals(new GlobalPath(EXPECTED_SENDING_NODE, EXPECTED_PATH)));
+    }
+
+    @Test
+    public void verifyNotEquals() {
+        assertFalse(path.equals(null));
+        assertFalse(path.equals("SomeDifferentObject"));
+        assertFalse(path.equals(new GlobalPath("otherNode", EXPECTED_PATH)));
+        assertFalse(path.equals(new GlobalPath(EXPECTED_SENDING_NODE, "otherPath")));
+        assertFalse(path.equals(new GlobalPath("otherNode", "otherPath")));
+    }
 
     @Test
     public void getSendingNode() {

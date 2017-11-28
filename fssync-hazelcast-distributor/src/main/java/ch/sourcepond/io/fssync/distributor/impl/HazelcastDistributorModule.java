@@ -25,7 +25,7 @@ import ch.sourcepond.io.fssync.distributor.impl.common.MessageListenerRegistrati
 import ch.sourcepond.io.fssync.distributor.impl.lock.LockModule;
 import ch.sourcepond.io.fssync.distributor.impl.request.RequestModule;
 import ch.sourcepond.io.fssync.distributor.impl.response.ResponseModule;
-import ch.sourcepond.io.fssync.distributor.spi.Receiver;
+import ch.sourcepond.io.fssync.distributor.spi.Client;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 
@@ -35,17 +35,17 @@ import static com.google.inject.Key.get;
 import static com.google.inject.multibindings.Multibinder.newSetBinder;
 
 public class HazelcastDistributorModule extends AbstractModule {
-    private final Receiver receiver;
+    private final Client client;
     private final Map<String, String> instantiationProperties;
 
-    public HazelcastDistributorModule(final Receiver pReceiver, final Map<String, String> pInstantiationProperties) {
-        receiver = pReceiver;
+    public HazelcastDistributorModule(final Client pClient, final Map<String, String> pInstantiationProperties) {
+        client = pClient;
         instantiationProperties = pInstantiationProperties;
     }
 
     @Override
     protected void configure() {
-        bind(Receiver.class).toInstance(receiver);
+        bind(Client.class).toInstance(client);
         install(new BindingModule(instantiationProperties));
         install(new CommonModule());
         install(new LockModule());

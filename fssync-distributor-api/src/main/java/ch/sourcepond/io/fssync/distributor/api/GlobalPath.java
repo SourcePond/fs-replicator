@@ -13,6 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.api;
 
+import java.util.Objects;
+
 /**
  * An instance of this class combines a sending-node and a file path to a global-path. A global path is
  * network-wide unique.
@@ -24,6 +26,24 @@ public class GlobalPath {
     public GlobalPath(final String pSendingNode, final String pPath) {
         sendingNode = pSendingNode;
         path = pPath;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        GlobalPath that = (GlobalPath) o;
+        return Objects.equals(sendingNode, that.sendingNode) &&
+                Objects.equals(path, that.path);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sendingNode, path);
     }
 
     public String getSendingNode() {

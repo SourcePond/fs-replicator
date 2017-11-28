@@ -24,7 +24,7 @@ public class ClientUnlockProcessorTest extends ClientMessageProcessorTest<String
 
     @Override
     protected ClientUnlockProcessor createProcessor() {
-        return new ClientUnlockProcessor(receiver);
+        return new ClientUnlockProcessor(client);
     }
 
     @Override
@@ -36,6 +36,6 @@ public class ClientUnlockProcessorTest extends ClientMessageProcessorTest<String
     @Override
     public void processMessage() throws IOException {
         processor.processMessage(path, message);
-        verify(receiver).unlockLocally(path);
+        verify(client).unlock(path);
     }
 }

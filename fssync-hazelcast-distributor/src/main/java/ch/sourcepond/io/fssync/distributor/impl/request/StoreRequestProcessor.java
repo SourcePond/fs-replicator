@@ -15,7 +15,7 @@ package ch.sourcepond.io.fssync.distributor.impl.request;
 
 import ch.sourcepond.io.fssync.distributor.api.GlobalPath;
 import ch.sourcepond.io.fssync.distributor.impl.common.ClientMessageProcessor;
-import ch.sourcepond.io.fssync.distributor.spi.Receiver;
+import ch.sourcepond.io.fssync.distributor.spi.Client;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -23,8 +23,8 @@ import java.io.IOException;
 final class StoreRequestProcessor extends ClientMessageProcessor<String> {
 
     @Inject
-    StoreRequestProcessor(final Receiver pReceiver) {
-        super(pReceiver);
+    StoreRequestProcessor(final Client pClient) {
+        super(pClient);
     }
 
     @Override
@@ -34,6 +34,6 @@ final class StoreRequestProcessor extends ClientMessageProcessor<String> {
 
     @Override
     protected void processMessage(final GlobalPath pPath, final String pMessage) throws IOException {
-        receiver.store(pPath);
+        client.store(pPath);
     }
 }
