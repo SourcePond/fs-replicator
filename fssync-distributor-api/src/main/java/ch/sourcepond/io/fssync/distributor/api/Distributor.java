@@ -24,21 +24,22 @@ public interface Distributor extends AutoCloseable {
     /**
      * Tries to lock the path specified in the network. If successful, this method simply returns.
      *
+     * @param pSyncDir
      * @param pPath Path to be locked, must not be {@code null}
      * @throws LockException        Thrown, if the path specified could not be locked for some reason
      *                              (timeout, I/O failure etc.)
      * @throws NullPointerException Thrown, if the path specified is {@code null}.
      */
-    void lock(String pPath) throws LockException;
+    void lock(String pSyncDir, String pPath) throws LockException;
 
     /**
-     * Returns when the path specified is locked network-wide i.e. {@link #lock(String)} was successful and
-     * {@link #unlock(String)} has not been called until now.
+     * Returns when the path specified is locked network-wide i.e. {@link #lock(String, String)} was successful and
+     * {@link #unlock(String, String)} has not been called until now.
      *
      * @param pPath Path to check, must not be {@code null}.
      * @return {@code true} if the path specified is locked, {@code false} otherwise.
      */
-    boolean isLocked(String pPath);
+    boolean isLocked(String pSyncDir, String pPath);
 
     /**
      * Unlocks the path specified in the network. The underlying implementation must make its best effort to unlock
@@ -48,23 +49,23 @@ public interface Distributor extends AutoCloseable {
      * @throws UnlockException      Thrown, if exceptions occurred while unlocking.
      * @throws NullPointerException Thrown, if the path specified is {@code null}.
      */
-    void unlock(String pPath) throws UnlockException;
+    void unlock(String pSyncDir, String pPath) throws UnlockException;
 
     /**
      * Deletes the path specified from the network. If successful, this method simply returns. Before calling this
-     * method, {@link #lock(String)} should have been executed successfully.
+     * method, {@link #lock(String, String)} should have been executed successfully.
      *
      * @param pPath Path to be deleted, must not be {@code null}.
      * @throws DeletionException    Thrown, if the path specified could not be deleted for some reason
      *                              (timeout, I/O failure etc.)
      * @throws NullPointerException Thrown, if the path specified is {@code null}.
      */
-    void delete(String pPath) throws DeletionException;
+    void delete(String pSyncDir, String pPath) throws DeletionException;
 
     /**
      * Transfers the data specified for the path specified to the network. If successful, this method simply returns.
-     * Before calling this method, {@link #lock(String)} should have been executed successfully. The newly
-     * transferred data is <em>not</em> visible on the clients until {@link #store(String, byte[], IOException)} has been called.
+     * Before calling this method, {@link #lock(String, String)} should have been executed successfully. The newly
+     * transferred data is <em>not</em> visible on the clients until {@link #store(String, String, byte[])} has been called.
      *
      * @param pPath Path to which the data belongs to, must not be {@code null}.
      * @param pData ByteBuffer containing the data to be transferred, must not be {@code null}
@@ -72,12 +73,12 @@ public interface Distributor extends AutoCloseable {
      *                              (timeout, I/O failure etc.)
      * @throws NullPointerException Thrown, if the path specified is {@code null}.
      */
-    void transfer(String pPath, ByteBuffer pData) throws TransferException;
+    void transfer(String pSyncDir, String pPath, ByteBuffer pData) throws TransferException;
 
     /**
-     * Discards the transferred data (see {@link #transfer(String, ByteBuffer)}) for the path specified which has not been
-     * stored yet (see {@link #transfer(String, ByteBuffer)}). Before calling this method,
-     * {@link #lock(String)} should have been executed successfully.
+     * Discards the transferred data (see {@link #transfer(String, String, ByteBuffer)}) for the path specified which has not been
+     * stored yet (see {@link #transfer(String, String, ByteBuffer)}). Before calling this method,
+     * {@link #lock(String, String)} should have been executed successfully.
      *
      * @param pPath    Path to which the data to be discarded belongs to, must not be {@code null}.
      * @param pFailure IOException thrown during reading the file to be synced, must not be {@code null}.
@@ -85,13 +86,13 @@ public interface Distributor extends AutoCloseable {
      *                              (timeout, I/O failure etc.)
      * @throws NullPointerException Thrown, if the path specified is {@code null}.
      */
-    void discard(String pPath, IOException pFailure) throws DiscardException;
+    void discard(String pSyncDir, String pPath, IOException pFailure) throws DiscardException;
 
     /**
      * Stores the transferred data to the path specified. If the store was successful, the global
      * checksum will be updated with the checksum specified and this method returns. Before calling this method,
-     * {@link #lock(String)} should have been executed successfully. After calling this method, the newly transferred
-     * data is visible on the clients (see {@link #transfer(String, ByteBuffer)}).
+     * {@link #lock(String, String)} should have been executed successfully. After calling this method, the newly transferred
+     * data is visible on the clients (see {@link #transfer(String, String, ByteBuffer)}).
      *
      * @param pPath     Path to which the data belongs to, must not be {@code null}.
      * @param pChecksum Updated checksum to set, must be not {@code null}.
@@ -99,24 +100,16 @@ public interface Distributor extends AutoCloseable {
      *                              (timeout, I/O failure etc.)
      * @throws NullPointerException Thrown, if the path specified is {@code null}.
      */
-    void store(String pPath, byte[] pChecksum) throws StoreException;
+    void store(String pSyncDir, String pPath, byte[] pChecksum) throws StoreException;
 
     /**
-     * Returns the local node identifier. This can be a name, a uuid or anything
-     * else depending on the implementation.
-     *
-     * @return Local node identifier, never {@code null}.
-     */
-    String getLocalNode();
-
-    /**
-     * Returns the checksum of the path specified which was set during the last {@link #store(String, byte[], IOException)}
+     * Returns the checksum of the path specified which was set during the last {@link #store(String, String, byte[])}
      * operation. If the path has no checksum yet, an empty array will be returned. Before calling this method,
-     * {@link #lock(String)} should have been executed successfully.
+     * {@link #lock(String, String)} should have been executed successfully.
      *
      * @param pPath Path, must not be {@code null}.
      * @return Checksum as byte-array, never {@code null}
      * @throws NullPointerException Thrown, if the path specified is {@code null}
      */
-    byte[] getChecksum(String pPath);
+    byte[] getChecksum(String pSyncDir, String pPath);
 }
