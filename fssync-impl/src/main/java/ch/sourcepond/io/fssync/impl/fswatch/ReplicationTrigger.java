@@ -14,9 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.impl.fswatch;
 
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
-import ch.sourcepond.io.fssync.distributor.api.LockException;
-import ch.sourcepond.io.fssync.distributor.api.UnlockException;
-import ch.sourcepond.io.fssync.impl.Constants;
+import ch.sourcepond.io.fssync.impl.config.Config;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -26,6 +24,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static ch.sourcepond.io.fssync.impl.Constants.TMP_FILE_PREFIX;
 import static java.nio.ByteBuffer.allocate;
@@ -36,27 +35,34 @@ import static org.slf4j.LoggerFactory.getLogger;
 class ReplicationTrigger {
     private static final Logger LOG = getLogger(ReplicationTrigger.class);
     private final Distributor distributor;
+    private final ScheduledExecutorService executor;
+    private final Config config;
 
-    public ReplicationTrigger(final Distributor pDistributor) {
+    public ReplicationTrigger(final Distributor pDistributor,
+                              final ScheduledExecutorService pExecutor,
+                              final Config pConfig) {
         distributor = pDistributor;
+        executor = pExecutor;
+        config = pConfig;
     }
 
-    private void transfer(final Path pSource) throws IOException {
-        final String path = pSource.toString();
+    private void transfer(final Path pSyncDir, final Path pSource) throws IOException {
+        final String syncDir = pSyncDir.toString();
+        final String path = pSyncDir.relativize(pSource).toString();
         try (final ReadableByteChannel source = open(pSource, READ)) {
             final ByteBuffer buffer = allocate(1024);
             final MessageDigest digest = MessageDigest.getInstance("SHA-256");
             try {
                 while (source.read(buffer) != -1) {
                     buffer.rewind();
-                    distributor.transfer(path, buffer);
+                    distributor.transfer(syncDir, path, buffer);
                     buffer.rewind();
                     digest.update(buffer);
                     buffer.rewind();
                 }
-                distributor.store(path, digest.digest());
+                distributor.store(syncDir, path, digest.digest());
             } catch (final IOException e) {
-                distributor.discard(path, e);
+                distributor.discard(syncDir, path, e);
             }
         } catch (final NoSuchAlgorithmException e) {
             // This should never happen
@@ -64,41 +70,29 @@ class ReplicationTrigger {
         }
     }
 
-    private void lock(final Path pPath) throws LockException {
-        distributor.lock(pPath.toString());
-    }
-
-    private void unlock(final Path pPath) throws UnlockException {
-        distributor.unlock(pPath.toString());
-    }
-
     private boolean isRegularFile(final Path pFile) {
         return !pFile.getFileName().startsWith(TMP_FILE_PREFIX);
     }
 
-    void delete(final Path pFile) throws IOException {
+    public void delete(final Path pSyncDir, final Path pFile) throws IOException {
+        final String syncDir = pSyncDir.toString();
+        final String path = pSyncDir.relativize(pFile).toString();
+
         if (isRegularFile(pFile)) {
-            final String path = pFile.toString();
-            lock(pFile);
-            try {
-                distributor.delete(path);
-            } finally {
-                unlock(pFile);
-            }
+            executor.execute(new SyncTrigger(executor, distributor, config, syncDir, path, (s, p) -> {
+                distributor.delete(s, p);
+            }));
         }
     }
 
-    void modify(final Path pSource, final byte[] pChecksum) throws IOException {
-        if (isRegularFile(pSource)) {
-            final String target = pSource.toString();
-            if (!Arrays.equals(distributor.getChecksum(target), pChecksum)) {
-                lock(pSource);
-                try {
-                    transfer(pSource);
-                } finally {
-                    unlock(pSource);
-                }
-            }
+    public void modify(final Path pSyncDir, final Path pSource, final byte[] pChecksum) throws IOException {
+        final String syncDir = pSyncDir.toString();
+        final String path = pSyncDir.relativize(pSource).toString();
+
+        if (isRegularFile(pSource) && !Arrays.equals(distributor.getChecksum(syncDir, path), pChecksum)) {
+            executor.execute(new SyncTrigger(executor, distributor, config, syncDir, path, (s, p) -> {
+                transfer(pSyncDir, pSource);
+            }));
         }
     }
 }

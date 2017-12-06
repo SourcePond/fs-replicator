@@ -19,7 +19,7 @@ import java.nio.ByteBuffer;
 public interface SyncTarget {
 
     /**
-     * Locks the path specified on the local host.
+     * Locks the path specified on the local host. This method is being called concurrently with different paths.
      *
      * @param pPath
      * @throws IOException

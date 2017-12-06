@@ -16,6 +16,10 @@ package ch.sourcepond.io.fssync.impl.config;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
+import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 /**
  *
  */
@@ -28,4 +32,8 @@ public @interface Config {
             description = "Duration to wait until a file lock is forced to be released"
     )
     long getForceUnlockTimeoutSeconds();
+
+    long retryDelay() default 500;
+
+    TimeUnit retryDelayUnit() default MILLISECONDS;
 }

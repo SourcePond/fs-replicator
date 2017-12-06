@@ -13,11 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.lock;
 
-import ch.sourcepond.io.fssync.distributor.hazelcast.CompoundSyncTarget;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.ClientMessageProcessor;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.DistributionMessage;
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
 import ch.sourcepond.io.fssync.target.api.SyncPath;
+import ch.sourcepond.io.fssync.target.api.SyncTarget;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -28,8 +28,8 @@ import java.io.IOException;
 final class ClientUnlockProcessor extends ClientMessageProcessor<DistributionMessage> {
 
     @Inject
-    public ClientUnlockProcessor(final CompoundSyncTarget pCompoundSyncTarget) {
-        super(pCompoundSyncTarget);
+    public ClientUnlockProcessor(final SyncTarget pSyncTarget) {
+        super(pSyncTarget);
     }
 
     @Override

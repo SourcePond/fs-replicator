@@ -13,10 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.request;
 
-import ch.sourcepond.io.fssync.distributor.hazelcast.CompoundSyncTarget;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.ClientMessageProcessor;
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
 import ch.sourcepond.io.fssync.target.api.SyncPath;
+import ch.sourcepond.io.fssync.target.api.SyncTarget;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -26,8 +26,8 @@ import static java.nio.ByteBuffer.wrap;
 final class TransferRequestProcessor extends ClientMessageProcessor<TransferRequest> {
 
     @Inject
-    TransferRequestProcessor(final CompoundSyncTarget pCompoundSyncTarget) {
-        super(pCompoundSyncTarget);
+    TransferRequestProcessor(final SyncTarget pSyncTarget) {
+        super(pSyncTarget);
     }
 
     @Override

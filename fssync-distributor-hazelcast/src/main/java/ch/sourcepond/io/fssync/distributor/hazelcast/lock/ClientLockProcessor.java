@@ -13,11 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.lock;
 
-import ch.sourcepond.io.fssync.distributor.hazelcast.CompoundSyncTarget;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.ClientMessageProcessor;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.DistributionMessage;
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
 import ch.sourcepond.io.fssync.target.api.SyncPath;
+import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
@@ -33,8 +33,8 @@ final class ClientLockProcessor extends ClientMessageProcessor<DistributionMessa
     private final HazelcastInstance hci;
 
     @Inject
-    public ClientLockProcessor(final HazelcastInstance pHci, final CompoundSyncTarget pCompoundSyncTarget) {
-        super(pCompoundSyncTarget);
+    public ClientLockProcessor(final HazelcastInstance pHci, final SyncTarget pSyncTarget) {
+        super(pSyncTarget);
         hci = pHci;
     }
 
