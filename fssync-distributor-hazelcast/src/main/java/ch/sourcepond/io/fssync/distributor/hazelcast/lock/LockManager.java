@@ -21,39 +21,33 @@ import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Unlock;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.DistributionMessage;
 import ch.sourcepond.io.fssync.distributor.hazelcast.response.ClusterResponseBarrierFactory;
 import ch.sourcepond.io.fssync.distributor.hazelcast.response.ResponseException;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.ILock;
 import com.hazelcast.core.ITopic;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static java.lang.String.format;
 import static java.lang.Thread.currentThread;
 import static java.util.Objects.requireNonNull;
-import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class LockManager {
     private static final Logger LOG = getLogger(LockManager.class);
-    static final TimeUnit DEFAULT_LEASE_UNIT = MINUTES;
-    static final long DEFAULT_LEASE_TIMEOUT = 15;
     private final ClusterResponseBarrierFactory factory;
-    private final HazelcastInstance hci;
+    private final Locks locks;
     private final ITopic<DistributionMessage> lockRequestTopic;
     private final ITopic<DistributionMessage> unlockRequestTopic;
     private final Config config;
 
     @Inject
     public LockManager(final ClusterResponseBarrierFactory pFactory,
-                       final HazelcastInstance pHci,
+                       final Locks pLocks,
                        final Config pConfig,
                        @Lock final ITopic<DistributionMessage> pLockRequestTopic,
                        @Unlock final ITopic<DistributionMessage> pUnlockRequestTopic) {
         factory = pFactory;
-        hci = pHci;
+        locks = pLocks;
         lockRequestTopic = pLockRequestTopic;
         unlockRequestTopic = pUnlockRequestTopic;
         config = pConfig;
@@ -94,7 +88,7 @@ public class LockManager {
             } catch (final ResponseException | TimeoutException e) {
                 LOG.warn(e.getMessage(), e);
             } finally {
-                hci.getLock(toGlobalPath(pSyncDir, pPath)).unlock();
+                locks.unlock(toGlobalPath(pSyncDir, pPath));
             }
         }
     }
@@ -104,19 +98,11 @@ public class LockManager {
                 requireNonNull(pPath, "path is null"));
     }
 
-    private ILock getLock(final String pSyncDir, final String pPath) {
-        return hci.getLock(toGlobalPath(pSyncDir, pPath));
-    }
-
-    public boolean isLocked(final String pSyncDir, final String pPath) {
-        return getLock(pSyncDir, pPath).isLocked();
-    }
-
-    public void lock(final String pSyncDir, final String pPath) throws LockException {
-        final ILock globalLock = getLock(pSyncDir, pPath);
+    public boolean tryLock(final String pSyncDir, final String pPath) throws LockException {
         try {
-            if (globalLock.tryLock(config.lockTimeout(), config.lockTimeoutUnit(), DEFAULT_LEASE_TIMEOUT, DEFAULT_LEASE_UNIT)) {
+            if (locks.tryLock(toGlobalPath(pSyncDir, pPath))) {
                 acquireGlobalFileLock(pSyncDir, pPath);
+                return true;
             } else {
                 lockAcquisitionFailed(pSyncDir, pPath, format("Lock acquisition timed out after %d %s",
                         config.lockTimeout(), config.lockTimeoutUnit()), null);
@@ -127,16 +113,16 @@ public class LockManager {
         } catch (final ResponseException | TimeoutException e) {
             lockAcquisitionFailed(pSyncDir, pPath, format("Lock acquisition failed for %s!", pPath), e);
         }
+        return false;
     }
 
     public void unlock(final String pSyncDir, final String pPath) throws UnlockException {
-        final ILock lock = getLock(pSyncDir, pPath);
         try {
             releaseGlobalFileLock(pSyncDir, pPath);
         } catch (final ResponseException | TimeoutException e) {
             throw new UnlockException(format("Exception occurred while releasing file-lock for %s", pPath), e);
         } finally {
-            lock.unlock();
+            locks.unlock(toGlobalPath(pSyncDir, pPath));
         }
     }
 }

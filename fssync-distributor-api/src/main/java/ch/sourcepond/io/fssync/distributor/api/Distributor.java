@@ -30,16 +30,7 @@ public interface Distributor extends AutoCloseable {
      *                              (timeout, I/O failure etc.)
      * @throws NullPointerException Thrown, if the path specified is {@code null}.
      */
-    void lock(String pSyncDir, String pPath) throws LockException;
-
-    /**
-     * Returns when the path specified is locked network-wide i.e. {@link #lock(String, String)} was successful and
-     * {@link #unlock(String, String)} has not been called until now.
-     *
-     * @param pPath Path to check, must not be {@code null}.
-     * @return {@code true} if the path specified is locked, {@code false} otherwise.
-     */
-    boolean isLocked(String pSyncDir, String pPath);
+    boolean tryLock(String pSyncDir, String pPath) throws LockException;
 
     /**
      * Unlocks the path specified in the network. The underlying implementation must make its best effort to unlock
@@ -53,7 +44,7 @@ public interface Distributor extends AutoCloseable {
 
     /**
      * Deletes the path specified from the network. If successful, this method simply returns. Before calling this
-     * method, {@link #lock(String, String)} should have been executed successfully.
+     * method, {@link #tryLock(String, String)} should have been executed successfully.
      *
      * @param pPath Path to be deleted, must not be {@code null}.
      * @throws DeletionException    Thrown, if the path specified could not be deleted for some reason
@@ -64,7 +55,7 @@ public interface Distributor extends AutoCloseable {
 
     /**
      * Transfers the data specified for the path specified to the network. If successful, this method simply returns.
-     * Before calling this method, {@link #lock(String, String)} should have been executed successfully. The newly
+     * Before calling this method, {@link #tryLock(String, String)} should have been executed successfully. The newly
      * transferred data is <em>not</em> visible on the clients until {@link #store(String, String, byte[])} has been called.
      *
      * @param pPath Path to which the data belongs to, must not be {@code null}.
@@ -78,7 +69,7 @@ public interface Distributor extends AutoCloseable {
     /**
      * Discards the transferred data (see {@link #transfer(String, String, ByteBuffer)}) for the path specified which has not been
      * stored yet (see {@link #transfer(String, String, ByteBuffer)}). Before calling this method,
-     * {@link #lock(String, String)} should have been executed successfully.
+     * {@link #tryLock(String, String)} should have been executed successfully.
      *
      * @param pPath    Path to which the data to be discarded belongs to, must not be {@code null}.
      * @param pFailure IOException thrown during reading the file to be synced, must not be {@code null}.
@@ -91,7 +82,7 @@ public interface Distributor extends AutoCloseable {
     /**
      * Stores the transferred data to the path specified. If the store was successful, the global
      * checksum will be updated with the checksum specified and this method returns. Before calling this method,
-     * {@link #lock(String, String)} should have been executed successfully. After calling this method, the newly transferred
+     * {@link #tryLock(String, String)} should have been executed successfully. After calling this method, the newly transferred
      * data is visible on the clients (see {@link #transfer(String, String, ByteBuffer)}).
      *
      * @param pPath     Path to which the data belongs to, must not be {@code null}.
@@ -105,7 +96,7 @@ public interface Distributor extends AutoCloseable {
     /**
      * Returns the checksum of the path specified which was set during the last {@link #store(String, String, byte[])}
      * operation. If the path has no checksum yet, an empty array will be returned. Before calling this method,
-     * {@link #lock(String, String)} should have been executed successfully.
+     * {@link #tryLock(String, String)} should have been executed successfully.
      *
      * @param pPath Path, must not be {@code null}.
      * @return Checksum as byte-array, never {@code null}

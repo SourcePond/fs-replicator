@@ -62,14 +62,8 @@ final class HazelcastDistributor implements Distributor {
     }
 
     @Override
-    public void lock(final String pSyncDir, final String pPath) throws LockException {
-        lockManager.lock(requireNonNull(pSyncDir, "syncdir is null"),
-                requireNonNull(pPath, "path is null"));
-    }
-
-    @Override
-    public boolean isLocked(final String pSyncDir, final String pPath) {
-        return lockManager.isLocked(requireNonNull(pSyncDir, "syncdir is null"),
+    public boolean tryLock(final String pSyncDir, final String pPath) throws LockException {
+        return lockManager.tryLock(requireNonNull(pSyncDir, "syncdir is null"),
                 requireNonNull(pPath, "path is null"));
     }
 
@@ -116,10 +110,7 @@ final class HazelcastDistributor implements Distributor {
 
     @Override
     public void close() {
-        try {
-            listenerRegistrations.forEach(r -> r.close());
-        } finally {
-            registration.unregister();
-        }
+        registration.unregister();
+        listenerRegistrations.forEach(r -> r.close());
     }
 }

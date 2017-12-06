@@ -74,41 +74,21 @@ public class HazelcastDistributorTest {
     }
 
     @Test(expected = NullPointerException.class)
-    public void lockSyncDirIsNull() throws LockException {
-        distributor.lock(null, EXPECTED_PATH);
+    public void tryLockSyncDirIsNull() throws LockException {
+        distributor.tryLock(null, EXPECTED_PATH);
         verifyNoMoreInteractions(lockManager, hci, checksums, requestDistributor, requestDistributor, registration);
     }
 
     @Test(expected = NullPointerException.class)
-    public void lockPathIsNull() throws LockException {
-        distributor.lock(EXPECTED_SYNC_DIR, null);
+    public void tryLockPathIsNull() throws LockException {
+        distributor.tryLock(EXPECTED_SYNC_DIR, null);
         verifyNoMoreInteractions(lockManager, hci, checksums, requestDistributor, requestDistributor, registration);
     }
 
     @Test
-    public void lock() throws LockException {
-        distributor.lock(EXPECTED_SYNC_DIR, EXPECTED_PATH);
-        verify(lockManager).lock(EXPECTED_SYNC_DIR, EXPECTED_PATH);
-        verifyNoMoreInteractions(lockManager, hci, checksums, requestDistributor, requestDistributor, registration);
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void isLockSynDirIsNull() {
-        distributor.isLocked(null, EXPECTED_PATH);
-        verifyNoMoreInteractions(lockManager, hci, checksums, requestDistributor, requestDistributor, registration);
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void isLockPathIsNull() {
-        distributor.isLocked(EXPECTED_SYNC_DIR, null);
-        verifyNoMoreInteractions(lockManager, hci, checksums, requestDistributor, requestDistributor, registration);
-    }
-
-    @Test
-    public void isLocked() throws LockException {
-        when(distributor.isLocked(EXPECTED_SYNC_DIR, EXPECTED_PATH)).thenReturn(true);
-        assertTrue(distributor.isLocked(EXPECTED_SYNC_DIR, EXPECTED_PATH));
-        verify(lockManager).isLocked(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+    public void tryLock() throws LockException {
+        assertTrue(distributor.tryLock(EXPECTED_SYNC_DIR, EXPECTED_PATH));
+        verify(lockManager).tryLock(EXPECTED_SYNC_DIR, EXPECTED_PATH);
         verifyNoMoreInteractions(lockManager, hci, checksums, requestDistributor, requestDistributor, registration);
     }
 

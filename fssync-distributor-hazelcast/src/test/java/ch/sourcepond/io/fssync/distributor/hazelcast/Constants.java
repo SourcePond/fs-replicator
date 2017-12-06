@@ -19,8 +19,15 @@ import ch.sourcepond.io.fssync.target.api.SyncPath;
 import org.mockito.ArgumentMatcher;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 public class Constants {
+    public static final long EXPECTED_LOCK_TIMEOUT = 5L;
+    public static final TimeUnit EXPECTED_LEASE_TIME_UNIT = MINUTES;
+    public static final long EXPECTED_LEASE_TIME = 15;
+    public static final TimeUnit EXPECTED_LOCK_TIMEOUT_UNIT = MINUTES;
     public static final String EXPECTED_SENDER_NODE = "someSenderNode";
     public static final String EXPECTED_LOCAL_NODE = "someLocalNode";
     public static final String EXPECTED_SYNC_DIR = "someDir";

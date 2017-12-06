@@ -18,6 +18,7 @@ import com.hazelcast.topic.TopicOverloadPolicy;
 import java.util.concurrent.TimeUnit;
 
 import static com.hazelcast.topic.TopicOverloadPolicy.BLOCK;
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 public @interface Config {
 
@@ -28,6 +29,10 @@ public @interface Config {
     TimeUnit lockTimeoutUnit();
 
     long lockTimeout();
+
+    TimeUnit leaseTimeUnit() default MINUTES;
+
+    long leaseTime() default 15;
 
     TimeUnit responseTimeoutUnit();
 

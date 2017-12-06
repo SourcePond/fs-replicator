@@ -31,6 +31,7 @@ public class LockModule extends AbstractModule {
     protected void configure() {
         bind(ClientLockProcessor.class);
         bind(ClientUnlockProcessor.class);
+        bind(Locks.class);
         bind(LockManager.class);
     }
 
