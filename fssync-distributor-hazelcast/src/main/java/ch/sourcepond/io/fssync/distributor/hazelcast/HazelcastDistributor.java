@@ -112,5 +112,6 @@ final class HazelcastDistributor implements Distributor {
     public void close() {
         registration.unregister();
         listenerRegistrations.forEach(r -> r.close());
+        lockManager.close();
     }
 }

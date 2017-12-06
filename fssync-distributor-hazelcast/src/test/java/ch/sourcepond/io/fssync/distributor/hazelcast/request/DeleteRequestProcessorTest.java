@@ -29,7 +29,7 @@ public class DeleteRequestProcessorTest extends ClientMessageProcessorTest<Distr
 
     @Override
     protected DeleteRequestProcessor createProcessor() {
-        return new DeleteRequestProcessor(syncTargets);
+        return new DeleteRequestProcessor(syncTarget);
     }
 
     @Override
@@ -44,6 +44,6 @@ public class DeleteRequestProcessorTest extends ClientMessageProcessorTest<Distr
     @Override
     public void processMessage() throws IOException {
         processor.processMessage(nodeInfo, syncPath, message);
-        verify(syncTargets).delete(nodeInfo, syncPath);
+        verify(syncTarget).delete(nodeInfo, syncPath);
     }
 }

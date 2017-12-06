@@ -31,7 +31,7 @@ public class TransferRequestProcessorTest extends ClientMessageProcessorTest<Tra
 
     @Override
     protected TransferRequestProcessor createProcessor() {
-        return new TransferRequestProcessor(syncTargets);
+        return new TransferRequestProcessor(syncTarget);
     }
 
     @Override
@@ -46,6 +46,6 @@ public class TransferRequestProcessorTest extends ClientMessageProcessorTest<Tra
     @Override
     public void processMessage() throws IOException {
         processor.processMessage(nodeInfo, syncPath, message);
-        verify(syncTargets).transfer(same(nodeInfo), same(syncPath), argThat(data -> Arrays.equals(EXPECTED_DATA, data.array())));
+        verify(syncTarget).transfer(same(nodeInfo), same(syncPath), argThat(data -> Arrays.equals(EXPECTED_DATA, data.array())));
     }
 }

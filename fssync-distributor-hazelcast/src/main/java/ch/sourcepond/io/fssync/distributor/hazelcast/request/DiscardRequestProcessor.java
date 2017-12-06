@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.request;
 
-import ch.sourcepond.io.fssync.distributor.hazelcast.SyncTargets;
+import ch.sourcepond.io.fssync.distributor.hazelcast.CompoundSyncTarget;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.ClientMessageProcessor;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.StatusMessage;
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
@@ -25,12 +25,12 @@ import java.io.IOException;
 final class DiscardRequestProcessor extends ClientMessageProcessor<StatusMessage> {
 
     @Inject
-    DiscardRequestProcessor(final SyncTargets pSyncTargets) {
-        super(pSyncTargets);
+    DiscardRequestProcessor(final CompoundSyncTarget pCompoundSyncTarget) {
+        super(pCompoundSyncTarget);
     }
 
     @Override
     protected void processMessage(final NodeInfo pNodeInfo, final SyncPath pPath, final StatusMessage pMessage) throws IOException {
-        syncTargets.discard(pNodeInfo, pPath, pMessage.getFailureOrNull());
+        syncTarget.discard(pNodeInfo, pPath, pMessage.getFailureOrNull());
     }
 }

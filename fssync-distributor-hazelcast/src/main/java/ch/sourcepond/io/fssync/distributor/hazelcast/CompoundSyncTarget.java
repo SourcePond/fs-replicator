@@ -16,7 +16,6 @@ package ch.sourcepond.io.fssync.distributor.hazelcast;
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
 import ch.sourcepond.io.fssync.target.api.SyncPath;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
-import com.hazelcast.core.HazelcastInstance;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
@@ -25,14 +24,10 @@ import org.osgi.framework.ServiceReference;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
-import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
-import static java.util.Objects.requireNonNull;
-
-public class SyncTargets implements ServiceListener {
+class CompoundSyncTarget implements SyncTarget, ServiceListener {
 
     @FunctionalInterface
     private interface TargetFunction {
@@ -40,12 +35,9 @@ public class SyncTargets implements ServiceListener {
         void process(NodeInfo pNodeInfo, SyncPath pPath, SyncTarget pTarget) throws IOException;
     }
 
-    private final ConcurrentMap<ServiceReference<SyncTarget>, SyncTarget> targets = new ConcurrentHashMap<>();
-    private final ConcurrentMap<SyncPath, Collection<SyncTarget>> lockedTargets = new ConcurrentHashMap<>();
-    private final HazelcastInstance hci;
+    private final ConcurrentMap<ServiceReference<SyncTarget>, SyncTargetHolder> targets = new ConcurrentHashMap<>();
 
-    SyncTargets(final HazelcastInstance pHci) {
-        hci = pHci;
+    CompoundSyncTarget() {
     }
 
     @Override
@@ -68,19 +60,20 @@ public class SyncTargets implements ServiceListener {
         }
     }
 
-    void registerService(ServiceReference<SyncTarget> reference) {
+    void registerService(final ServiceReference<SyncTarget> reference) {
         final BundleContext context = reference.getBundle().getBundleContext();
-        final SyncTarget service = context.getService(reference);
-        targets.put(reference, service);
+        targets.put(reference, new SyncTargetHolder(context.getService(reference)));
     }
 
     private void process(final NodeInfo pNodeInfo, final SyncPath pPath, final TargetFunction pTargetFunction) throws IOException {
         try {
-            requireNonNull(lockedTargets.get(pPath), "Sync has not been locked").forEach(t -> {
-                try {
-                    pTargetFunction.process(pNodeInfo, pPath, t);
-                } catch (final IOException e) {
-                    throw new UncheckedIOException(e.getMessage(), e);
+            targets.values().forEach(t -> {
+                if (t.contains(pPath)) {
+                    try {
+                        pTargetFunction.process(pNodeInfo, pPath, t.getTarget());
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e.getMessage(), e);
+                    }
                 }
             });
         } catch (final UncheckedIOException e) {
@@ -88,36 +81,38 @@ public class SyncTargets implements ServiceListener {
         }
     }
 
+    @Override
     public void lock(final NodeInfo pNodeInfo, final SyncPath pPath) throws IOException {
-        lockedTargets.computeIfAbsent(pPath, p -> new CopyOnWriteArrayList<>(targets.values()));
         process(pNodeInfo, pPath, (nodeInfo, syncPath, syncTarget) -> syncTarget.lock(nodeInfo, syncPath));
     }
 
+    @Override
     public void unlock(final NodeInfo pNodeInfo, final SyncPath pPath) throws IOException {
-        try {
-            process(pNodeInfo, pPath, (nodeInfo, syncPath, syncTarget) -> syncTarget.unlock(nodeInfo, syncPath));
-        } finally {
-            lockedTargets.remove(pPath);
-        }
+        process(pNodeInfo, pPath, (nodeInfo, syncPath, syncTarget) -> syncTarget.unlock(nodeInfo, syncPath));
     }
 
+    @Override
     public void delete(final NodeInfo pNodeInfo, final SyncPath pPath) throws IOException {
         process(pNodeInfo, pPath, (nodeInfo, syncPath, syncTarget) -> syncTarget.delete(nodeInfo, syncPath));
     }
 
+    @Override
     public void transfer(final NodeInfo pNodeInfo, final SyncPath pPath, final ByteBuffer pBuffer) throws IOException {
         process(pNodeInfo, pPath, (nodeInfo, syncPath, syncTarget) -> syncTarget.transfer(nodeInfo, syncPath, pBuffer));
     }
 
+    @Override
     public void discard(final NodeInfo pNodeInfo, final SyncPath pPath, final IOException pFailure) throws IOException {
         process(pNodeInfo, pPath, (nodeInfo, syncPath, syncTarget) -> syncTarget.discard(nodeInfo, syncPath, pFailure));
     }
 
+    @Override
     public void store(final NodeInfo pNodeInfo, final SyncPath pPath) throws IOException {
         process(pNodeInfo, pPath, (nodeInfo, syncPath, syncTarget) -> syncTarget.store(nodeInfo, syncPath));
     }
 
+    @Override
     public void cancel(final NodeInfo pNodeInfo) {
-        lockedTargets.values().forEach(l -> l.forEach(a -> a.cancel(pNodeInfo)));
+        targets.values().forEach(a -> a.getTarget().cancel(pNodeInfo));
     }
 }

@@ -13,9 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.common;
 
-import ch.sourcepond.io.fssync.distributor.hazelcast.SyncTargets;
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
 import ch.sourcepond.io.fssync.target.api.SyncPath;
+import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import com.hazelcast.core.Endpoint;
 import com.hazelcast.core.HazelcastInstance;
 import org.junit.Before;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public abstract class ClientMessageProcessorTest<M extends DistributionMessage, T extends ClientMessageProcessor<M>> {
-    protected final SyncTargets syncTargets = mock(SyncTargets.class);
+    protected final SyncTarget syncTarget = mock(SyncTarget.class);
     protected final SyncPath syncPath = mock(SyncPath.class);
     protected final HazelcastInstance hci = mock(HazelcastInstance.class);
     protected final Endpoint endpoint = mock(Endpoint.class);
@@ -49,7 +49,7 @@ public abstract class ClientMessageProcessorTest<M extends DistributionMessage, 
 
     @Test
     public void verifyReceiver() {
-        assertSame(syncTargets, processor.syncTargets);
+        assertSame(syncTarget, processor.syncTarget);
     }
 
     protected abstract M createMessage();

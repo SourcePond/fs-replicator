@@ -17,17 +17,24 @@ import ch.sourcepond.io.fssync.distributor.api.LockException;
 import ch.sourcepond.io.fssync.distributor.hazelcast.Config;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ILock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static java.lang.String.format;
+import static java.lang.Thread.currentThread;
+import static java.time.Instant.now;
 
-class Locks {
+class Locks implements AutoCloseable {
+    private static final Logger LOG = LoggerFactory.getLogger(Locks.class);
     private final Lock lock = new ReentrantLock();
     private final Condition shutdownDone = lock.newCondition();
     private final Map<String, ILock> locks = new HashMap<>();
@@ -75,13 +82,20 @@ class Locks {
         }
     }
 
-    public void shutdown() throws InterruptedException {
+    @Override
+    public void close() {
         lock.lock();
         try {
             shutdown = true;
-            while (!locks.isEmpty()) {
-                shutdownDone.await();
+            final long leaseTime = config.leaseTime();
+            final TimeUnit leaseTimeUnit = config.leaseTimeUnit();
+            final Instant limit = now().plusMillis(leaseTimeUnit.toMillis(leaseTime));
+
+            while (!locks.isEmpty() && limit.isAfter(now())) {
+                shutdownDone.await(leaseTime, leaseTimeUnit);
             }
+        } catch (final InterruptedException e) {
+            currentThread().interrupt();
         } finally {
             lock.unlock();
         }

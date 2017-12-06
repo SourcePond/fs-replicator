@@ -29,7 +29,7 @@ public class ClientUnlockProcessorTest extends ClientMessageProcessorTest<Distri
 
     @Override
     protected ClientUnlockProcessor createProcessor() {
-        return new ClientUnlockProcessor(syncTargets);
+        return new ClientUnlockProcessor(syncTarget);
     }
 
     @Override
@@ -44,6 +44,6 @@ public class ClientUnlockProcessorTest extends ClientMessageProcessorTest<Distri
     @Override
     public void processMessage() throws IOException {
         processor.processMessage(nodeInfo, syncPath, message);
-        verify(syncTargets).unlock(nodeInfo, syncPath);
+        verify(syncTarget).unlock(nodeInfo, syncPath);
     }
 }

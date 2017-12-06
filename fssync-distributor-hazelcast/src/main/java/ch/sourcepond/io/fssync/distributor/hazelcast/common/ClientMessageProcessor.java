@@ -13,17 +13,18 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.common;
 
-import ch.sourcepond.io.fssync.distributor.hazelcast.SyncTargets;
+import ch.sourcepond.io.fssync.distributor.hazelcast.CompoundSyncTarget;
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
 import ch.sourcepond.io.fssync.target.api.SyncPath;
+import ch.sourcepond.io.fssync.target.api.SyncTarget;
 
 import java.io.IOException;
 
 public abstract class ClientMessageProcessor<T extends DistributionMessage> {
-    protected final SyncTargets syncTargets;
+    protected final SyncTarget syncTarget;
 
-    public ClientMessageProcessor(final SyncTargets pSyncTargets) {
-        syncTargets = pSyncTargets;
+    public ClientMessageProcessor(final CompoundSyncTarget pCompoundSyncTarget) {
+        syncTarget = pCompoundSyncTarget;
     }
 
     protected abstract void processMessage(NodeInfo pNodeInfo, SyncPath pPath, T pPayload) throws IOException;

@@ -14,35 +14,38 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast;
 
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
+import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilderFactory;
-import com.google.inject.Injector;
-import com.hazelcast.core.HazelcastInstance;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedServiceFactory;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import static com.google.inject.Guice.createInjector;
+import static java.lang.String.format;
+import static org.osgi.framework.Constants.OBJECTCLASS;
 import static org.osgi.framework.Constants.SERVICE_PID;
 
 public class Activator implements BundleActivator, ManagedServiceFactory {
-    private final ConcurrentMap<String, ServiceRegistration<Distributor>> distributors = new ConcurrentHashMap<>();
+    private final Map<String, HazelcastDistributor> distributors = new ConcurrentHashMap<>();
     private final ConfigBuilderFactory factory;
+    private final CompoundSyncTarget compoundSyncTarget;
     private volatile BundleContext context;
 
     public Activator() {
-        this(new ConfigBuilderFactory());
+        this(new ConfigBuilderFactory(), new CompoundSyncTarget());
     }
 
     // Constructor for testing
-    Activator(final ConfigBuilderFactory pFactory) {
+    Activator(final ConfigBuilderFactory pFactory, final CompoundSyncTarget pCompoundSyncTarget) {
         factory = pFactory;
+        compoundSyncTarget = pCompoundSyncTarget;
     }
 
     @Override
@@ -50,6 +53,13 @@ public class Activator implements BundleActivator, ManagedServiceFactory {
         final Hashtable<String, String> props = new Hashtable<>();
         props.put(SERVICE_PID, getClass().getPackage().getName());
         context.registerService(ManagedServiceFactory.class, this, props);
+        context.addServiceListener(compoundSyncTarget, format("(%s=%s)", OBJECTCLASS, SyncTarget.class.getName()));
+        final ServiceReference<?>[] references = context.getAllServiceReferences(SyncTarget.class.getName(), null);
+        if (references != null) {
+            for (final ServiceReference<?>  reference : references) {
+                compoundSyncTarget.registerService((ServiceReference<SyncTarget>) reference);
+            }
+        }
     }
 
     @Override
@@ -63,23 +73,24 @@ public class Activator implements BundleActivator, ManagedServiceFactory {
         return getClass().getName();
     }
 
-
     @Override
-    public void updated(final String pPid, final Dictionary<String, ?> pProperties) throws ConfigurationException {
+    public synchronized void updated(final String pPid, final Dictionary<String, ?> pProperties) throws ConfigurationException {
+        deleted(pPid);
+
         final Config config = factory.create(pProperties, Config.class).build();
-
-
-        final Injector injector = createInjector(new HazelcastDistributorModule(config));
-        injector.getInstance(HazelcastInstance.class);
-
-        HazelcastDistributor distributor = createInjector(new HazelcastDistributorModule(config)).
+        final HazelcastDistributor distributor = createInjector(
+                new HazelcastDistributorModule(config, compoundSyncTarget)).
                 getInstance(HazelcastDistributor.class);
-
-        distributor.setServiceRegistration(context.registerService(Distributor.class, distributor, null));
+        final Hashtable<String, String> props = new Hashtable<>();
+        props.put(SERVICE_PID, pPid);
+        distributor.setServiceRegistration(context.registerService(Distributor.class, distributor, props));
     }
 
     @Override
-    public void deleted(final String pPid) {
-
+    public synchronized void deleted(final String pPid) {
+        HazelcastDistributor distributor = distributors.remove(pPid);
+        if (distributor != null) {
+            distributor.close();
+        }
     }
 }

@@ -39,7 +39,7 @@ public class ClientLockProcessorTest extends ClientMessageProcessorTest<Distribu
 
     @Override
     protected ClientLockProcessor createProcessor() {
-        return new ClientLockProcessor(hci, syncTargets);
+        return new ClientLockProcessor(hci, syncTarget);
     }
 
     @Override
@@ -55,25 +55,25 @@ public class ClientLockProcessorTest extends ClientMessageProcessorTest<Distribu
         when(member.getUuid()).thenReturn(Constants.EXPECTED_SENDER_NODE);
         final MembershipEvent event = new MembershipEvent(mock(Cluster.class), member, MEMBER_REMOVED, emptySet());
         processor.memberRemoved(event);
-        verify(syncTargets).cancel(argThat(IS_EQUAL_TO_EXPECTED_NODE_INFO));
+        verify(syncTarget).cancel(argThat(IS_EQUAL_TO_EXPECTED_NODE_INFO));
     }
 
     @Test
     public void memberAdded() {
         processor.memberAdded(null);
-        Mockito.verifyZeroInteractions(syncTargets);
+        Mockito.verifyZeroInteractions(syncTarget);
     }
 
     @Test
     public void memberAttributeChanged() {
         processor.memberAttributeChanged(null);
-        Mockito.verifyZeroInteractions(syncTargets);
+        Mockito.verifyZeroInteractions(syncTarget);
     }
 
     @Test
     @Override
     public void processMessage() throws IOException {
         processor.processMessage(nodeInfo, syncPath, message);
-        verify(syncTargets).lock(nodeInfo, syncPath);
+        verify(syncTarget).lock(nodeInfo, syncPath);
     }
 }

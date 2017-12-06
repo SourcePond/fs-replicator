@@ -28,6 +28,7 @@ import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_L
 import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_LEASE_TIME_UNIT;
 import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_LOCK_TIMEOUT;
 import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_LOCK_TIMEOUT_UNIT;
+import static java.lang.Thread.interrupted;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
@@ -60,6 +61,7 @@ public class LocksTest {
 
     @After
     public void tearDown() {
+        interrupted();
         executor.shutdown();
     }
 
@@ -92,8 +94,29 @@ public class LocksTest {
             }
         }, 500, MILLISECONDS);
         locks.tryLock(EXPECTED_KEY);
-        locks.shutdown();
+        locks.close();
         assertNotNull(expectedException);
         assertEquals(LockException.class, expectedException.getClass());
+    }
+
+    @Test(timeout = 1000)
+    public void closeInterrupted() throws Exception {
+        when(config.leaseTimeUnit()).thenReturn(MILLISECONDS);
+        when(config.leaseTime()).thenReturn(1000L);
+        when(globalLock.tryLock(EXPECTED_LOCK_TIMEOUT, EXPECTED_LOCK_TIMEOUT_UNIT, 1000, MILLISECONDS)).thenReturn(true);
+        final Thread main = Thread.currentThread();
+        executor.schedule(() -> main.interrupt(), 200, MILLISECONDS);
+        locks.tryLock(EXPECTED_KEY);
+        locks.close();
+        assertTrue(main.isInterrupted());
+    }
+
+    @Test(timeout = 1000)
+    public void forceCloseAfterTimeout() throws Exception {
+        when(config.leaseTimeUnit()).thenReturn(MILLISECONDS);
+        when(config.leaseTime()).thenReturn(500L);
+        when(globalLock.tryLock(EXPECTED_LOCK_TIMEOUT, EXPECTED_LOCK_TIMEOUT_UNIT, 1000, MILLISECONDS)).thenReturn(true);
+        locks.tryLock(EXPECTED_KEY);
+        locks.close();
     }
 }

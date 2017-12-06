@@ -32,7 +32,7 @@ public @interface Config {
 
     TimeUnit leaseTimeUnit() default MINUTES;
 
-    long leaseTime() default 15;
+    long leaseTime() default 3;
 
     TimeUnit responseTimeoutUnit();
 

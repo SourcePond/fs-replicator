@@ -32,7 +32,7 @@ import static java.lang.Thread.currentThread;
 import static java.util.Objects.requireNonNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class LockManager {
+public class LockManager implements AutoCloseable {
     private static final Logger LOG = getLogger(LockManager.class);
     private final ClusterResponseBarrierFactory factory;
     private final Locks locks;
@@ -124,5 +124,10 @@ public class LockManager {
         } finally {
             locks.unlock(toGlobalPath(pSyncDir, pPath));
         }
+    }
+
+    @Override
+    public void close() {
+        locks.close();
     }
 }

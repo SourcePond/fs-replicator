@@ -29,7 +29,7 @@ public class StoreRequestProcessorTest extends ClientMessageProcessorTest<Distri
 
     @Override
     protected StoreRequestProcessor createProcessor() {
-        return new StoreRequestProcessor(syncTargets);
+        return new StoreRequestProcessor(syncTarget);
     }
 
     @Override
@@ -44,6 +44,6 @@ public class StoreRequestProcessorTest extends ClientMessageProcessorTest<Distri
     @Override
     public void processMessage() throws IOException {
         processor.processMessage(nodeInfo, syncPath, message);
-        verify(syncTargets).store(nodeInfo, syncPath);
+        verify(syncTarget).store(nodeInfo, syncPath);
     }
 }

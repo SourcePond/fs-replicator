@@ -31,17 +31,19 @@ import com.google.inject.multibindings.Multibinder;
 import static com.google.inject.Key.get;
 import static com.google.inject.multibindings.Multibinder.newSetBinder;
 
-public class HazelcastDistributorModule extends AbstractModule {
+class HazelcastDistributorModule extends AbstractModule {
     private final Config config;
+    private final CompoundSyncTarget compoundSyncTarget;
 
-    public HazelcastDistributorModule(final Config pConfig) {
+    public HazelcastDistributorModule(final Config pConfig, final CompoundSyncTarget pCompoundSyncTarget) {
         config = pConfig;
+        compoundSyncTarget = pCompoundSyncTarget;
     }
 
     @Override
     protected void configure() {
         bind(Config.class).toInstance(config);
-        bind(SyncTargets.class);
+        bind(CompoundSyncTarget.class).toInstance(compoundSyncTarget);
         install(new BindingModule());
         install(new CommonModule());
         install(new LockModule());

@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.lock;
 
-import ch.sourcepond.io.fssync.distributor.hazelcast.SyncTargets;
+import ch.sourcepond.io.fssync.distributor.hazelcast.CompoundSyncTarget;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.ClientMessageProcessor;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.DistributionMessage;
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
@@ -33,14 +33,14 @@ final class ClientLockProcessor extends ClientMessageProcessor<DistributionMessa
     private final HazelcastInstance hci;
 
     @Inject
-    public ClientLockProcessor(final HazelcastInstance pHci, final SyncTargets pSyncTargets) {
-        super(pSyncTargets);
+    public ClientLockProcessor(final HazelcastInstance pHci, final CompoundSyncTarget pCompoundSyncTarget) {
+        super(pCompoundSyncTarget);
         hci = pHci;
     }
 
     @Override
     public void processMessage(final NodeInfo pNodeInfo, final SyncPath pPath, final DistributionMessage pMessage) throws IOException {
-        syncTargets.lock(pNodeInfo, pPath);
+        syncTarget.lock(pNodeInfo, pPath);
     }
 
     @Override
@@ -50,7 +50,7 @@ final class ClientLockProcessor extends ClientMessageProcessor<DistributionMessa
 
     @Override
     public void memberRemoved(final MembershipEvent membershipEvent) {
-        syncTargets.cancel(new NodeInfo(membershipEvent.getMember().getUuid(), hci.getLocalEndpoint().getUuid()));
+        syncTarget.cancel(new NodeInfo(membershipEvent.getMember().getUuid(), hci.getLocalEndpoint().getUuid()));
     }
 
     @Override

@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.request;
 
-import ch.sourcepond.io.fssync.distributor.hazelcast.SyncTargets;
+import ch.sourcepond.io.fssync.distributor.hazelcast.CompoundSyncTarget;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.ClientMessageProcessor;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.DistributionMessage;
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
@@ -25,12 +25,12 @@ import java.io.IOException;
 final class DeleteRequestProcessor extends ClientMessageProcessor<DistributionMessage> {
 
     @Inject
-    DeleteRequestProcessor(final SyncTargets pSyncTargets) {
-        super(pSyncTargets);
+    DeleteRequestProcessor(final CompoundSyncTarget pCompoundSyncTarget) {
+        super(pCompoundSyncTarget);
     }
 
     @Override
     protected void processMessage(final NodeInfo pNodeInfo, final SyncPath pPath, final DistributionMessage pMessage) throws IOException {
-        syncTargets.delete(pNodeInfo, pPath);
+        syncTarget.delete(pNodeInfo, pPath);
     }
 }
