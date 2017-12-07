@@ -2,7 +2,7 @@ group 'ch.sourcepond.io'
 version '0.1-SNAPSHOT'
 
 apply plugin: 'java'
-apply plugin: 'osgi'
+apply plugin: 'biz.aQute.bnd.builder'
 
 sourceCompatibility = 1.8
 
@@ -27,7 +27,7 @@ dependencies {
 
 jar {
     manifest {
-        instruction 'Export-Package', '!ch.sourcepond.io.distributor.hazelcast'
-        instruction 'Bundle-Activator', 'ch.sourcepond.io.distributor.hazelcast.osgi.Activator'
+        //attributes('Export-Package', '!ch.sourcepond.io.distributor.hazelcast')
+        attributes('Bundle-Activator': 'ch.sourcepond.io.distributor.hazelcast.Activator')
     }
 }

@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.target.fs;
 
-import ch.sourcepond.io.fssync.impl.config.Config;
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
 import org.slf4j.Logger;
 
@@ -60,7 +59,7 @@ class FileHandle implements Closeable {
     }
 
     public boolean isExpired(final Config pConfig, final Instant pThreshold) {
-        Instant o = openSince.plusSeconds(pConfig.getForceUnlockTimeoutSeconds());
+        Instant o = openSince.plusMillis(pConfig.forceUnlockTimoutUnit().toMillis(pConfig.forceUnlockTimeout()));
         return pThreshold.isAfter(o);
     }
 

@@ -1,10 +1,6 @@
-rootProject.name = 'fs-replicator'
+rootProject.name = 'fssync'
 include 'fssync-distributor-api'
 include 'fssync-distributor-hazelcast'
-include 'fssync-api'
-include 'fssync-hazelcast'
-include 'fssync-distributor-spi'
 include 'fssync-target-api'
 include 'fssync-target-filesystem'
-include 'fssync-impl'
-
+include 'fssync-source-filesystem'

@@ -13,11 +13,22 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.target.fs;
 
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
+
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+
+@ObjectClassDefinition(name = "Fssync target filesystem", description = "Configuration for target filesystem")
 public @interface Config {
 
-    long forceUnlockTimeoutSeconds();
+    @AttributeDefinition(
+            min = "0",
+            description = "Timeout after which a file-lock is forced to be released"
+    )
+    long forceUnlockTimeout() default 5;
 
-    TimeUnit forceUnlockTimoutUnit();
+    @AttributeDefinition
+    TimeUnit forceUnlockTimoutUnit() default MINUTES;
 }

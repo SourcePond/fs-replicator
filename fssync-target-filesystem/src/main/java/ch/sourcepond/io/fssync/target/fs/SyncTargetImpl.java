@@ -45,8 +45,8 @@ class SyncTargetImpl implements SyncTarget, Runnable {
 
     public void start() {
         watchDogExecutor.scheduleAtFixedRate(this,
-                config.forceUnlockTimeoutSeconds(),
-                config.forceUnlockTimeoutSeconds(),
+                config.forceUnlockTimeout(),
+                config.forceUnlockTimeout(),
                 config.forceUnlockTimoutUnit());
     }
 
