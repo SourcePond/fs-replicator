@@ -27,6 +27,10 @@ public class NodeInfo {
         localNode = pLocalNode;
     }
 
+    public boolean isLocalNode() {
+        return senderNode.equals(localNode);
+    }
+
     public String getSender() {
         return senderNode;
     }

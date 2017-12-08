@@ -16,12 +16,16 @@ package ch.sourcepond.io.fssync.target.fs;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.concurrent.TimeUnit;
 
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
+@Retention(RUNTIME)
 @ObjectClassDefinition(name = "Fssync target filesystem", description = "Configuration for target filesystem")
-public @interface Config {
+public @interface SyncTargetConfig {
 
     @AttributeDefinition(
             min = "0",
@@ -31,4 +35,7 @@ public @interface Config {
 
     @AttributeDefinition
     TimeUnit forceUnlockTimoutUnit() default MINUTES;
+
+    @AttributeDefinition(min = "1")
+    String syncDir() default "/";
 }

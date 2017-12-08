@@ -34,6 +34,12 @@ public class NodeInfoTest {
     }
 
     @Test
+    public void isLocalNode() {
+        assertFalse(nodeInfo.isLocalNode());
+        assertTrue(new NodeInfo(EXPECTED_LOCAL, EXPECTED_LOCAL).isLocalNode());
+    }
+
+    @Test
     public void hashCodeMustBeEqualOnEqualnodeInfos() {
         assertEquals(nodeInfo.hashCode(), new NodeInfo(EXPECTED_SENDER, EXPECTED_LOCAL).hashCode());
     }

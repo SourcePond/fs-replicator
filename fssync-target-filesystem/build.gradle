@@ -13,6 +13,7 @@ repositories {
 
 dependencies {
     compile project(':fssync-target-api')
+    compile 'ch.sourcepond.osgi.cmpn:metatype-builder-lib:0.1-SNAPSHOT'
     compile 'org.slf4j:slf4j-api:1.7.25'
     compile 'com.google.inject:guice:4.1.0'
     compile 'com.google.inject.extensions:guice-multibindings:4.1.0'

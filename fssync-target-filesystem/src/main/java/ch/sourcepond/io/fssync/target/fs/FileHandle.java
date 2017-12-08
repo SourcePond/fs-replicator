@@ -14,72 +14,67 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.target.fs;
 
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
+import ch.sourcepond.io.fssync.target.api.SyncPath;
 import org.slf4j.Logger;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 
 import static java.lang.String.format;
-import static java.nio.channels.FileChannel.open;
-import static java.nio.file.Files.createDirectories;
-import static java.nio.file.Files.deleteIfExists;
-import static java.nio.file.Files.move;
-import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import static java.nio.file.StandardOpenOption.APPEND;
-import static java.nio.file.StandardOpenOption.CREATE;
-import static java.nio.file.StandardOpenOption.WRITE;
 import static java.time.Instant.now;
 import static org.slf4j.LoggerFactory.getLogger;
 
 class FileHandle implements Closeable {
     private static final Logger LOG = getLogger(FileHandle.class);
+    private final TargetDirectory syncTarget;
     private final NodeInfo nodeInfo;
+    private final SyncPath syncPath;
     private final Path targetFile;
-    private final Path tmpFile;
     private final FileChannel channel;
     private final Instant openSince;
+    private boolean closed;
 
-
-    public FileHandle(final NodeInfo pNodeInfo,
+    public FileHandle(final TargetDirectory pSyncTarget,
+                      final NodeInfo pNodeInfo,
+                      final SyncPath pSyncPath,
                       final FileChannel pChannel,
-                      final Path pTargetFile,
-                      final Path pTmpFile) {
+                      final Path pTargetFile) {
+        syncTarget = pSyncTarget;
         nodeInfo = pNodeInfo;
+        syncPath = pSyncPath;
         channel = pChannel;
         targetFile = pTargetFile;
-        tmpFile = pTmpFile;
         openSince = now();
     }
 
-    public boolean isExpired(final Config pConfig, final Instant pThreshold) {
-        Instant o = openSince.plusMillis(pConfig.forceUnlockTimoutUnit().toMillis(pConfig.forceUnlockTimeout()));
-        return pThreshold.isAfter(o);
+    private void checkOpen() throws IOException {
+        if (closed) {
+            throw new IOException(format("File-handle for %s has been closed", targetFile));
+        }
     }
 
-    public void delete() throws IOException {
+    public boolean closeExpired(final SyncTargetConfig pSyncTargetConfig, final Instant pThreshold) {
+        final Instant o = openSince.plusMillis(pSyncTargetConfig.forceUnlockTimoutUnit().toMillis(pSyncTargetConfig.forceUnlockTimeout()));
+        final boolean expired = pThreshold.isAfter(o);
+        if (expired) {
+            close();
+        }
+        return expired;
+    }
+
+    public synchronized void delete() throws IOException {
+        checkOpen();
         Files.delete(targetFile);
     }
 
-    public void transfer(final ByteBuffer pBuffer) throws IOException {
-        try (final FileChannel tmpChannel = open(tmpFile, CREATE, WRITE, APPEND)) {
-            tmpChannel.write(pBuffer);
-        }
-    }
-
-    public void store() throws IOException {
-        createDirectories(targetFile.getParent());
-        try {
-            move(tmpFile, targetFile, ATOMIC_MOVE);
-        } catch (final AtomicMoveNotSupportedException e) {
-            move(tmpFile, targetFile, REPLACE_EXISTING);
-        }
+    public synchronized void transfer(final ByteBuffer pBuffer) throws IOException {
+        checkOpen();
+        channel.write(pBuffer);
     }
 
     public NodeInfo getNodeInfo() {
@@ -87,22 +82,21 @@ class FileHandle implements Closeable {
     }
 
     @Override
-    public void close() {
-        try {
-            channel.close();
-        } catch (final IOException e) {
-            LOG.warn(e.getMessage(), e);
-        } finally {
+    public synchronized void close() {
+        if (!closed) {
+            closed = true;
             try {
-                deleteIfExists(tmpFile);
+                channel.close();
             } catch (final IOException e) {
                 LOG.warn(e.getMessage(), e);
+            } finally {
+                syncTarget.remove(syncPath);
             }
         }
     }
 
     @Override
     public String toString() {
-        return format("%s (tmpfile: %s)", targetFile, tmpFile);
+        return format("%s [%s]", getClass().getSimpleName(), targetFile);
     }
 }
