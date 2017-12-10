@@ -17,7 +17,6 @@ import ch.sourcepond.io.fssync.target.api.NodeInfo;
 import ch.sourcepond.io.fssync.target.api.SyncPath;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.osgi.framework.ServiceRegistration;
@@ -35,16 +34,20 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
+import static java.lang.Thread.sleep;
 import static java.nio.file.FileSystems.getDefault;
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.Files.delete;
 import static java.nio.file.Files.isRegularFile;
 import static java.nio.file.Files.walkFileTree;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TargetDirectoryTest {
     private static final String EXPECTED_CONTEXT = "Some expected content";
@@ -138,5 +141,19 @@ public class TargetDirectoryTest {
         // Only a log message should be printed
         syncTarget.discard(nodeInfo, syncPath, new IOException());
         assertTrue(Files.exists(expectedPath));
+    }
+
+    @Test(timeout = 3000)
+    public void forceUnlock() throws Exception {
+        when(config.forceUnlockTimeout()).thenReturn(1L);
+        when(config.forceUnlockTimoutUnit()).thenReturn(SECONDS);
+        when(config.forceUnlockSchedulePeriod()).thenReturn(100L);
+        when(config.forceUnlockSchedulePeriodUnit()).thenReturn(MILLISECONDS);
+        syncTarget.start();
+
+        sleep(1500);
+
+        // Lock should be possible now
+        syncTarget.lock(nodeInfo, syncPath);
     }
 }

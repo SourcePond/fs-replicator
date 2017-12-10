@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Retention(RUNTIME)
 @ObjectClassDefinition(name = "Fssync target filesystem", description = "Configuration for target filesystem")
@@ -38,4 +39,10 @@ public @interface SyncTargetConfig {
 
     @AttributeDefinition(min = "1")
     String syncDir() default "/";
+
+    @AttributeDefinition(min = "10")
+    long forceUnlockSchedulePeriod();
+
+    @AttributeDefinition
+    TimeUnit forceUnlockSchedulePeriodUnit() default SECONDS;
 }

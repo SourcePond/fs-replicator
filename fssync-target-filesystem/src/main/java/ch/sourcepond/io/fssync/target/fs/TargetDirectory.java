@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileSystem;
@@ -34,13 +33,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import static java.lang.String.format;
 import static java.nio.channels.FileChannel.open;
 import static java.nio.file.Files.createDirectories;
-import static java.nio.file.Files.exists;
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isSameFile;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.WRITE;
 import static java.time.Instant.now;
-import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static org.slf4j.LoggerFactory.getLogger;
 
 class TargetDirectory implements SyncTarget, AutoCloseable, Runnable {
@@ -69,9 +66,9 @@ class TargetDirectory implements SyncTarget, AutoCloseable, Runnable {
 
     public void start() {
         watchDogExecutor.scheduleAtFixedRate(this,
-                syncTargetConfig.forceUnlockTimeout(),
-                syncTargetConfig.forceUnlockTimeout(),
-                syncTargetConfig.forceUnlockTimoutUnit());
+                syncTargetConfig.forceUnlockSchedulePeriod(),
+                syncTargetConfig.forceUnlockSchedulePeriod(),
+                syncTargetConfig.forceUnlockSchedulePeriodUnit());
     }
 
     @Override
