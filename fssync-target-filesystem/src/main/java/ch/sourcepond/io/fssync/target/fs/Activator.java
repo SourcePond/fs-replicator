@@ -17,27 +17,23 @@ import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilderFactory;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
-import org.osgi.framework.ServiceReference;
-import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.osgi.service.cm.ManagedServiceFactory;
 
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static java.lang.String.format;
-import static java.nio.file.FileSystems.getDefault;
 import static org.osgi.framework.Constants.SERVICE_PID;
 
 public class Activator implements BundleActivator, ManagedService, ManagedServiceFactory {
-    private static final String FACTORY_PID = Activator.class.getPackage().getName();
-    private static final String DEFAULT_TARGET_PID = format("%s.defaultTarget", FACTORY_PID);
+    static final String FACTORY_PID = "ch.sourcepond.io.fssync.target.fs.factory";
+    private final Map<String, String> syncDirToPid = new HashMap<>();
     private final ConcurrentMap<String, TargetDirectory> targets = new ConcurrentHashMap<>();
     private final ConfigBuilderFactory configBuilderFactory;
     private final TargetDirectoryFactory targetDirectoryFactory;
@@ -54,15 +50,16 @@ public class Activator implements BundleActivator, ManagedService, ManagedServic
     }
 
     @Override
-    public void start(final BundleContext pContext) throws Exception {
+    public void start(final BundleContext pContext) {
         context = pContext;
         final Hashtable<String, String> props = new Hashtable<>();
         props.put(SERVICE_PID, FACTORY_PID);
-        context.registerService(ManagedService.class, this, props);
+        context.registerService(new String[]{ManagedService.class.getName(),
+                ManagedServiceFactory.class.getName()}, this, props);
     }
 
     @Override
-    public void stop(final BundleContext context) throws Exception {
+    public void stop(final BundleContext context) {
         targets.values().forEach(t -> t.close());
     }
 
@@ -74,14 +71,23 @@ public class Activator implements BundleActivator, ManagedService, ManagedServic
 
     @Override
     public void updated(final Dictionary<String, ?> properties) throws ConfigurationException {
-        updated(DEFAULT_TARGET_PID, properties);
+        updated(FACTORY_PID, properties);
     }
 
     @Override
     public void updated(final String pPid, final Dictionary<String, ?> pProperties) throws ConfigurationException {
-        final SyncTargetConfig config = configBuilderFactory.create(pProperties, SyncTargetConfig.class).build();
-        deleted(pPid);
-        final TargetDirectory dir = targetDirectoryFactory.create(config);
+        final SyncTargetConfig config = configBuilderFactory.create(SyncTargetConfig.class, pProperties).build();
+
+        synchronized (syncDirToPid) {
+            final String pid = syncDirToPid.get(config.syncDir());
+            if (pid != null && !pid.equals(pPid)) {
+                throw new ConfigurationException("syncDir", format("Sync directory %s is already used by PID %s", config.syncDir(), pid));
+            }
+            syncDirToPid.put(config.syncDir(), pPid);
+        }
+
+        final TargetDirectory dir = targets.computeIfAbsent(pPid, pid -> targetDirectoryFactory.create());
+        dir.update(config);
         final Hashtable<String, String> props = new Hashtable<>();
         props.put(SERVICE_PID, pPid);
         dir.setRegistration(context.registerService(SyncTarget.class, dir, props));
@@ -89,9 +95,12 @@ public class Activator implements BundleActivator, ManagedService, ManagedServic
 
     @Override
     public void deleted(final String pPid) {
-        targets.computeIfPresent(pPid, (k, v) -> {
-            v.close();
-            return null;
-        });
+        synchronized (syncDirToPid) {
+            final TargetDirectory syncTarget = targets.remove(pPid);
+            if (syncTarget != null) {
+                syncTarget.close();
+                syncDirToPid.remove(syncTarget.getConfig().syncDir());
+            }
+        }
     }
 }

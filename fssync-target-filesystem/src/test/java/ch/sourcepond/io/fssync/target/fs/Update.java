@@ -13,11 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.target.fs;
 
-import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
+import org.osgi.service.cm.ConfigurationException;
 
-class TargetDirectoryFactory {
+@FunctionalInterface
+public interface Update {
 
-    public TargetDirectory create() {
-        return new TargetDirectory(newSingleThreadScheduledExecutor());
-    }
+    void update() throws ConfigurationException;
 }

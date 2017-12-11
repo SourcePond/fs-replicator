@@ -45,6 +45,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
@@ -62,7 +63,10 @@ public class TargetDirectoryTest {
     @Before
     public void setup() throws IOException {
         when(config.syncDir()).thenReturn(syncPath.getSyncDir());
-        syncTarget = new TargetDirectoryFactory().create(config);
+        when(config.forceUnlockSchedulePeriod()).thenReturn(100L);
+        when(config.forceUnlockSchedulePeriodUnit()).thenReturn(MILLISECONDS);
+        syncTarget = new TargetDirectoryFactory().create();
+        syncTarget.update(config);
         syncTarget.setRegistration(registration);
         syncTarget.lock(nodeInfo, syncPath);
     }
@@ -87,6 +91,16 @@ public class TargetDirectoryTest {
                 }
             });
         }
+    }
+
+    @Test
+    public void updateConfig() {
+        syncTarget.update(config);
+    }
+
+    @Test
+    public void getConfig() {
+        assertSame(config, syncTarget.getConfig());
     }
 
     @Test
@@ -149,9 +163,6 @@ public class TargetDirectoryTest {
     public void forceUnlock() throws Exception {
         when(config.forceUnlockTimeout()).thenReturn(1L);
         when(config.forceUnlockTimoutUnit()).thenReturn(SECONDS);
-        when(config.forceUnlockSchedulePeriod()).thenReturn(100L);
-        when(config.forceUnlockSchedulePeriodUnit()).thenReturn(MILLISECONDS);
-        syncTarget.start();
 
         sleep(1500);
 

@@ -17,15 +17,15 @@ import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
 import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.util.concurrent.TimeUnit;
 
+import static ch.sourcepond.io.fssync.target.fs.Activator.FACTORY_PID;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Retention(RUNTIME)
-@ObjectClassDefinition(name = "Fssync target filesystem", description = "Configuration for target filesystem")
+@ObjectClassDefinition(name = "Fssync target filesystem", description = "Configuration for target filesystem", factoryPid = {FACTORY_PID})
 public @interface SyncTargetConfig {
 
     @AttributeDefinition(
@@ -40,8 +40,8 @@ public @interface SyncTargetConfig {
     @AttributeDefinition(min = "1")
     String syncDir() default "/";
 
-    @AttributeDefinition(min = "10")
-    long forceUnlockSchedulePeriod();
+    @AttributeDefinition(min = "1")
+    long forceUnlockSchedulePeriod() default 10;
 
     @AttributeDefinition
     TimeUnit forceUnlockSchedulePeriodUnit() default SECONDS;

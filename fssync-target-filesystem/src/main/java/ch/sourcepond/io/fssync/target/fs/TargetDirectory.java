@@ -19,7 +19,6 @@ import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import org.osgi.framework.ServiceRegistration;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -27,9 +26,11 @@ import java.nio.file.Path;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 
 import static java.lang.String.format;
 import static java.nio.channels.FileChannel.open;
+import static java.nio.file.FileSystems.getDefault;
 import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isSameFile;
@@ -41,33 +42,26 @@ class TargetDirectory implements SyncTarget, AutoCloseable, Runnable {
     private static final Logger LOG = getLogger(TargetDirectory.class);
     private final ConcurrentMap<SyncPath, FileHandle> handles = new ConcurrentHashMap<>();
     private final ScheduledExecutorService watchDogExecutor;
-    private final SyncTargetConfig syncTargetConfig;
-    private final Path syncDir;
+    private volatile ScheduledFuture<?> watchDogFuture;
+    private volatile SyncTargetConfig config;
+    private volatile Path syncDir;
     private ServiceRegistration<SyncTarget> registration;
 
-    @Inject
-    public TargetDirectory(final SyncTargetConfig pSyncTargetConfig,
-                           final ScheduledExecutorService pWatchDogExecutor,
-                           final Path pSyncDir) {
-        syncTargetConfig = pSyncTargetConfig;
+    public TargetDirectory(final ScheduledExecutorService pWatchDogExecutor) {
         watchDogExecutor = pWatchDogExecutor;
-        syncDir = pSyncDir;
     }
 
     public void setRegistration(final ServiceRegistration<SyncTarget> pRegistration) {
         registration = pRegistration;
     }
 
-    public void start() {
-        watchDogExecutor.scheduleAtFixedRate(this,
-                syncTargetConfig.forceUnlockSchedulePeriod(),
-                syncTargetConfig.forceUnlockSchedulePeriod(),
-                syncTargetConfig.forceUnlockSchedulePeriodUnit());
+    public SyncTargetConfig getConfig() {
+        return config;
     }
 
     @Override
     public void run() {
-        handles.values().removeIf(value -> value.closeExpired(syncTargetConfig));
+        handles.values().removeIf(value -> value.closeExpired(config));
     }
 
     private FileHandle createHandle(final NodeInfo pNodeInfo, final SyncPath pPath) throws IOException {
@@ -172,5 +166,17 @@ class TargetDirectory implements SyncTarget, AutoCloseable, Runnable {
         registration.unregister();
         watchDogExecutor.shutdown();
         handles.values().forEach(ch -> ch.close());
+    }
+
+    public void update(final SyncTargetConfig pConfig) {
+        config = pConfig;
+        syncDir = getDefault().getPath(pConfig.syncDir());
+        if (watchDogFuture != null) {
+            watchDogFuture.cancel(false);
+        }
+        watchDogFuture = watchDogExecutor.scheduleAtFixedRate(this,
+                config.forceUnlockSchedulePeriod(),
+                config.forceUnlockSchedulePeriod(),
+                config.forceUnlockSchedulePeriodUnit());
     }
 }

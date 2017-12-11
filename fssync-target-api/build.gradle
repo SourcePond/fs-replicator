@@ -1,7 +1,8 @@
-group 'ch.sourcepond.io'
+group 'ch.sourcepond.io.fssync'
 version '0.1-SNAPSHOT'
 
 apply plugin: 'java'
+apply plugin: 'maven'
 apply plugin: 'biz.aQute.bnd.builder'
 
 sourceCompatibility = 1.8
@@ -12,4 +13,10 @@ repositories {
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+jar {
+    manifest {
+        attributes('Export-Package': 'ch.sourcepond.io.fssync.target.api')
+    }
 }

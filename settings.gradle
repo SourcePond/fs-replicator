@@ -4,3 +4,5 @@ include 'fssync-distributor-hazelcast'
 include 'fssync-target-api'
 include 'fssync-target-filesystem'
 include 'fssync-source-filesystem'
+include 'fssync-target-filesystem-tests'
+
