@@ -38,6 +38,7 @@ import static java.lang.Thread.sleep;
 import static java.nio.file.FileSystems.getDefault;
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.Files.delete;
+import static java.nio.file.Files.exists;
 import static java.nio.file.Files.isRegularFile;
 import static java.nio.file.Files.walkFileTree;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -155,5 +156,111 @@ public class TargetDirectoryTest {
 
         // Lock should be possible now
         syncTarget.lock(nodeInfo, syncPath);
+    }
+
+    @Test
+    public void cancel() throws Exception {
+        syncTarget.cancel(nodeInfo);
+
+        // Handle should have been closed, so locking should be allowed again
+        syncTarget.lock(nodeInfo, syncPath);
+    }
+
+    @Test
+    public void ignoreLockOnLocalNodeAndSameTarget() throws Exception {
+        when(nodeInfo.isLocalNode()).thenReturn(true);
+        syncTarget.lock(nodeInfo, syncPath);
+
+        // Nothing should have been happened, so calling this method again has no effect
+        syncTarget.lock(nodeInfo, syncPath);
+    }
+
+    @Test
+    public void ignoreUnlockOnLocalNodeAndSameTarget() throws Exception {
+        when(nodeInfo.isLocalNode()).thenReturn(true);
+        syncTarget.unlock(nodeInfo, syncPath);
+        when(nodeInfo.isLocalNode()).thenReturn(false);
+        try {
+            syncTarget.lock(nodeInfo, syncPath);
+            fail("Exception expected");
+        } catch (final IOException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void ignoreDeleteOnLocalNodeAndSameTarget() throws Exception {
+        when(nodeInfo.isLocalNode()).thenReturn(true);
+        syncTarget.delete(nodeInfo, syncPath);
+        assertTrue(exists(expectedPath));
+    }
+
+    @Test
+    public void ignoreStoreOnLocalNodeAndSameTarget() throws Exception {
+        when(nodeInfo.isLocalNode()).thenReturn(true);
+        syncTarget.store(nodeInfo, syncPath);
+        when(nodeInfo.isLocalNode()).thenReturn(false);
+        try {
+            syncTarget.lock(nodeInfo, syncPath);
+            fail("Exception expected");
+        } catch (final IOException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void deleteWithoutLock() throws Exception {
+        syncTarget.unlock(nodeInfo, syncPath);
+        try {
+            syncTarget.delete(nodeInfo, syncPath);
+            fail("Exception expected");
+        } catch (final IOException expected) {
+            // noop
+        }
+    }
+
+    @Test
+    public void transferWithoutLock() throws Exception {
+        syncTarget.unlock(nodeInfo, syncPath);
+        try {
+            syncTarget.transfer(nodeInfo, syncPath, ByteBuffer.wrap(EXPECTED_CONTEXT.getBytes()));
+            fail("Exception expected");
+        } catch (final IOException expected) {
+            // noop
+        }
+    }
+
+    @Test
+    public void discardWithoutLock() throws Exception {
+        syncTarget.unlock(nodeInfo, syncPath);
+        try {
+            syncTarget.discard(nodeInfo, syncPath, new IOException());
+            fail("Exception expected");
+        } catch (final IOException expected) {
+            // noop
+        }
+    }
+
+    @Test
+    public void storeWithoutLock() throws Exception {
+        syncTarget.unlock(nodeInfo, syncPath);
+        try {
+            syncTarget.store(nodeInfo, syncPath);
+            fail("Exception expected");
+        } catch (final IOException expected) {
+            // noop
+        }
+    }
+
+    @Test
+    public void lockPathIsNotRelative() throws Exception {
+        final SyncPath syncPath = new SyncPath(format("%s/target", getProperty("user.dir")), "/org/foo/bar.txt");
+
+        try {
+            syncTarget.lock(nodeInfo, syncPath);
+            fail("Exception expected");
+        } catch (final IOException expected) {
+            assertTrue(expected.getMessage().contains(syncPath.getPath()));
+        }
     }
 }
