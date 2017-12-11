@@ -23,9 +23,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.FileSystem;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -37,7 +35,6 @@ import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isSameFile;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.WRITE;
-import static java.time.Instant.now;
 import static org.slf4j.LoggerFactory.getLogger;
 
 class TargetDirectory implements SyncTarget, AutoCloseable, Runnable {
@@ -45,19 +42,16 @@ class TargetDirectory implements SyncTarget, AutoCloseable, Runnable {
     private final ConcurrentMap<SyncPath, FileHandle> handles = new ConcurrentHashMap<>();
     private final ScheduledExecutorService watchDogExecutor;
     private final SyncTargetConfig syncTargetConfig;
-    private final Path rootDir;
-    private final FileSystem fs;
+    private final Path syncDir;
     private ServiceRegistration<SyncTarget> registration;
 
     @Inject
-    public TargetDirectory(final FileSystem pFs,
-                           final SyncTargetConfig pSyncTargetConfig,
+    public TargetDirectory(final SyncTargetConfig pSyncTargetConfig,
                            final ScheduledExecutorService pWatchDogExecutor,
-                           final Path pRootDir) {
-        fs = pFs;
+                           final Path pSyncDir) {
         syncTargetConfig = pSyncTargetConfig;
         watchDogExecutor = pWatchDogExecutor;
-        rootDir = pRootDir;
+        syncDir = pSyncDir;
     }
 
     public void setRegistration(final ServiceRegistration<SyncTarget> pRegistration) {
@@ -73,12 +67,11 @@ class TargetDirectory implements SyncTarget, AutoCloseable, Runnable {
 
     @Override
     public void run() {
-        final Instant now = now();
-        handles.values().removeIf(value -> value.closeExpired(syncTargetConfig, now));
+        handles.values().removeIf(value -> value.closeExpired(syncTargetConfig));
     }
 
     private FileHandle createHandle(final NodeInfo pNodeInfo, final SyncPath pPath) throws IOException {
-        final Path syncDir = fs.getPath(pPath.getSyncDir());
+        final Path syncDir = this.syncDir.getFileSystem().getPath(pPath.getSyncDir());
         final Path targetFile = syncDir.resolve(pPath.getPath());
 
         if (!targetFile.startsWith(syncDir)) {
@@ -113,8 +106,8 @@ class TargetDirectory implements SyncTarget, AutoCloseable, Runnable {
 
     private void process(final NodeInfo pNodeInfo, final SyncPath pPath, final TargetFunction pFunction) throws IOException {
         if (pNodeInfo.isLocalNode()) {
-            final Path sourceSyncDir = rootDir.getFileSystem().getPath(pPath.getSyncDir());
-            final Path targetSyncDir = rootDir.resolve(pPath.getSyncDir());
+            final Path sourceSyncDir = syncDir.getFileSystem().getPath(pPath.getSyncDir());
+            final Path targetSyncDir = syncDir.resolve(pPath.getSyncDir());
 
             if (isSameFile(sourceSyncDir, targetSyncDir)) {
                 LOG.debug("Ignore local event because [source: {}] points to the same file as [target: {}]", sourceSyncDir, targetSyncDir);

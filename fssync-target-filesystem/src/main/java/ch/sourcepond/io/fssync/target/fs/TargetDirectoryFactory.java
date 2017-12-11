@@ -13,9 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.target.fs;
 
+import static java.nio.file.FileSystems.getDefault;
+import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
+
 class TargetDirectoryFactory {
 
     public TargetDirectory create(final SyncTargetConfig pConfig) {
-        return null;
+        return new TargetDirectory(pConfig, newSingleThreadScheduledExecutor(), getDefault().getPath(pConfig.syncDir()));
     }
 }

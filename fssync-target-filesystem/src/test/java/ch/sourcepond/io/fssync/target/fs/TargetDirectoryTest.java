@@ -54,14 +54,15 @@ public class TargetDirectoryTest {
     private static final String EXPECTED_CONTEXT = "Some expected content";
     private final NodeInfo nodeInfo = mock(NodeInfo.class);
     private final SyncPath syncPath = new SyncPath(format("%s/target", getProperty("user.dir")), "org/foo/bar.txt");
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private final SyncTargetConfig config = mock(SyncTargetConfig.class);
     private final ServiceRegistration<SyncTarget> registration = mock(ServiceRegistration.class);
     private final Path expectedPath = getDefault().getPath(syncPath.getSyncDir(), syncPath.getPath());
-    private final TargetDirectory syncTarget = new TargetDirectory(getDefault(), config, executor, getDefault().getPath(syncPath.getSyncDir()));
+    private TargetDirectory syncTarget;
 
     @Before
     public void setup() throws IOException {
+        when(config.syncDir()).thenReturn(syncPath.getSyncDir());
+        syncTarget = new TargetDirectoryFactory().create(config);
         syncTarget.setRegistration(registration);
         syncTarget.lock(nodeInfo, syncPath);
     }

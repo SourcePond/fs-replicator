@@ -58,9 +58,10 @@ class FileHandle implements Closeable {
         }
     }
 
-    public boolean closeExpired(final SyncTargetConfig pSyncTargetConfig, final Instant pThreshold) {
-        final Instant o = openSince.plusMillis(pSyncTargetConfig.forceUnlockTimoutUnit().toMillis(pSyncTargetConfig.forceUnlockTimeout()));
-        final boolean expired = pThreshold.isAfter(o);
+    public boolean closeExpired(final SyncTargetConfig pSyncTargetConfig) {
+        final Instant o = openSince.plusMillis(pSyncTargetConfig.forceUnlockTimoutUnit().toMillis(
+                pSyncTargetConfig.forceUnlockTimeout()));
+        final boolean expired = now().isAfter(o);
         if (expired) {
             close();
         }
@@ -69,7 +70,11 @@ class FileHandle implements Closeable {
 
     public synchronized void delete() throws IOException {
         checkOpen();
-        Files.delete(targetFile);
+        try {
+            Files.delete(targetFile);
+        } finally {
+            channel.close();
+        }
     }
 
     public synchronized void transfer(final ByteBuffer pBuffer) throws IOException {
