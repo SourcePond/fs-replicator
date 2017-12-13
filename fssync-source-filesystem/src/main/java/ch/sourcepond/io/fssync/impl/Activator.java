@@ -1,4 +1,4 @@
-package ch.sourcepond.io.fssync.impl.osgi;
+package ch.sourcepond.io.fssync.impl;
 
 import ch.sourcepond.io.fssync.distributor.api.DistributorFactory;
 import org.osgi.framework.BundleActivator;

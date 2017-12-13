@@ -11,12 +11,13 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.fssync.impl.fswatch;
+package ch.sourcepond.io.fssync.impl.trigger;
 
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
-import ch.sourcepond.io.fssync.impl.config.Config;
+import ch.sourcepond.io.fssync.impl.Config;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
@@ -32,37 +33,39 @@ import static java.nio.channels.FileChannel.open;
 import static java.nio.file.StandardOpenOption.READ;
 import static org.slf4j.LoggerFactory.getLogger;
 
-class ReplicationTrigger {
+public class ReplicationTrigger {
     private static final Logger LOG = getLogger(ReplicationTrigger.class);
     private final Distributor distributor;
+    private final SyncTriggerFactory syncTriggerFactory;
     private final ScheduledExecutorService executor;
     private final Config config;
 
+    @Inject
     public ReplicationTrigger(final Distributor pDistributor,
+                              final SyncTriggerFactory pSyncTriggerFactory,
                               final ScheduledExecutorService pExecutor,
                               final Config pConfig) {
         distributor = pDistributor;
+        syncTriggerFactory = pSyncTriggerFactory;
         executor = pExecutor;
         config = pConfig;
     }
 
-    private void transfer(final Path pSyncDir, final Path pSource) throws IOException {
-        final String syncDir = pSyncDir.toString();
-        final String path = pSyncDir.relativize(pSource).toString();
-        try (final ReadableByteChannel source = open(pSource, READ)) {
+    private void transfer(final SyncPath pPath) throws IOException {
+        try (final ReadableByteChannel source = open(pPath.getPath(), READ)) {
             final ByteBuffer buffer = allocate(1024);
             final MessageDigest digest = MessageDigest.getInstance("SHA-256");
             try {
                 while (source.read(buffer) != -1) {
                     buffer.rewind();
-                    distributor.transfer(syncDir, path, buffer);
+                    distributor.transfer(pPath.getSyncDirAsString(), pPath.getPathAsString(), buffer);
                     buffer.rewind();
                     digest.update(buffer);
                     buffer.rewind();
                 }
-                distributor.store(syncDir, path, digest.digest());
+                distributor.store(pPath.getSyncDirAsString(), pPath.getPathAsString(), digest.digest());
             } catch (final IOException e) {
-                distributor.discard(syncDir, path, e);
+                distributor.discard(pPath.getSyncDirAsString(), pPath.getPathAsString(), e);
             }
         } catch (final NoSuchAlgorithmException e) {
             // This should never happen
@@ -75,24 +78,18 @@ class ReplicationTrigger {
     }
 
     public void delete(final Path pSyncDir, final Path pFile) throws IOException {
-        final String syncDir = pSyncDir.toString();
-        final String path = pSyncDir.relativize(pFile).toString();
-
         if (isRegularFile(pFile)) {
-            executor.execute(new SyncTrigger(executor, distributor, config, syncDir, path, (s, p) -> {
-                distributor.delete(s, p);
-            }));
+            executor.execute(syncTriggerFactory.create(new SyncPath(pSyncDir, pFile), p ->
+                    distributor.delete(p.getSyncDirAsString(), p.getPathAsString())));
         }
     }
 
-    public void modify(final Path pSyncDir, final Path pSource, final byte[] pChecksum) throws IOException {
-        final String syncDir = pSyncDir.toString();
-        final String path = pSyncDir.relativize(pSource).toString();
-
-        if (isRegularFile(pSource) && !Arrays.equals(distributor.getChecksum(syncDir, path), pChecksum)) {
-            executor.execute(new SyncTrigger(executor, distributor, config, syncDir, path, (s, p) -> {
-                transfer(pSyncDir, pSource);
-            }));
+    public void modify(final Path pSyncDir, final Path pFile, final byte[] pChecksum) throws IOException {
+        if (isRegularFile(pFile)) {
+            final SyncPath path = new SyncPath(pSyncDir, pFile);
+            if (!Arrays.equals(distributor.getChecksum(path.getSyncDirAsString(), path.getPathAsString()), pChecksum)) {
+                executor.execute(syncTriggerFactory.create(path, this::transfer));
+            }
         }
     }
 }

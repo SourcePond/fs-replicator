@@ -16,6 +16,7 @@ package ch.sourcepond.io.fssync.impl.fswatch;
 import ch.sourcepond.io.checksum.api.Resource;
 import ch.sourcepond.io.checksum.api.ResourceProducer;
 import ch.sourcepond.io.checksum.api.Update;
+import ch.sourcepond.io.fssync.impl.trigger.ReplicationTrigger;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -47,13 +48,16 @@ public class WatchServiceInstaller extends SimpleFileVisitor<Path> implements Ru
     private final ResourceProducer resourceProducer;
     private final WatchService watchService;
     private final ReplicationTrigger trigger;
+    private final Path syncDir;
 
     WatchServiceInstaller(final ResourceProducer pResourceProducer,
                           final WatchService pWatchService,
-                          final ReplicationTrigger pTrigger) {
+                          final ReplicationTrigger pTrigger,
+                          final Path pSyncDir) {
         resourceProducer = pResourceProducer;
         watchService = pWatchService;
         trigger = pTrigger;
+        syncDir = pSyncDir;
     }
 
     @Override
@@ -75,7 +79,7 @@ public class WatchServiceInstaller extends SimpleFileVisitor<Path> implements Ru
     private void updateResource(final Update pUpdate, final Path pFile) {
         if (pUpdate.hasChanged()) {
             try {
-                trigger.modify(pFile, pUpdate.getCurrent().toByteArray());
+                trigger.modify(syncDir, pFile, pUpdate.getCurrent().toByteArray());
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -108,7 +112,7 @@ public class WatchServiceInstaller extends SimpleFileVisitor<Path> implements Ru
                 dirOrNull.close();
             }
         } else if (isRegularFile(pPath) && obj != null) {
-            trigger.delete(pPath);
+            trigger.delete(syncDir, pPath);
         }
     }
 

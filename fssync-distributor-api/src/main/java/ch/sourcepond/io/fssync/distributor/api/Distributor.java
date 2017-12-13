@@ -19,7 +19,7 @@ import java.nio.ByteBuffer;
 /**
  * This interface provides access to the underlying distribution mechanism.
  */
-public interface Distributor extends AutoCloseable {
+public interface Distributor  {
 
     /**
      * Tries to lock the path specified in the network. If successful, this method simply returns.

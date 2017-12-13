@@ -35,7 +35,7 @@ import java.util.Set;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
-final class HazelcastDistributor implements Distributor {
+final class HazelcastDistributor implements Distributor, AutoCloseable {
     static final byte[] EMPTY_CHECKSUM = new byte[0];
     private final HazelcastInstance hci;
     private final IMap<String, byte[]> checksums;

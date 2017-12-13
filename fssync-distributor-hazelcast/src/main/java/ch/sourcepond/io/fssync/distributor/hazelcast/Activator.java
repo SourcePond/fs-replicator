@@ -77,7 +77,7 @@ public class Activator implements BundleActivator, ManagedServiceFactory {
     public synchronized void updated(final String pPid, final Dictionary<String, ?> pProperties) throws ConfigurationException {
         deleted(pPid);
 
-        final Config config = factory.create(pProperties, Config.class).build();
+        final Config config = factory.create(Config.class, pProperties).build();
         final HazelcastDistributor distributor = createInjector(
                 new HazelcastDistributorModule(config, compoundSyncTarget)).
                 getInstance(HazelcastDistributor.class);

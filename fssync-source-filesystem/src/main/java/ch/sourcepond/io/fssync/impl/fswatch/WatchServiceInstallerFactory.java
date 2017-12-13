@@ -14,7 +14,10 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.impl.fswatch;
 
 import ch.sourcepond.io.checksum.api.ResourceProducer;
+import ch.sourcepond.io.fssync.impl.trigger.ReplicationTrigger;
 
+import javax.inject.Inject;
+import java.nio.file.Path;
 import java.nio.file.WatchService;
 
 public class WatchServiceInstallerFactory {
@@ -22,6 +25,7 @@ public class WatchServiceInstallerFactory {
     private final WatchService watchService;
     private final ReplicationTrigger replicationTrigger;
 
+    @Inject
     WatchServiceInstallerFactory(final ResourceProducer pResourceProducer,
                                  final WatchService pWatchService,
                                  final ReplicationTrigger pReplicationTrigger) {
@@ -30,7 +34,7 @@ public class WatchServiceInstallerFactory {
         replicationTrigger = pReplicationTrigger;
     }
 
-    public WatchServiceInstaller create() {
-        return new WatchServiceInstaller(resourceProducer, watchService, replicationTrigger);
+    public WatchServiceInstaller create(final Path pSyncDir) {
+        return new WatchServiceInstaller(resourceProducer, watchService, replicationTrigger, pSyncDir);
     }
 }
