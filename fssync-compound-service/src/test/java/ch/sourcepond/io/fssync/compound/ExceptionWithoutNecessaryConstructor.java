@@ -13,13 +13,5 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.compound;
 
-public interface TestService {
-
-    void start(String pSyncDir, String pPath) throws TestException, ExceptionWithoutNecessaryConstructor;
-
-    void doStuff(String pSyncDir, String pPath) throws TestException, ExceptionWithoutNecessaryConstructor;
-
-    void doMoreStuff(String pSyncDir, String pPath) throws TestException, ExceptionWithoutNecessaryConstructor;
-
-    void end(String pSyncDir, String pPath) throws TestException, ExceptionWithoutNecessaryConstructor;
+public class ExceptionWithoutNecessaryConstructor extends Exception {
 }

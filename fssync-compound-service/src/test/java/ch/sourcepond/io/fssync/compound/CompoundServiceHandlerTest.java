@@ -27,6 +27,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+import static ch.sourcepond.io.fssync.compound.Constants.EXPECTED_PATH;
+import static ch.sourcepond.io.fssync.compound.Constants.EXPECTED_SYNC_DIR;
 import static java.lang.reflect.Proxy.newProxyInstance;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static org.junit.Assert.assertEquals;
@@ -43,8 +45,6 @@ import static org.osgi.framework.ServiceEvent.REGISTERED;
 import static org.osgi.framework.ServiceEvent.UNREGISTERING;
 
 public class CompoundServiceHandlerTest {
-    private static final String EXPECTED_SYNC_DIR = "expectedSyncDir";
-    private static final String EXPECTED_PATH = "expectedPath";
     private final BundleContext context = mock(BundleContext.class);
     private final ServiceReference<TestService> reference = mock(ServiceReference.class);
     private final TestService service = mock(TestService.class);

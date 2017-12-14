@@ -35,10 +35,21 @@ public class CompoundServiceFactory {
         executor = requireNonNull(pExecutor, "Executor is null");
     }
 
-    private static void validateVoidOnlyMethods(final Class<?> pInterface) {
+    private static void validateMethods(final Class<?> pInterface, final Class<?> pExceptionClass) {
         for (final Method method : pInterface.getMethods()) {
             if (!void.class.equals(method.getReturnType())) {
                 throw new IllegalArgumentException(format("Only void methods are permitted, illegal method: %s", method));
+            }
+            boolean exceptionDeclared = false;
+            for (final Class<?> exceptionType : method.getExceptionTypes()) {
+                exceptionDeclared = exceptionType.isAssignableFrom(pExceptionClass);
+                if (exceptionDeclared) {
+                    break;
+                }
+            }
+            if (!exceptionDeclared) {
+                throw new IllegalArgumentException(format("Every method must throw %s, illegal method: %s",
+                        pExceptionClass.getName(), method));
             }
         }
     }
@@ -48,7 +59,7 @@ public class CompoundServiceFactory {
             return pExceptionClass.getConstructor(String.class);
         } catch (final NoSuchMethodException e) {
             throw new IllegalArgumentException(
-                    format("% must have a public constructor which takes a message string as argument",
+                    format("%s must have a public constructor which takes exactly one string as argument",
                             pExceptionClass.getName()));
         }
     }
@@ -58,15 +69,18 @@ public class CompoundServiceFactory {
         if (!pInterface.isInterface()) {
             throw new IllegalArgumentException(format("%s is not an interface", pInterface.getName()));
         }
-        validateVoidOnlyMethods(pInterface);
+        validateMethods(pInterface, pExceptionClass);
 
         final CompoundServiceHandler<T, E> handler = new CompoundServiceHandler<>(context,
                 findConstructor(pExceptionClass), executor);
         final String filter = format("(%s=%s)", OBJECTCLASS, pInterface.getName());
         try {
             context.addServiceListener(handler, filter);
-            for (final ServiceReference<?> reference : context.getServiceReferences(pInterface.getName(), filter)) {
-                handler.registerService((ServiceReference<T>) reference);
+            final ServiceReference<?>[] references = context.getServiceReferences(pInterface.getName(), filter);
+            if (references != null) {
+                for (final ServiceReference<?> reference : references) {
+                    handler.registerService((ServiceReference<T>) reference);
+                }
             }
         } catch (final InvalidSyntaxException e) {
             // This should never happen

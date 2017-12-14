@@ -13,5 +13,103 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.compound;
 
+import org.junit.After;
+import org.junit.Test;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
+
+import java.util.concurrent.ExecutorService;
+
+import static ch.sourcepond.io.fssync.compound.Constants.EXPECTED_PATH;
+import static ch.sourcepond.io.fssync.compound.Constants.EXPECTED_SYNC_DIR;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
+
 public class CompoundServiceFactoryTest {
+    private final BundleContext context = mock(BundleContext.class);
+    private final ExecutorService executor = newSingleThreadExecutor();
+    private final TestService service = mock(TestService.class);
+    private final CompoundServiceFactory factory = new CompoundServiceFactory(context, executor);
+
+    @After
+    public void tearDown() {
+        executor.shutdown();
+    }
+
+    @Test
+    public void createReferencesAreNull() throws Exception {
+        // Even in case when the service references are null this should work properly
+        final TestService proxy = factory.create(TestService.class, TestException.class);
+        assertNotNull(proxy);
+        proxy.start(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+        verifyZeroInteractions(service);
+    }
+
+    @Test
+    public void create() throws Exception {
+        final ServiceReference<TestService> reference = mock(ServiceReference.class);
+        final ServiceReference<?>[] references = new ServiceReference<?>[]{reference};
+        when(context.getServiceReferences(TestService.class.getName(), "(objectClass=ch.sourcepond.io.fssync.compound.TestService)")).thenReturn(references);
+        when(context.getService(reference)).thenReturn(service);
+        final TestService proxy = factory.create(TestService.class, TestException.class);
+        proxy.start(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+        verify(service).start(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+    }
+
+    @Test
+    public void createExceptionIsNotDeclared() {
+        try {
+            factory.create(TestService.class, ClassNotFoundException.class);
+            fail("Exception expected!");
+        } catch (final IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains(ClassNotFoundException.class.getName()));
+        }
+    }
+
+    @Test
+    public void createExceptionHasNoMatchingConstructor() {
+        try {
+            factory.create(TestService.class, ExceptionWithoutNecessaryConstructor.class);
+            fail("Exception expected!");
+        } catch (final IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("public constructor"));
+        }
+    }
+
+    @Test
+    public void createIllegalMethod() {
+        try {
+            factory.create(TestServiceWithNonVoidMethods.class, TestException.class);
+            fail("Exception expected!");
+        } catch (final IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("void methods"));
+        }
+    }
+
+    @Test
+    public void createNotAnInterface() {
+        try {
+            factory.create(Object.class, TestException.class);
+            fail("Exception expected!");
+        } catch (final IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("not an interface"));
+        }
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void invalidSyntaxException() throws Exception {
+        final InvalidSyntaxException expected = new InvalidSyntaxException("", "");
+        doThrow(expected).when(context).addServiceListener(any(), anyString());
+        factory.create(TestService.class, TestException.class);
+    }
 }
