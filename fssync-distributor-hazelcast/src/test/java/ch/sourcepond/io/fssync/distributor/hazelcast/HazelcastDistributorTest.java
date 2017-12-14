@@ -13,13 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast;
 
-import ch.sourcepond.io.fssync.distributor.api.DeletionException;
-import ch.sourcepond.io.fssync.distributor.api.DiscardException;
+import ch.sourcepond.io.fssync.distributor.hazelcast.exception.DeletionException;
+import ch.sourcepond.io.fssync.distributor.hazelcast.exception.DiscardException;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
-import ch.sourcepond.io.fssync.distributor.api.LockException;
-import ch.sourcepond.io.fssync.distributor.api.StoreException;
-import ch.sourcepond.io.fssync.distributor.api.TransferException;
-import ch.sourcepond.io.fssync.distributor.api.UnlockException;
+import ch.sourcepond.io.fssync.distributor.hazelcast.exception.LockException;
+import ch.sourcepond.io.fssync.distributor.hazelcast.exception.StoreException;
+import ch.sourcepond.io.fssync.distributor.hazelcast.exception.TransferException;
+import ch.sourcepond.io.fssync.distributor.hazelcast.exception.UnlockException;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.MessageListenerRegistration;
 import ch.sourcepond.io.fssync.distributor.hazelcast.lock.LockManager;
 import ch.sourcepond.io.fssync.distributor.hazelcast.request.RequestDistributor;

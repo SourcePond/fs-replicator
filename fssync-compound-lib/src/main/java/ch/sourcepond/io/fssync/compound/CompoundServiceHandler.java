@@ -18,12 +18,14 @@ import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -34,18 +36,18 @@ import static org.osgi.framework.ServiceEvent.MODIFIED_ENDMATCH;
 import static org.osgi.framework.ServiceEvent.REGISTERED;
 import static org.osgi.framework.ServiceEvent.UNREGISTERING;
 
-class CompoundServiceHandler<T, E extends Throwable> implements ServiceListener, InvocationHandler {
+class CompoundServiceHandler<T> implements ServiceListener, InvocationHandler {
     private final ConcurrentMap<ServiceReference<T>, T> targets = new ConcurrentHashMap<>();
-    private final Constructor<E> exceptionConstructor;
     private final BundleContext context;
     private final ExecutorService executor;
+    private final Set<Method> methodsWithIOException;
 
     public CompoundServiceHandler(final BundleContext pContext,
-                                  final Constructor<E> pExceptionConstructor,
-                                  final ExecutorService pExecutor) {
+                                  final ExecutorService pExecutor,
+                                  final Set<Method> pMethodsWithIOException) {
         context = pContext;
-        exceptionConstructor = pExceptionConstructor;
         executor = pExecutor;
+        methodsWithIOException = pMethodsWithIOException;
     }
 
     @Override
@@ -102,9 +104,11 @@ class CompoundServiceHandler<T, E extends Throwable> implements ServiceListener,
         }
 
         if (firstException != null) {
-            final E exception = exceptionConstructor.newInstance(failures.toString());
-            exception.initCause(firstException);
-            throw exception;
+            if (methodsWithIOException.contains(method)) {
+                throw new IOException(failures.toString(), firstException);
+            } else {
+                throw firstException;
+            }
         }
 
         // Only void methods allowed, so it's safe to simply return null

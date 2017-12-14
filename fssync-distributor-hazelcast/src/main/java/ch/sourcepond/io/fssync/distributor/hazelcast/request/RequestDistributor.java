@@ -13,10 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.request;
 
-import ch.sourcepond.io.fssync.distributor.api.DeletionException;
-import ch.sourcepond.io.fssync.distributor.api.DiscardException;
-import ch.sourcepond.io.fssync.distributor.api.StoreException;
-import ch.sourcepond.io.fssync.distributor.api.TransferException;
+import ch.sourcepond.io.fssync.distributor.hazelcast.exception.DeletionException;
+import ch.sourcepond.io.fssync.distributor.hazelcast.exception.DiscardException;
+import ch.sourcepond.io.fssync.distributor.hazelcast.exception.StoreException;
+import ch.sourcepond.io.fssync.distributor.hazelcast.exception.TransferException;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Delete;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Discard;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Store;

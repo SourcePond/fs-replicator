@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.lock;
 
-import ch.sourcepond.io.fssync.distributor.api.LockException;
+import ch.sourcepond.io.fssync.distributor.hazelcast.exception.LockException;
 import ch.sourcepond.io.fssync.distributor.hazelcast.Config;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ILock;

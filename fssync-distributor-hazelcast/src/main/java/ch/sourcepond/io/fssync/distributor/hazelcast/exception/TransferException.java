@@ -11,15 +11,11 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.fssync.distributor.api;
+package ch.sourcepond.io.fssync.distributor.hazelcast.exception;
 
 import java.io.IOException;
 
 public class TransferException extends IOException {
-
-    public TransferException(final String message) {
-        super(message);
-    }
 
     public TransferException(final String message, Throwable cause) {
         super(message, cause);

@@ -13,12 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast;
 
+import ch.sourcepond.io.fssync.compound.CompoundServiceFactory;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilderFactory;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedServiceFactory;
 
@@ -26,40 +26,37 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 import static com.google.inject.Guice.createInjector;
-import static java.lang.String.format;
-import static org.osgi.framework.Constants.OBJECTCLASS;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.osgi.framework.Constants.SERVICE_PID;
 
 public class Activator implements BundleActivator, ManagedServiceFactory {
     private final Map<String, HazelcastDistributor> distributors = new ConcurrentHashMap<>();
     private final ConfigBuilderFactory factory;
-    private final CompoundSyncTarget compoundSyncTarget;
+    private final CompoundServiceFactory compoundServiceFactory;
+    // TODO: Implement more flexible solution here
+    private final ExecutorService executor = newSingleThreadExecutor();
     private volatile BundleContext context;
+    private volatile SyncTarget compoundSyncTarget;
 
     public Activator() {
-        this(new ConfigBuilderFactory(), new CompoundSyncTarget());
+        this(new ConfigBuilderFactory(), new CompoundServiceFactory());
     }
 
     // Constructor for testing
-    Activator(final ConfigBuilderFactory pFactory, final CompoundSyncTarget pCompoundSyncTarget) {
+    Activator(final ConfigBuilderFactory pFactory, final CompoundServiceFactory pCompoundServiceFactory) {
         factory = pFactory;
-        compoundSyncTarget = pCompoundSyncTarget;
+        compoundServiceFactory = pCompoundServiceFactory;
     }
 
     @Override
     public void start(final BundleContext context) throws Exception {
+        compoundServiceFactory.create(context, executor, SyncTarget.class);
         final Hashtable<String, String> props = new Hashtable<>();
         props.put(SERVICE_PID, getClass().getPackage().getName());
         context.registerService(ManagedServiceFactory.class, this, props);
-        context.addServiceListener(compoundSyncTarget, format("(%s=%s)", OBJECTCLASS, SyncTarget.class.getName()));
-        final ServiceReference<?>[] references = context.getAllServiceReferences(SyncTarget.class.getName(), null);
-        if (references != null) {
-            for (final ServiceReference<?>  reference : references) {
-                compoundSyncTarget.registerService((ServiceReference<SyncTarget>) reference);
-            }
-        }
     }
 
     @Override

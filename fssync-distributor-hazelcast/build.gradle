@@ -14,6 +14,7 @@ repositories {
 dependencies {
     compile project(':fssync-distributor-api')
     compile project(':fssync-target-api')
+    compile project(':fssync-compound-lib')
     compile 'ch.sourcepond.osgi.cmpn:metatype-builder-lib:0.1-SNAPSHOT'
     compile 'com.hazelcast:hazelcast:3.8.6'
     compile 'org.slf4j:slf4j-api:1.7.25'

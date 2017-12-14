@@ -61,8 +61,8 @@ public class CompoundServiceFactoryTest {
 
     @Test
     public void verifyCreate() {
-        final CompoundServiceFactory factory = new CompoundServiceFactory(context, executor);
-        final TestService proxy = factory.create(TestService.class, TestException.class);
+        final CompoundServiceFactory factory = new CompoundServiceFactory();
+        final TestService proxy = factory.create(context, executor, TestService.class, TestException.class);
         assertNotNull(proxy);
     }
 }

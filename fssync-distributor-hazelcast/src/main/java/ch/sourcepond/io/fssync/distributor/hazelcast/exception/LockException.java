@@ -11,17 +11,17 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.fssync.distributor.api;
+package ch.sourcepond.io.fssync.distributor.hazelcast.exception;
 
 import java.io.IOException;
 
-public class StoreException extends IOException {
+public class LockException extends IOException {
 
-    public StoreException(final String message) {
+    public LockException(final String message) {
         super(message);
     }
 
-    public StoreException(final String message, final Throwable cause) {
+    public LockException(final String message, Throwable cause) {
         super(message, cause);
     }
 }

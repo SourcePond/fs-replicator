@@ -21,7 +21,11 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceReference;
 
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.lang.reflect.UndeclaredThrowableException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -48,15 +52,16 @@ public class CompoundServiceHandlerTest {
     private final BundleContext context = mock(BundleContext.class);
     private final ServiceReference<TestService> reference = mock(ServiceReference.class);
     private final TestService service = mock(TestService.class);
+    private final Set<Method> methodsWithIOException = new HashSet<>();
     private ExecutorService executor = newSingleThreadScheduledExecutor();
-    private CompoundServiceHandler<TestService, TestException> handler;
+    private CompoundServiceHandler<TestService> handler;
     private TestService proxy;
 
     @Before
     public void setup() throws Exception {
         when(context.getService(reference)).thenReturn(service);
-        handler = new CompoundServiceHandler<>(context,
-                TestException.class.getConstructor(String.class), executor);
+        methodsWithIOException.add(TestService.class.getMethod("start", String.class, String.class));
+        handler = new CompoundServiceHandler<>(context, executor, methodsWithIOException);
         proxy = (TestService) newProxyInstance(getClass().getClassLoader(),
                 new Class<?>[]{TestService.class}, handler);
         handler.serviceChanged(new ServiceEvent(REGISTERED, reference));
@@ -97,17 +102,30 @@ public class CompoundServiceHandlerTest {
     }
 
     @Test
-    public void exceptionOccured() throws Exception {
-        final TestException expected = new TestException("Some message");
+    public void exceptionOccured() throws IOException {
+        final IOException expected = new IOException("Some message");
         doThrow(expected).when(service).start(EXPECTED_SYNC_DIR, EXPECTED_PATH);
         try {
             proxy.start(EXPECTED_SYNC_DIR, EXPECTED_PATH);
             fail("Exception expected!");
-        } catch (final TestException e) {
+        } catch (final IOException e) {
             assertEquals("At least one exception occurred (only the first one is visible in stacktrace)!\n\t - " +
                     "Some message\n", e.getMessage());
             final Throwable cause = e.getCause();
             assertSame(expected, cause);
+        }
+    }
+
+    @Test
+    public void exceptionOccuredExceptionNotWrapped() throws IOException {
+        methodsWithIOException.clear();
+        final IOException expected = new IOException("Some message");
+        doThrow(expected).when(service).start(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+        try {
+            proxy.start(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+            fail("Exception expected!");
+        } catch (final IOException e) {
+            assertEquals("Some message", e.getMessage());
         }
     }
 

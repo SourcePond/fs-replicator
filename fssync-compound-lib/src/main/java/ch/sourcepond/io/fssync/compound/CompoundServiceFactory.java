@@ -17,8 +17,10 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 
-import java.lang.reflect.Constructor;
+import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 import static java.lang.String.format;
@@ -27,56 +29,43 @@ import static java.util.Objects.requireNonNull;
 import static org.osgi.framework.Constants.OBJECTCLASS;
 
 public class CompoundServiceFactory {
-    private final BundleContext context;
-    private final ExecutorService executor;
 
-    public CompoundServiceFactory(final BundleContext pContext, final ExecutorService pExecutor) {
-        context = requireNonNull(pContext, "Bundle-Context is null");
-        executor = requireNonNull(pExecutor, "Executor is null");
-    }
-
-    private static void validateMethods(final Class<?> pInterface, final Class<?> pExceptionClass) {
+    private static Set<Method> validateMethods(final Class<?> pInterface) {
+        final Set<Method> methods = new HashSet<>();
         for (final Method method : pInterface.getMethods()) {
             if (!void.class.equals(method.getReturnType())) {
                 throw new IllegalArgumentException(format("Only void methods are permitted, illegal method: %s", method));
             }
-            boolean exceptionDeclared = false;
-            for (final Class<?> exceptionType : method.getExceptionTypes()) {
-                exceptionDeclared = exceptionType.isAssignableFrom(pExceptionClass);
-                if (exceptionDeclared) {
-                    break;
-                }
-            }
-            if (!exceptionDeclared) {
-                throw new IllegalArgumentException(format("Every method must throw %s, illegal method: %s",
-                        pExceptionClass.getName(), method));
+            addIfIOExceptionDeclared(methods, method);
+        }
+        return methods;
+    }
+
+    private static void addIfIOExceptionDeclared(final Set<Method> pMethods, final Method pMethod) {
+        for (final Class<?> exceptionType : pMethod.getExceptionTypes()) {
+            if (IOException.class.equals(exceptionType)) {
+                pMethods.add(pMethod);
+                break;
             }
         }
     }
 
-    private static <E extends Throwable> Constructor<E> findConstructor(final Class<E> pExceptionClass) {
-        try {
-            return pExceptionClass.getConstructor(String.class);
-        } catch (final NoSuchMethodException e) {
-            throw new IllegalArgumentException(
-                    format("%s must have a public constructor which takes exactly one string as argument",
-                            pExceptionClass.getName()));
-        }
-    }
-
-    public <T, E extends Throwable> T create(final Class<T> pInterface, final Class<E> pExceptionClass) {
+    public <T> T create(final BundleContext pContext,
+                        final ExecutorService pExecutor,
+                        final Class<T> pInterface) {
+        requireNonNull(pContext, "Bundle-Context is null");
+        requireNonNull(pExecutor, "Executor is null");
         requireNonNull(pInterface, "Interface is null");
         if (!pInterface.isInterface()) {
             throw new IllegalArgumentException(format("%s is not an interface", pInterface.getName()));
         }
-        validateMethods(pInterface, pExceptionClass);
+        final Set<Method> methodsWithIOException = validateMethods(pInterface);
+        final CompoundServiceHandler<T> handler = new CompoundServiceHandler<>(pContext, pExecutor, methodsWithIOException);
 
-        final CompoundServiceHandler<T, E> handler = new CompoundServiceHandler<>(context,
-                findConstructor(pExceptionClass), executor);
         final String filter = format("(%s=%s)", OBJECTCLASS, pInterface.getName());
         try {
-            context.addServiceListener(handler, filter);
-            final ServiceReference<?>[] references = context.getServiceReferences(pInterface.getName(), filter);
+            pContext.addServiceListener(handler, filter);
+            final ServiceReference<?>[] references = pContext.getServiceReferences(pInterface.getName(), filter);
             if (references != null) {
                 for (final ServiceReference<?> reference : references) {
                     handler.registerService((ServiceReference<T>) reference);

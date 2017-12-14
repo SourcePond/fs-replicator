@@ -25,6 +25,7 @@ import ch.sourcepond.io.fssync.distributor.hazelcast.common.MessageListenerRegis
 import ch.sourcepond.io.fssync.distributor.hazelcast.lock.LockModule;
 import ch.sourcepond.io.fssync.distributor.hazelcast.request.RequestModule;
 import ch.sourcepond.io.fssync.distributor.hazelcast.response.ResponseModule;
+import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 
@@ -33,9 +34,9 @@ import static com.google.inject.multibindings.Multibinder.newSetBinder;
 
 class HazelcastDistributorModule extends AbstractModule {
     private final Config config;
-    private final CompoundSyncTarget compoundSyncTarget;
+    private final SyncTarget compoundSyncTarget;
 
-    public HazelcastDistributorModule(final Config pConfig, final CompoundSyncTarget pCompoundSyncTarget) {
+    public HazelcastDistributorModule(final Config pConfig, final SyncTarget pCompoundSyncTarget) {
         config = pConfig;
         compoundSyncTarget = pCompoundSyncTarget;
     }
@@ -43,7 +44,7 @@ class HazelcastDistributorModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(Config.class).toInstance(config);
-        bind(CompoundSyncTarget.class).toInstance(compoundSyncTarget);
+        bind(SyncTarget.class).toInstance(compoundSyncTarget);
         install(new BindingModule());
         install(new CommonModule());
         install(new LockModule());

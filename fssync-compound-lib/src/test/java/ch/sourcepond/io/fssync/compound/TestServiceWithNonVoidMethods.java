@@ -13,7 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.compound;
 
+import java.io.IOException;
+
 public interface TestServiceWithNonVoidMethods {
 
-    String illegalMethod(String pSyncDir, String pPath) throws TestException;
+    String illegalMethod(String pSyncDir, String pPath) throws IOException;
 }
