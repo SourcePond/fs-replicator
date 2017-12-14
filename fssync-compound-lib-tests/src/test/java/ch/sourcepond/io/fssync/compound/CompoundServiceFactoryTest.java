@@ -41,7 +41,6 @@ public class CompoundServiceFactoryTest {
 
     @ProbeBuilder
     public TestProbeBuilder probeConfiguration(final TestProbeBuilder pBuilder) {
-        pBuilder.addTest(TestException.class);
         pBuilder.addTest(TestService.class);
         return pBuilder;
     }
@@ -62,7 +61,7 @@ public class CompoundServiceFactoryTest {
     @Test
     public void verifyCreate() {
         final CompoundServiceFactory factory = new CompoundServiceFactory();
-        final TestService proxy = factory.create(context, executor, TestService.class, TestException.class);
+        final TestService proxy = factory.create(context, executor, TestService.class);
         assertNotNull(proxy);
     }
 }
