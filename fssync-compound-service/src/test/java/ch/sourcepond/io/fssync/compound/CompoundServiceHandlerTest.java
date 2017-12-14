@@ -77,6 +77,7 @@ public class CompoundServiceHandlerTest {
     public void unregisterService() throws Exception {
         handler.serviceChanged(new ServiceEvent(UNREGISTERING, reference));
         proxy.start(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+        verify(context).ungetService(reference);
         verifyZeroInteractions(service);
     }
 
@@ -84,6 +85,7 @@ public class CompoundServiceHandlerTest {
     public void unregisterServiceEndMatch() throws Exception {
         handler.serviceChanged(new ServiceEvent(MODIFIED_ENDMATCH, reference));
         proxy.start(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+        verify(context).ungetService(reference);
         verifyZeroInteractions(service);
     }
 
