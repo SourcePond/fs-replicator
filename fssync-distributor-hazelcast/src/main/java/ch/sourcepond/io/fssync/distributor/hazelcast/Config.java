@@ -14,83 +14,129 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast;
 
 import com.hazelcast.topic.TopicOverloadPolicy;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
+import java.lang.annotation.Retention;
 import java.util.concurrent.TimeUnit;
 
+import static ch.sourcepond.io.fssync.distributor.hazelcast.Activator.FACTORY_PID;
 import static com.hazelcast.topic.TopicOverloadPolicy.BLOCK;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
+@Retention(RUNTIME)
+@ObjectClassDefinition(name = "Fssync Hazelcast distributor", description = "Configuration for Hazelcast distributor",
+        factoryPid = {FACTORY_PID})
 public @interface Config {
 
+    @AttributeDefinition(
+            description = "Name of the existing Hazelcast instance to be used"
+    )
     String existingInstanceName();
 
+    @AttributeDefinition
     String checksumMapName() default "__fs_replicator.checksums";
 
-    TimeUnit lockTimeoutUnit();
+    @AttributeDefinition
+    TimeUnit lockTimeoutUnit() default MINUTES;
 
-    long lockTimeout();
+    @AttributeDefinition
+    long lockTimeout() default 1;
 
+    @AttributeDefinition
     TimeUnit leaseTimeUnit() default MINUTES;
 
+    @AttributeDefinition
     long leaseTime() default 3;
 
-    TimeUnit responseTimeoutUnit();
+    @AttributeDefinition
+    TimeUnit responseTimeoutUnit() default MINUTES;
 
-    long responseTimeout();
+    @AttributeDefinition
+    long responseTimeout() default 1;
 
+    @AttributeDefinition
     String responseTopicName() default "__fs_distributor.response";
 
+    @AttributeDefinition
     TopicOverloadPolicy responseTopicOverloadPolicy() default BLOCK;
 
+    @AttributeDefinition
     int responseTopicReadBatchSize() default 50;
 
+    @AttributeDefinition
     boolean responseTopicStatisticsEnabled() default false;
 
+    @AttributeDefinition
     String deleteTopicName() default "__fs_distributor.delete";
 
+    @AttributeDefinition
     TopicOverloadPolicy deleteTopicOverloadPolicy() default BLOCK;
 
+    @AttributeDefinition
     int deleteTopicReadBatchSize() default 50;
 
+    @AttributeDefinition
     boolean deleteTopicStatisticsEnabled() default false;
 
+    @AttributeDefinition
     String transferTopicName() default "__fs_distributor.transfer";
 
+    @AttributeDefinition
     TopicOverloadPolicy transferTopicOverloadPolicy() default BLOCK;
 
+    @AttributeDefinition
     int transferTopicReadBatchSize() default 50;
 
+    @AttributeDefinition
     boolean transferTopicStatisticsEnabled() default false;
 
+    @AttributeDefinition
     String discardTopicName() default "__fs_distributor.discard";
 
+    @AttributeDefinition
     TopicOverloadPolicy discardTopicOverloadPolicy() default BLOCK;
 
+    @AttributeDefinition
     int discardTopicReadBatchSize() default 50;
 
+    @AttributeDefinition
     boolean discardTopicStatisticsEnabled() default false;
 
+    @AttributeDefinition
     String storeTopicName() default "__fs_distributor.store";
 
+    @AttributeDefinition
     TopicOverloadPolicy storeTopicOverloadPolicy() default BLOCK;
 
+    @AttributeDefinition
     int storeTopicReadBatchSize() default 50;
 
+    @AttributeDefinition
     boolean storeTopicStatisticsEnabled() default false;
 
+    @AttributeDefinition
     String lockTopicName() default "__fs_distributor.lock";
 
+    @AttributeDefinition
     TopicOverloadPolicy lockTopicOverloadPolicy() default BLOCK;
 
+    @AttributeDefinition
     int lockTopicReadBatchSize() default 50;
 
+    @AttributeDefinition
     boolean lockTopicStatisticsEnabled() default false;
 
+    @AttributeDefinition
     String unlockTopicName() default "__fs_distributor.unlock";
 
+    @AttributeDefinition
     TopicOverloadPolicy unlockTopicOverloadPolicy() default BLOCK;
 
+    @AttributeDefinition
     int unlockTopicReadBatchSize() default 50;
 
+    @AttributeDefinition
     boolean unlockTopicStatisticsEnabled() default false;
 }

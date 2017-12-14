@@ -13,36 +13,34 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast;
 
+import ch.sourcepond.io.fssync.compound.Configurable;
+import ch.sourcepond.io.fssync.distributor.api.Distributor;
+import ch.sourcepond.io.fssync.distributor.hazelcast.common.MessageListenerRegistration;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.DeletionException;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.DiscardException;
-import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.LockException;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.StoreException;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.TransferException;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.UnlockException;
-import ch.sourcepond.io.fssync.distributor.hazelcast.common.MessageListenerRegistration;
 import ch.sourcepond.io.fssync.distributor.hazelcast.lock.LockManager;
 import ch.sourcepond.io.fssync.distributor.hazelcast.request.RequestDistributor;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
-import org.osgi.framework.ServiceRegistration;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Set;
 
-import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
-final class HazelcastDistributor implements Distributor, AutoCloseable {
+final class HazelcastDistributor extends Configurable<Config> implements Distributor {
     static final byte[] EMPTY_CHECKSUM = new byte[0];
     private final HazelcastInstance hci;
     private final IMap<String, byte[]> checksums;
     private final LockManager lockManager;
     private final RequestDistributor requestDistributor;
     private final Set<MessageListenerRegistration> listenerRegistrations;
-    private volatile ServiceRegistration<Distributor> registration;
 
     @Inject
     HazelcastDistributor(final HazelcastInstance pHci,
@@ -57,8 +55,8 @@ final class HazelcastDistributor implements Distributor, AutoCloseable {
         listenerRegistrations = pListenerRegistrations;
     }
 
-    void setServiceRegistration(final ServiceRegistration<Distributor> pRegistration) {
-        registration = pRegistration;
+    public String getHazelcastInstanceName() {
+        return hci.getName();
     }
 
     @Override
@@ -110,7 +108,7 @@ final class HazelcastDistributor implements Distributor, AutoCloseable {
 
     @Override
     public void close() {
-        registration.unregister();
+        super.close();
         listenerRegistrations.forEach(r -> r.close());
         lockManager.close();
     }

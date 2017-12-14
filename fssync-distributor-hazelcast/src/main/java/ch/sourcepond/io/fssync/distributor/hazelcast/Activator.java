@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast;
 
+import ch.sourcepond.io.fssync.compound.BaseActivator;
 import ch.sourcepond.io.fssync.compound.CompoundServiceFactory;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
@@ -20,21 +21,21 @@ import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilderFactory;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.cm.ConfigurationException;
+import org.osgi.service.cm.ManagedService;
 import org.osgi.service.cm.ManagedServiceFactory;
 
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
 import static com.google.inject.Guice.createInjector;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.osgi.framework.Constants.SERVICE_PID;
 
-public class Activator implements BundleActivator, ManagedServiceFactory {
-    private final Map<String, HazelcastDistributor> distributors = new ConcurrentHashMap<>();
-    private final ConfigBuilderFactory factory;
+public class Activator extends BaseActivator<HazelcastDistributor, Config> {
+    static final String FACTORY_PID = "ch.sourcepond.io.fssync.distributor.hazelcast.configBuilderFactory";
     private final CompoundServiceFactory compoundServiceFactory;
     // TODO: Implement more flexible solution here
     private final ExecutorService executor = newSingleThreadExecutor();
@@ -46,48 +47,46 @@ public class Activator implements BundleActivator, ManagedServiceFactory {
     }
 
     // Constructor for testing
-    Activator(final ConfigBuilderFactory pFactory, final CompoundServiceFactory pCompoundServiceFactory) {
-        factory = pFactory;
+    Activator(final ConfigBuilderFactory pConfigBuilderFactory, final CompoundServiceFactory pCompoundServiceFactory) {
+        super(pConfigBuilderFactory);
         compoundServiceFactory = pCompoundServiceFactory;
     }
 
     @Override
-    public void start(final BundleContext context) throws Exception {
-        compoundServiceFactory.create(context, executor, SyncTarget.class);
-        final Hashtable<String, String> props = new Hashtable<>();
-        props.put(SERVICE_PID, getClass().getPackage().getName());
-        context.registerService(ManagedServiceFactory.class, this, props);
+    public void start(final BundleContext pContext) {
+        compoundSyncTarget = compoundServiceFactory.create(pContext, executor, SyncTarget.class);
+        super.start(pContext);
     }
 
     @Override
-    public void stop(final BundleContext context) {
-        // noop
+    protected String getFactoryPid() {
+        return FACTORY_PID;
     }
 
     @Override
-    public String getName() {
-        // TODO: Return a localized string here
-        return getClass().getName();
+    protected String getUniqueIdName() {
+        return "existingInstanceName";
     }
 
     @Override
-    public synchronized void updated(final String pPid, final Dictionary<String, ?> pProperties) throws ConfigurationException {
-        deleted(pPid);
+    protected String determineUniqueId(final Config pConfig) {
+        return pConfig.existingInstanceName();
+    }
 
-        final Config config = factory.create(Config.class, pProperties).build();
-        final HazelcastDistributor distributor = createInjector(
-                new HazelcastDistributorModule(config, compoundSyncTarget)).
+    @Override
+    protected Class<Config> getConfigAnnotation() {
+        return Config.class;
+    }
+
+    @Override
+    protected String getServiceInterfaceName() {
+        return Distributor.class.getName();
+    }
+
+    @Override
+    protected HazelcastDistributor createService(final Config pConfig) {
+        return createInjector(
+                new HazelcastDistributorModule(pConfig, compoundSyncTarget)).
                 getInstance(HazelcastDistributor.class);
-        final Hashtable<String, String> props = new Hashtable<>();
-        props.put(SERVICE_PID, pPid);
-        distributor.setServiceRegistration(context.registerService(Distributor.class, distributor, props));
-    }
-
-    @Override
-    public synchronized void deleted(final String pPid) {
-        HazelcastDistributor distributor = distributors.remove(pPid);
-        if (distributor != null) {
-            distributor.close();
-        }
     }
 }

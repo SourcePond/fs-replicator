@@ -26,7 +26,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Retention(RUNTIME)
 @ObjectClassDefinition(name = "Fssync target filesystem", description = "Configuration for target filesystem", factoryPid = {FACTORY_PID})
-public @interface SyncTargetConfig {
+public @interface Config {
 
     @AttributeDefinition(
             min = "0",

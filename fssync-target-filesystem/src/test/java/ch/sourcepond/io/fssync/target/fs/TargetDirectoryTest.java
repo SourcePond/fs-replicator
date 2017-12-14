@@ -29,8 +29,6 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
@@ -55,7 +53,7 @@ public class TargetDirectoryTest {
     private static final String EXPECTED_CONTEXT = "Some expected content";
     private final NodeInfo nodeInfo = mock(NodeInfo.class);
     private final SyncPath syncPath = new SyncPath(format("%s/target", getProperty("user.dir")), "org/foo/bar.txt");
-    private final SyncTargetConfig config = mock(SyncTargetConfig.class);
+    private final Config config = mock(Config.class);
     private final ServiceRegistration<SyncTarget> registration = mock(ServiceRegistration.class);
     private final Path expectedPath = getDefault().getPath(syncPath.getSyncDir(), syncPath.getPath());
     private TargetDirectory syncTarget;

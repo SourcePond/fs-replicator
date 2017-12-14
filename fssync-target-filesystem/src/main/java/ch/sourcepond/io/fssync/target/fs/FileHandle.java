@@ -58,9 +58,9 @@ class FileHandle implements Closeable {
         }
     }
 
-    public boolean closeExpired(final SyncTargetConfig pSyncTargetConfig) {
-        final Instant o = openSince.plusMillis(pSyncTargetConfig.forceUnlockTimoutUnit().toMillis(
-                pSyncTargetConfig.forceUnlockTimeout()));
+    public boolean closeExpired(final Config pConfig) {
+        final Instant o = openSince.plusMillis(pConfig.forceUnlockTimoutUnit().toMillis(
+                pConfig.forceUnlockTimeout()));
         final boolean expired = now().isAfter(o);
         if (expired) {
             close();

@@ -61,7 +61,7 @@ public class FileHandleTest {
     private final NodeInfo nodeInfo = mock(NodeInfo.class);
     private final SyncPath syncPath = mock(SyncPath.class);
     private final Path path = getDefault().getPath(format("%s/target/test.txt", getProperty("user.dir")));
-    private final SyncTargetConfig config = mock(SyncTargetConfig.class);
+    private final Config config = mock(Config.class);
     private FileChannel channel;
     private FileHandle handle;
 

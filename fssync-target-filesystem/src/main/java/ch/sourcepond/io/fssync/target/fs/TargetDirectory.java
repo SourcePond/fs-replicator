@@ -43,7 +43,7 @@ class TargetDirectory implements SyncTarget, AutoCloseable, Runnable {
     private final ConcurrentMap<SyncPath, FileHandle> handles = new ConcurrentHashMap<>();
     private final ScheduledExecutorService watchDogExecutor;
     private volatile ScheduledFuture<?> watchDogFuture;
-    private volatile SyncTargetConfig config;
+    private volatile Config config;
     private volatile Path syncDir;
     private ServiceRegistration<SyncTarget> registration;
 
@@ -55,7 +55,7 @@ class TargetDirectory implements SyncTarget, AutoCloseable, Runnable {
         registration = pRegistration;
     }
 
-    public SyncTargetConfig getConfig() {
+    public Config getConfig() {
         return config;
     }
 
@@ -168,7 +168,7 @@ class TargetDirectory implements SyncTarget, AutoCloseable, Runnable {
         handles.values().forEach(ch -> ch.close());
     }
 
-    public void update(final SyncTargetConfig pConfig) {
+    public void update(final Config pConfig) {
         config = pConfig;
         syncDir = getDefault().getPath(pConfig.syncDir());
         if (watchDogFuture != null) {

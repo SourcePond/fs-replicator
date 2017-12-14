@@ -11,27 +11,30 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.fssync.distributor.hazelcast;
+package ch.sourcepond.io.fssync.compound;
 
-import org.osgi.service.cm.ConfigurationException;
-import org.osgi.service.cm.ManagedServiceFactory;
+import org.osgi.framework.ServiceRegistration;
 
-import java.util.Dictionary;
+import java.lang.annotation.Annotation;
 
-class HazelcastDistributorFactory implements ManagedServiceFactory {
+public abstract class Configurable<C extends Annotation> implements AutoCloseable {
+    private volatile C config;
+    private volatile ServiceRegistration<?> registration;
 
-    @Override
-    public String getName() {
-        return null;
+    public C getConfig() {
+        return config;
+    }
+
+    public void update(C pConfig) {
+        config = pConfig;
+    }
+
+    public void setRegistration(ServiceRegistration<?> pRegistration) {
+        registration = pRegistration;
     }
 
     @Override
-    public void updated(final String s, final Dictionary<String, ?> dictionary) throws ConfigurationException {
-
-    }
-
-    @Override
-    public void deleted(final String s) {
-
+    public void close() {
+        registration.unregister();
     }
 }

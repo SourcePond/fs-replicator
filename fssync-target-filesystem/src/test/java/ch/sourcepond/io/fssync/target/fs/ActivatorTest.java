@@ -41,11 +41,11 @@ import static org.osgi.framework.Constants.SERVICE_PID;
 
 public class ActivatorTest {
     private static final String EXPECTED_SYNC_DIR = "someExpectedSyncDir";
-    private final ConfigBuilder<SyncTargetConfig> configBuilder = mock(ConfigBuilder.class);
+    private final ConfigBuilder<Config> configBuilder = mock(ConfigBuilder.class);
     private final ConfigBuilderFactory configBuilderFactory = mock(ConfigBuilderFactory.class);
     private final TargetDirectoryFactory targetDirectoryFactory = mock(TargetDirectoryFactory.class);
     private final TargetDirectory syncTarget = mock(TargetDirectory.class);
-    private final SyncTargetConfig config = mock(SyncTargetConfig.class);
+    private final Config config = mock(Config.class);
     private final Dictionary<String, Object> props = mock(Dictionary.class);
     private final BundleContext context = mock(BundleContext.class);
     private final ServiceRegistration<SyncTarget> registration = mock(ServiceRegistration.class);
@@ -54,7 +54,7 @@ public class ActivatorTest {
     @Before
     public void setup() throws Exception {
         when(config.syncDir()).thenReturn(EXPECTED_SYNC_DIR);
-        when(configBuilderFactory.create(SyncTargetConfig.class, props)).thenReturn(configBuilder);
+        when(configBuilderFactory.create(Config.class, props)).thenReturn(configBuilder);
         when(configBuilder.build()).thenReturn(config);
         when(targetDirectoryFactory.create()).thenReturn(syncTarget);
         when(syncTarget.getConfig()).thenReturn(config);
