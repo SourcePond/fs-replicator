@@ -22,6 +22,6 @@ dependencies {
 
 jar {
     manifest {
-        attributes('Bundle-Activator': 'ch.sourcepond.io.fssync.target.fs.Activator')
+        attributes('Export-Package': 'ch.sourcepond.io.fssync.compound')
     }
 }
