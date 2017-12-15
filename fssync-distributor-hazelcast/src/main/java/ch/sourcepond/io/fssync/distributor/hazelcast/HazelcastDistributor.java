@@ -24,7 +24,6 @@ import ch.sourcepond.io.fssync.distributor.hazelcast.exception.TransferException
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.UnlockException;
 import ch.sourcepond.io.fssync.distributor.hazelcast.lock.LockManager;
 import ch.sourcepond.io.fssync.distributor.hazelcast.request.RequestDistributor;
-import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 
 import javax.inject.Inject;
@@ -36,27 +35,20 @@ import static java.util.Objects.requireNonNull;
 
 final class HazelcastDistributor extends Configurable<Config> implements Distributor {
     static final byte[] EMPTY_CHECKSUM = new byte[0];
-    private final HazelcastInstance hci;
     private final IMap<String, byte[]> checksums;
     private final LockManager lockManager;
     private final RequestDistributor requestDistributor;
     private final Set<MessageListenerRegistration> listenerRegistrations;
 
     @Inject
-    HazelcastDistributor(final HazelcastInstance pHci,
-                         final IMap<String, byte[]> pChecksums,
+    HazelcastDistributor(final IMap<String, byte[]> pChecksums,
                          final LockManager pLockManager,
                          final RequestDistributor pRequestDistributor,
                          final Set<MessageListenerRegistration> pListenerRegistrations) {
-        hci = pHci;
         checksums = pChecksums;
         lockManager = pLockManager;
         requestDistributor = pRequestDistributor;
         listenerRegistrations = pListenerRegistrations;
-    }
-
-    public String getHazelcastInstanceName() {
-        return hci.getName();
     }
 
     @Override

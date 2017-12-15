@@ -39,6 +39,11 @@ public class ActivatorTest extends BaseActivatorTest<HazelcastDistributor, Activ
         super.setup();
     }
 
+    @Test
+    public void verifyDefaultConstructor() {
+        new Activator();
+    }
+
     @Override
     protected Class<Config> getConfigAnnotation() {
         return Config.class;

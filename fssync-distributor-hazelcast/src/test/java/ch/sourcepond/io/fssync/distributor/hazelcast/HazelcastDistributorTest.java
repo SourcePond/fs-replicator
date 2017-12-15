@@ -61,7 +61,7 @@ public class HazelcastDistributorTest {
     private final Set<MessageListenerRegistration> registrations = new HashSet<>();
     private final Endpoint endpoint = mock(Endpoint.class);
     private final ServiceRegistration<Distributor> serviceRegistration = mock(ServiceRegistration.class);
-    private final HazelcastDistributor distributor = new HazelcastDistributor(hci, checksums, lockManager, requestDistributor, registrations);
+    private final HazelcastDistributor distributor = new HazelcastDistributor(checksums, lockManager, requestDistributor, registrations);
 
     @Before
     public void setup() {
@@ -87,6 +87,7 @@ public class HazelcastDistributorTest {
 
     @Test
     public void tryLock() throws LockException {
+        when(lockManager.tryLock(EXPECTED_SYNC_DIR, EXPECTED_PATH)).thenReturn(true);
         assertTrue(distributor.tryLock(EXPECTED_SYNC_DIR, EXPECTED_PATH));
         verify(lockManager).tryLock(EXPECTED_SYNC_DIR, EXPECTED_PATH);
         verifyNoMoreInteractions(lockManager, hci, checksums, requestDistributor, requestDistributor, registration);
@@ -232,6 +233,7 @@ public class HazelcastDistributorTest {
     public void close() {
         distributor.close();
         verify(registration).close();
+        verify(lockManager).close();
         verify(serviceRegistration).unregister();
         verifyNoMoreInteractions(lockManager, hci, checksums, requestDistributor, requestDistributor, registration);
     }

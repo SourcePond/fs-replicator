@@ -47,6 +47,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 public class LockManagerTest {
@@ -175,5 +176,11 @@ public class LockManagerTest {
         order.verify(lockListener).awaitResponse(argThat(IS_EQUAL_TO_EXPECTED_DISTRIBUTION_MESSAGE));
         order.verify(unlockListener).awaitResponse(argThat(IS_EQUAL_TO_EXPECTED_DISTRIBUTION_MESSAGE));
         order.verify(locks).unlock(EXPECTED_GLOBAL_PATH);
+    }
+
+    @Test
+    public void close() {
+        manager.close();
+        verify(locks).close();
     }
 }

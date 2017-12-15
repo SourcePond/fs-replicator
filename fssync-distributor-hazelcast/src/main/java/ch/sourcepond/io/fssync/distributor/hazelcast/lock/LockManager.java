@@ -78,7 +78,7 @@ public class LockManager implements AutoCloseable {
         factory.create(pPath, unlockRequestTopic).awaitResponse(new DistributionMessage(pSyncDir, pPath));
     }
 
-    private void lockAcquisitionFailed(final String pSyncDir, final String pPath, final String pMessage, final Exception pCause)
+    private boolean lockAcquisitionFailed(final String pSyncDir, final String pPath, final String pMessage, final Exception pCause)
             throws LockException {
         try {
             throw new LockException(pMessage, pCause);
@@ -104,16 +104,15 @@ public class LockManager implements AutoCloseable {
                 acquireGlobalFileLock(pSyncDir, pPath);
                 return true;
             } else {
-                lockAcquisitionFailed(pSyncDir, pPath, format("Lock acquisition timed out after %d %s",
+                return lockAcquisitionFailed(pSyncDir, pPath, format("Lock acquisition timed out after %d %s",
                         config.lockTimeout(), config.lockTimeoutUnit()), null);
             }
         } catch (final InterruptedException e) {
             currentThread().interrupt();
-            lockAcquisitionFailed(pSyncDir, pPath, format("Lock acquisition interrupted for %s!", pPath), e);
+            return lockAcquisitionFailed(pSyncDir, pPath, format("Lock acquisition interrupted for %s!", pPath), e);
         } catch (final ResponseException | TimeoutException e) {
-            lockAcquisitionFailed(pSyncDir, pPath, format("Lock acquisition failed for %s!", pPath), e);
+            return lockAcquisitionFailed(pSyncDir, pPath, format("Lock acquisition failed for %s!", pPath), e);
         }
-        return false;
     }
 
     public void unlock(final String pSyncDir, final String pPath) throws UnlockException {
