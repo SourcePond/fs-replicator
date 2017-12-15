@@ -7,4 +7,5 @@ include 'fssync-source-filesystem'
 include 'fssync-target-filesystem-tests'
 include 'fssync-compound-lib'
 include 'fssync-compound-lib-tests'
+include 'fssync-distributor-hazelcast-tests'
 

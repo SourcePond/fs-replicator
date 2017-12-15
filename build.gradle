@@ -1,4 +1,4 @@
-group 'ch.sourcepond.io'
+group 'ch.sourcepond.io.fssync'
 version '0.1-SNAPSHOT'
 
 apply plugin: 'java'
