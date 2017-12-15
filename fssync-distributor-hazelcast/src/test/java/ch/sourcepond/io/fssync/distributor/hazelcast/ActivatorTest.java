@@ -13,12 +13,51 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast;
 
-import org.osgi.framework.BundleContext;
+import ch.sourcepond.io.fssync.compound.BaseActivatorTest;
+import ch.sourcepond.io.fssync.target.api.SyncTarget;
+import com.hazelcast.core.HazelcastInstance;
+import org.junit.Before;
+import org.junit.Test;
 
+import static ch.sourcepond.io.fssync.distributor.hazelcast.Activator.FACTORY_PID;
+import static com.hazelcast.core.Hazelcast.newHazelcastInstance;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-public class ActivatorTest {
-    private final BundleContext context = mock(BundleContext.class);
-    private final Activator activator = new Activator();
+public class ActivatorTest extends BaseActivatorTest<HazelcastDistributor, Activator, Config> {
+    private final SyncTarget compoundSyncTarget = mock(SyncTarget.class);
 
+    @Before
+    public void setup() throws Exception {
+        when(configBuilderFactory.create(Config.class, props)).thenReturn(configBuilder);
+        when(configBuilder.build()).thenReturn(config);
+        when(compoundServiceFactory.create(context, executorService, SyncTarget.class)).thenReturn(compoundSyncTarget);
+        config = mock(Config.class, inv -> inv.getMethod().getDefaultValue());
+        when(config.existingInstanceName()).thenReturn(EXPECTED_UNIQUE_ID);
+        activator = new Activator(configBuilderFactory, compoundServiceFactory, executorService);
+        super.setup();
+    }
+
+    @Override
+    protected Class<Config> getConfigAnnotation() {
+        return Config.class;
+    }
+
+    @Test
+    @Override
+    public void verifyGetFactoryId() {
+        assertEquals(FACTORY_PID, activator.getFactoryPid());
+    }
+
+    @Test
+    @Override
+    public void verifyService() throws Exception {
+        final HazelcastInstance hci = newHazelcastInstance(new com.hazelcast.config.Config(EXPECTED_UNIQUE_ID));
+        try {
+            super.verifyService();
+        } finally {
+            hci.shutdown();
+        }
+    }
 }

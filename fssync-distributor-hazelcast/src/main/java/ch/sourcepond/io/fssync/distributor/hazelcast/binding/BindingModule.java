@@ -21,6 +21,7 @@ import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Response;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Store;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Transfer;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Unlock;
+import ch.sourcepond.io.fssync.distributor.hazelcast.common.DistributionMessage;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.StatusMessage;
 import ch.sourcepond.io.fssync.distributor.hazelcast.request.TransferRequest;
 import com.google.inject.AbstractModule;
@@ -59,7 +60,6 @@ public class BindingModule extends AbstractModule {
     protected void configure() {
         // noop
     }
-
 
     @Provides
     @Singleton
@@ -155,7 +155,7 @@ public class BindingModule extends AbstractModule {
     @Provides
     @Singleton
     @Delete
-    ITopic<StatusMessage> deleteRequestTopic(final HazelcastInstance pHci, @Delete final ReliableTopicConfig pConfig) {
+    ITopic<DistributionMessage> deleteRequestTopic(final HazelcastInstance pHci, @Delete final ReliableTopicConfig pConfig) {
         return getTopic(pHci, pConfig);
     }
 
@@ -176,21 +176,21 @@ public class BindingModule extends AbstractModule {
     @Provides
     @Singleton
     @Store
-    ITopic<StatusMessage> storeRequestTopic(final HazelcastInstance pHci, @Store final ReliableTopicConfig pConfig) {
+    ITopic<DistributionMessage> storeRequestTopic(final HazelcastInstance pHci, @Store final ReliableTopicConfig pConfig) {
         return getTopic(pHci, pConfig);
     }
 
     @Provides
     @Singleton
     @Lock
-    ITopic<StatusMessage> lockRequestTopic(final HazelcastInstance pHci, @Lock final ReliableTopicConfig pConfig) {
+    ITopic<DistributionMessage> lockRequestTopic(final HazelcastInstance pHci, @Lock final ReliableTopicConfig pConfig) {
         return getTopic(pHci, pConfig);
     }
 
     @Provides
     @Singleton
     @Unlock
-    public ITopic<StatusMessage> unlockRequestTopic(final HazelcastInstance pHci, @Unlock final ReliableTopicConfig pConfig) {
+    public ITopic<DistributionMessage> unlockRequestTopic(final HazelcastInstance pHci, @Unlock final ReliableTopicConfig pConfig) {
         return getTopic(pHci, pConfig);
     }
 

@@ -52,14 +52,14 @@ public class LockModule extends AbstractModule {
     @Provides
     @Singleton
     @Lock
-    public MessageListenerRegistration registerLockListener(final @Lock ITopic<String> pLockTopic, final @Lock MessageListener<String> pLockListener) {
+    public MessageListenerRegistration registerLockListener(final @Lock ITopic<DistributionMessage> pLockTopic, final @Lock MessageListener<DistributionMessage> pLockListener) {
         return MessageListenerRegistration.register(pLockTopic, pLockListener);
     }
 
     @Provides
     @Singleton
     @Unlock
-    public MessageListenerRegistration registerUnlockListener(final @Unlock ITopic<String> pUnlockTopic, final @Unlock MessageListener<String> pUnlockListener) {
+    public MessageListenerRegistration registerUnlockListener(final @Unlock ITopic<DistributionMessage> pUnlockTopic, final @Unlock MessageListener<DistributionMessage> pUnlockListener) {
         return MessageListenerRegistration.register(pUnlockTopic, pUnlockListener);
     }
 }

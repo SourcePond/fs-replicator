@@ -37,19 +37,21 @@ import static org.osgi.framework.Constants.SERVICE_PID;
 public class Activator extends BaseActivator<HazelcastDistributor, Config> {
     static final String FACTORY_PID = "ch.sourcepond.io.fssync.distributor.hazelcast.configBuilderFactory";
     private final CompoundServiceFactory compoundServiceFactory;
-    // TODO: Implement more flexible solution here
-    private final ExecutorService executor = newSingleThreadExecutor();
+    private final ExecutorService executor;
     private volatile BundleContext context;
     private volatile SyncTarget compoundSyncTarget;
 
     public Activator() {
-        this(new ConfigBuilderFactory(), new CompoundServiceFactory());
+        this(new ConfigBuilderFactory(), new CompoundServiceFactory(), /* TODO: Implement more flexible solution here */ newSingleThreadExecutor());
     }
 
     // Constructor for testing
-    Activator(final ConfigBuilderFactory pConfigBuilderFactory, final CompoundServiceFactory pCompoundServiceFactory) {
+    Activator(final ConfigBuilderFactory pConfigBuilderFactory,
+              final CompoundServiceFactory pCompoundServiceFactory,
+              final ExecutorService pExecutor) {
         super(pConfigBuilderFactory);
         compoundServiceFactory = pCompoundServiceFactory;
+        executor = pExecutor;
     }
 
     @Override

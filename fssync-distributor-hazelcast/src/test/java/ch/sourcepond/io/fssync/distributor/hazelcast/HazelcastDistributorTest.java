@@ -70,7 +70,7 @@ public class HazelcastDistributorTest {
         when(lockManager.toGlobalPath(EXPECTED_SYNC_DIR, EXPECTED_PATH)).thenReturn(EXPECTED_GLOBAL_PATH);
         when(checksums.get(EXPECTED_GLOBAL_PATH)).thenReturn(EXPECTED_CHECKSUM);
         registrations.add(registration);
-        distributor.setServiceRegistration(serviceRegistration);
+        distributor.setRegistration(serviceRegistration);
     }
 
     @Test(expected = NullPointerException.class)

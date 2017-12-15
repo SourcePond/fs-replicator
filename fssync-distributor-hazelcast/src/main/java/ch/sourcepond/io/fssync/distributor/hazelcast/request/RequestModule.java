@@ -72,7 +72,7 @@ public class RequestModule extends AbstractModule {
     @Provides
     @Singleton
     @Delete
-    MessageListenerRegistration registerDeleteListener(final @Delete ITopic<String> pDeleteTopic, final @Delete MessageListener<String> pDeleteListener) {
+    MessageListenerRegistration registerDeleteListener(final @Delete ITopic<DistributionMessage> pDeleteTopic, final @Delete MessageListener<DistributionMessage> pDeleteListener) {
         return register(pDeleteTopic, pDeleteListener);
     }
 
@@ -93,7 +93,7 @@ public class RequestModule extends AbstractModule {
     @Provides
     @Singleton
     @Store
-    MessageListenerRegistration registerStoreListener(final @Store ITopic<String> pStoreTopic, final @Store MessageListener<String> pStoreListener) {
+    MessageListenerRegistration registerStoreListener(final @Store ITopic<DistributionMessage> pStoreTopic, final @Store MessageListener<DistributionMessage> pStoreListener) {
         return register(pStoreTopic, pStoreListener);
     }
 }
