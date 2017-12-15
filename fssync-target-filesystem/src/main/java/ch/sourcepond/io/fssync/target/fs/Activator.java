@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.target.fs;
 
+import ch.sourcepond.io.fssync.compound.BaseActivator;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilderFactory;
 import org.osgi.framework.BundleActivator;
@@ -31,13 +32,9 @@ import java.util.concurrent.ConcurrentMap;
 import static java.lang.String.format;
 import static org.osgi.framework.Constants.SERVICE_PID;
 
-public class Activator implements BundleActivator, ManagedService, ManagedServiceFactory {
+public class Activator extends BaseActivator<TargetDirectory, Config> {
     static final String FACTORY_PID = "ch.sourcepond.io.fssync.target.fs.factory";
-    private final Map<String, String> syncDirToPid = new HashMap<>();
-    private final ConcurrentMap<String, TargetDirectory> targets = new ConcurrentHashMap<>();
-    private final ConfigBuilderFactory configBuilderFactory;
     private final TargetDirectoryFactory targetDirectoryFactory;
-    private volatile BundleContext context;
 
     public Activator() {
         this(new ConfigBuilderFactory(), new TargetDirectoryFactory());
@@ -45,62 +42,37 @@ public class Activator implements BundleActivator, ManagedService, ManagedServic
 
     // Constructor for testing
     Activator(final ConfigBuilderFactory pConfigBuilderFactory, final TargetDirectoryFactory pTargetDirectoryFactory) {
-        configBuilderFactory = pConfigBuilderFactory;
+        super(pConfigBuilderFactory);
         targetDirectoryFactory = pTargetDirectoryFactory;
     }
 
     @Override
-    public void start(final BundleContext pContext) {
-        context = pContext;
-        final Hashtable<String, String> props = new Hashtable<>();
-        props.put(SERVICE_PID, FACTORY_PID);
-        pContext.registerService(new String[]{ManagedService.class.getName(),
-                ManagedServiceFactory.class.getName()}, this, props);
-    }
-
-    @Override
-    public void stop(final BundleContext context) {
-        targets.values().forEach(t -> t.close());
-    }
-
-    @Override
-    public String getName() {
-        // TODO (RH): Use localized string here
+    protected String getFactoryPid() {
         return FACTORY_PID;
     }
 
     @Override
-    public void updated(final Dictionary<String, ?> properties) throws ConfigurationException {
-        updated(FACTORY_PID, properties);
+    protected String getUniqueIdName() {
+        return "syncDir";
     }
 
     @Override
-    public void updated(final String pPid, final Dictionary<String, ?> pProperties) throws ConfigurationException {
-        final Config config = configBuilderFactory.create(Config.class, pProperties).build();
-
-        synchronized (syncDirToPid) {
-            final String pid = syncDirToPid.get(config.syncDir());
-            if (pid != null && !pid.equals(pPid)) {
-                throw new ConfigurationException("syncDir", format("Sync directory %s is already used by PID %s", config.syncDir(), pid));
-            }
-            syncDirToPid.put(config.syncDir(), pPid);
-        }
-
-        final TargetDirectory dir = targets.computeIfAbsent(pPid, pid -> targetDirectoryFactory.create());
-        dir.update(config);
-        final Hashtable<String, String> props = new Hashtable<>();
-        props.put(SERVICE_PID, pPid);
-        dir.setRegistration(context.registerService(SyncTarget.class, dir, props));
+    protected String determineUniqueId(Config pConfig) {
+        return pConfig.syncDir();
     }
 
     @Override
-    public void deleted(final String pPid) {
-        synchronized (syncDirToPid) {
-            final TargetDirectory syncTarget = targets.remove(pPid);
-            if (syncTarget != null) {
-                syncTarget.close();
-                syncDirToPid.remove(syncTarget.getConfig().syncDir());
-            }
-        }
+    protected Class<Config> getConfigAnnotation() {
+        return Config.class;
+    }
+
+    @Override
+    protected String getServiceInterfaceName() {
+        return SyncTarget.class.getName();
+    }
+
+    @Override
+    protected TargetDirectory createService(Config pConfig) {
+        return targetDirectoryFactory.create();
     }
 }

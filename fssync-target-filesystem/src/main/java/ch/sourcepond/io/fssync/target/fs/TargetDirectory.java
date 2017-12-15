@@ -13,10 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.target.fs;
 
+import ch.sourcepond.io.fssync.compound.Configurable;
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
 import ch.sourcepond.io.fssync.target.api.SyncPath;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
-import org.osgi.framework.ServiceRegistration;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -38,30 +38,20 @@ import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.WRITE;
 import static org.slf4j.LoggerFactory.getLogger;
 
-class TargetDirectory implements SyncTarget, AutoCloseable, Runnable {
+class TargetDirectory extends Configurable<Config> implements SyncTarget, Runnable {
     private static final Logger LOG = getLogger(TargetDirectory.class);
     private final ConcurrentMap<SyncPath, FileHandle> handles = new ConcurrentHashMap<>();
     private final ScheduledExecutorService watchDogExecutor;
     private volatile ScheduledFuture<?> watchDogFuture;
-    private volatile Config config;
     private volatile Path syncDir;
-    private ServiceRegistration<SyncTarget> registration;
 
     public TargetDirectory(final ScheduledExecutorService pWatchDogExecutor) {
         watchDogExecutor = pWatchDogExecutor;
     }
 
-    public void setRegistration(final ServiceRegistration<SyncTarget> pRegistration) {
-        registration = pRegistration;
-    }
-
-    public Config getConfig() {
-        return config;
-    }
-
     @Override
     public void run() {
-        handles.values().removeIf(value -> value.closeExpired(config));
+        handles.values().removeIf(value -> value.closeExpired(getConfig()));
     }
 
     private FileHandle createHandle(final NodeInfo pNodeInfo, final SyncPath pPath) throws IOException {
@@ -163,20 +153,20 @@ class TargetDirectory implements SyncTarget, AutoCloseable, Runnable {
 
     @Override
     public void close() {
-        registration.unregister();
+        super.close();
         watchDogExecutor.shutdown();
         handles.values().forEach(ch -> ch.close());
     }
 
     public void update(final Config pConfig) {
-        config = pConfig;
+        super.update(pConfig);
         syncDir = getDefault().getPath(pConfig.syncDir());
         if (watchDogFuture != null) {
             watchDogFuture.cancel(false);
         }
         watchDogFuture = watchDogExecutor.scheduleAtFixedRate(this,
-                config.forceUnlockSchedulePeriod(),
-                config.forceUnlockSchedulePeriod(),
-                config.forceUnlockSchedulePeriodUnit());
+                pConfig.forceUnlockSchedulePeriod(),
+                pConfig.forceUnlockSchedulePeriod(),
+                pConfig.forceUnlockSchedulePeriodUnit());
     }
 }
