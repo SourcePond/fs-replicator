@@ -75,6 +75,7 @@ public class TargetFilesystemTest {
         return new Option[]{
                 junitBundles(),
                 mavenBundle("ch.sourcepond.osgi.cmpn", "metatype-builder-lib").version("0.1-SNAPSHOT"),
+                mavenBundle("ch.sourcepond.io.fssync", "fssync-compound-lib").version("0.1-SNAPSHOT"),
                 mavenBundle("ch.sourcepond.io.fssync", "fssync-target-api").version("0.1-SNAPSHOT"),
                 mavenBundle("ch.sourcepond.io.fssync", "fssync-target-filesystem").version("0.1-SNAPSHOT"),
                 mavenBundle("org.apache.felix", "org.apache.felix.metatype").version("1.1.6"),

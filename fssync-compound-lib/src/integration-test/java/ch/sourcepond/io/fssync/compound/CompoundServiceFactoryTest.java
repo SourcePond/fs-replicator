@@ -49,7 +49,10 @@ public class CompoundServiceFactoryTest {
     public Option[] configure() {
         return new Option[]{
                 junitBundles(),
-                mavenBundle("ch.sourcepond.io.fssync", "fssync-compound-lib").version("0.1-SNAPSHOT")
+                mavenBundle("ch.sourcepond.osgi.cmpn", "metatype-builder-lib").version("0.1-SNAPSHOT"),
+                mavenBundle("ch.sourcepond.io.fssync", "fssync-compound-lib").version("0.1-SNAPSHOT"),
+                mavenBundle("org.apache.felix", "org.apache.felix.metatype").version("1.1.6"),
+                mavenBundle("org.apache.felix", "org.apache.felix.configadmin").version("1.8.16")
         };
     }
 

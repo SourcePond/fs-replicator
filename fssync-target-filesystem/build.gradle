@@ -1,26 +1,21 @@
-group 'ch.sourcepond.io.fssync'
-version '0.1-SNAPSHOT'
-
-apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'biz.aQute.bnd.builder'
-
-sourceCompatibility = 1.8
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
-
 dependencies {
     compile project(':fssync-target-api')
+    compile project(':fssync-compound-lib')
     compile 'ch.sourcepond.osgi.cmpn:metatype-builder-lib:0.1-SNAPSHOT'
     compile 'org.slf4j:slf4j-api:1.7.25'
     compile 'org.osgi:org.osgi.core:6.0.0'
     compile 'org.osgi:osgi.cmpn:6.0.0'
-    testCompile 'ch.qos.logback:logback-classic:1.2.3'
+    testCompile project(path: ":fssync-compound-lib", configuration: 'testArtifacts')
     testCompile 'org.mockito:mockito-core:2.11.0'
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    integrationTestCompile project(':fssync-target-filesystem')
+    integrationTestCompile 'org.apache.felix:org.apache.felix.metatype:1.1.6'
+    integrationTestCompile 'org.apache.felix:org.apache.felix.configadmin:1.8.16'
+    integrationTestCompile 'org.apache.servicemix.bundles:org.apache.servicemix.bundles.javax-inject:1_2'
+    integrationTestCompile 'org.ops4j.pax.exam:pax-exam-container-native:4.11.0'
+    integrationTestCompile 'org.ops4j.pax.exam:pax-exam-junit4:4.11.0'
+    integrationTestCompile 'org.ops4j.pax.exam:pax-exam-link-mvn:4.11.0'
+    integrationTestCompile 'org.ops4j.pax.url:pax-url-aether:2.5.3'
+    integrationTestCompile 'org.apache.felix:org.apache.felix.framework:5.6.10'
 }
 
 jar {
