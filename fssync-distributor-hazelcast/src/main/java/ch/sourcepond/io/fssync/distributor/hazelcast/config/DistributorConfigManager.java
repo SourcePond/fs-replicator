@@ -31,8 +31,8 @@ import static java.util.Arrays.asList;
 import static org.slf4j.LoggerFactory.getLogger;
 
 class DistributorConfigManager implements ManagedServiceFactory {
+    static final String FACTORY_PID = "ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig";
     private static final Logger LOG = getLogger(DistributorConfigManager.class);
-    private static final String FACTORY_PID = "ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig";
     private static final DistributorTopicConfig DEFAULT_TOPIC_CONFIG = (DistributorTopicConfig) newProxyInstance(DistributorTopicConfig.class.getClassLoader(),
             new Class<?>[]{DistributorTopicConfig.class}, (proxy, method, args) -> method.getDefaultValue());
     private static final String NAME_PATTERN = "__fssync_distributor.%s.%s";

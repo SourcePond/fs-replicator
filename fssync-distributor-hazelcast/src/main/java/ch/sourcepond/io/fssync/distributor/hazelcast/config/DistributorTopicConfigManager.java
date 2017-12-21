@@ -20,7 +20,7 @@ import org.osgi.service.cm.ManagedServiceFactory;
 import java.util.Dictionary;
 
 class DistributorTopicConfigManager implements ManagedServiceFactory {
-    private static final String FACTORY_PID = "ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorTopicConfig";
+    static final String FACTORY_PID = "ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorTopicConfig";
     private final DistributorConfigManager observer;
     private final ConfigBuilderFactory configBuilderFactory;
 
