@@ -20,7 +20,7 @@ import org.osgi.service.cm.ManagedServiceFactory;
 import java.util.Dictionary;
 
 class DistributorTopicConfigManager implements ManagedServiceFactory {
-    static final String FACTORY_PID = "ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorTopicConfig";
+    static final String FACTORY_PID = "ch.sourcepond.io.fssync.distributor.hazelcast.TopicConfig";
     private final DistributorConfigManager observer;
     private final ConfigBuilderFactory configBuilderFactory;
 
@@ -38,12 +38,12 @@ class DistributorTopicConfigManager implements ManagedServiceFactory {
     @Override
     public void updated(final String pPid, final Dictionary<String, ?> pProperties) throws ConfigurationException {
         // Validate configuration
-        configBuilderFactory.create(DistributorTopicConfig.class, pProperties).build();
-        observer.configUpdated(pPid);
+        configBuilderFactory.create(TopicConfig.class, pProperties).build();
+        observer.topicConfigUpdated(pPid);
     }
 
     @Override
     public void deleted(final String pPid) {
-        observer.configDeleted(pPid);
+        observer.topicConfigDeleted(pPid);
     }
 }

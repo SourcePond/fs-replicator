@@ -25,7 +25,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
         description = "Configuration of a Hazelcast-Instance (incl. group-config, network, multicast and TCP/IP) for" +
                 "used by a distinct Distributor",
         factoryPid = {FACTORY_PID})
-public @interface DistributorConfig {
+public @interface Config {
     String DEFAULT_CONFIG = "default";
 
     @AttributeDefinition(description = "The name of the associated Hazelcast Instance.")

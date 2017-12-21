@@ -1,7 +1,6 @@
 package ch.sourcepond.io.fssync.distributor.hazelcast.config;
 
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilderFactory;
-import com.hazelcast.config.Config;
 import com.hazelcast.config.GroupConfig;
 import com.hazelcast.config.JoinConfig;
 import com.hazelcast.config.MulticastConfig;
@@ -23,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 
-import static ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig.DEFAULT_CONFIG;
+import static ch.sourcepond.io.fssync.distributor.hazelcast.config.Config.DEFAULT_CONFIG;
 import static com.hazelcast.topic.TopicOverloadPolicy.BLOCK;
 import static java.lang.String.format;
 import static java.lang.reflect.Proxy.newProxyInstance;
@@ -31,10 +30,10 @@ import static java.util.Arrays.asList;
 import static org.slf4j.LoggerFactory.getLogger;
 
 class DistributorConfigManager implements ManagedServiceFactory {
-    static final String FACTORY_PID = "ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig";
+    static final String FACTORY_PID = "ch.sourcepond.io.fssync.distributor.hazelcast.Config";
     private static final Logger LOG = getLogger(DistributorConfigManager.class);
-    private static final DistributorTopicConfig DEFAULT_TOPIC_CONFIG = (DistributorTopicConfig) newProxyInstance(DistributorTopicConfig.class.getClassLoader(),
-            new Class<?>[]{DistributorTopicConfig.class}, (proxy, method, args) -> method.getDefaultValue());
+    private static final TopicConfig DEFAULT_TOPIC_CONFIG = (TopicConfig) newProxyInstance(TopicConfig.class.getClassLoader(),
+            new Class<?>[]{TopicConfig.class}, (proxy, method, args) -> method.getDefaultValue());
     private static final String NAME_PATTERN = "__fssync_distributor.%s.%s";
     private static final String TOPIC_CONFIG_PID_POSTFIX = "TopicConfigPID";
     private static final String RESPONSE_POSTFIX = "response";
@@ -44,7 +43,7 @@ class DistributorConfigManager implements ManagedServiceFactory {
     private static final String STORE_POSTFIX = "store";
     private static final String LOCK_POSTFIX = "lock";
     private static final String UNLOCK_POSTFIX = "unlock";
-    private final ConcurrentMap<String, DistributorConfig> configs = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Config> configs = new ConcurrentHashMap<>();
     private final ExecutorService executorService;
     private final ConfigChangeObserver observer;
     private final ConfigBuilderFactory configBuilderFactory;
@@ -76,13 +75,13 @@ class DistributorConfigManager implements ManagedServiceFactory {
         return format("%s%s", pPostfix, TOPIC_CONFIG_PID_POSTFIX);
     }
 
-    private void addTopicConfig(final Config pConfig, final String pInstanceName, final String pPostfix, final String pPid)
+    private void addTopicConfig(final com.hazelcast.config.Config pConfig, final String pInstanceName, final String pPostfix, final String pPid)
             throws ConfigurationException {
         final String name = format(NAME_PATTERN, pInstanceName, pPostfix);
-        final DistributorTopicConfig topicConfig;
+        final TopicConfig topicConfig;
         try {
             topicConfig = DEFAULT_CONFIG.equals(pPid) ? DEFAULT_TOPIC_CONFIG :
-                    getConfig(DistributorTopicConfig.class, toTopicConfigPidName(pPostfix), pPid);
+                    getConfig(TopicConfig.class, toTopicConfigPidName(pPostfix), pPid);
         } catch (final IOException e) {
             // TODO: Translate this
             throw new ConfigurationException(name, "Configuration could not be loaded", e);
@@ -102,7 +101,7 @@ class DistributorConfigManager implements ManagedServiceFactory {
         pConfig.addRingBufferConfig(ringbufferConfig);
     }
 
-    private void addTopicConfig(final Config config, DistributorConfig instance) throws ConfigurationException {
+    private void addTopicConfig(final com.hazelcast.config.Config config, Config instance) throws ConfigurationException {
         addTopicConfig(config, instance.instanceName(), RESPONSE_POSTFIX, instance.responseTopicConfigPID());
         addTopicConfig(config, instance.instanceName(), DELETE_POSTFIX, instance.deleteTopicConfigPID());
         addTopicConfig(config, instance.instanceName(), TRANSFER_POSTFIX, instance.transferTopicConfigPID());
@@ -118,54 +117,54 @@ class DistributorConfigManager implements ManagedServiceFactory {
         return FACTORY_PID;
     }
 
-    private Config createConfig(final DistributorConfig pDistributorConfig) throws ConfigurationException {
-        final Config config = new Config();
-        config.setInstanceName(pDistributorConfig.instanceName());
-        config.setGroupConfig(new GroupConfig().setName(pDistributorConfig.groupName()).setPassword(pDistributorConfig.groupPassword()));
+    private com.hazelcast.config.Config createConfig(final Config pConfig) throws ConfigurationException {
+        final com.hazelcast.config.Config config = new com.hazelcast.config.Config();
+        config.setInstanceName(pConfig.instanceName());
+        config.setGroupConfig(new GroupConfig().setName(pConfig.groupName()));
 
-        final NetworkConfig networkConfig = new NetworkConfig().setPort(pDistributorConfig.port()).setPortAutoIncrement(pDistributorConfig.portAutoIncrement());
-        networkConfig.setOutboundPortDefinitions(asList(pDistributorConfig.outboundPorts()));
-        networkConfig.setPortCount(pDistributorConfig.portCount());
+        final NetworkConfig networkConfig = new NetworkConfig().setPort(pConfig.port()).setPortAutoIncrement(pConfig.portAutoIncrement());
+        networkConfig.setOutboundPortDefinitions(asList(pConfig.outboundPorts()));
+        networkConfig.setPortCount(pConfig.portCount());
 
         final JoinConfig joinConfig = new JoinConfig();
 
         final MulticastConfig multicastConfig = new MulticastConfig();
-        multicastConfig.setEnabled(pDistributorConfig.multicastEnabled());
-        multicastConfig.setMulticastGroup(pDistributorConfig.multicastGroup());
-        multicastConfig.setMulticastPort(pDistributorConfig.multicastPort());
-        multicastConfig.setMulticastTimeToLive(pDistributorConfig.multicastTimeToLive());
-        multicastConfig.setMulticastTimeoutSeconds(pDistributorConfig.multicastTimeoutSeconds());
+        multicastConfig.setEnabled(pConfig.multicastEnabled());
+        multicastConfig.setMulticastGroup(pConfig.multicastGroup());
+        multicastConfig.setMulticastPort(pConfig.multicastPort());
+        multicastConfig.setMulticastTimeToLive(pConfig.multicastTimeToLive());
+        multicastConfig.setMulticastTimeoutSeconds(pConfig.multicastTimeoutSeconds());
         joinConfig.setMulticastConfig(multicastConfig);
 
         final TcpIpConfig tcpIpConfig = new TcpIpConfig();
-        tcpIpConfig.setMembers(asList(pDistributorConfig.tcpipMembers()));
-        tcpIpConfig.setEnabled(pDistributorConfig.tcpipEnabled());
+        tcpIpConfig.setMembers(asList(pConfig.tcpipMembers()));
+        tcpIpConfig.setEnabled(pConfig.tcpipEnabled());
         joinConfig.setTcpIpConfig(tcpIpConfig);
 
         networkConfig.setJoin(joinConfig);
         config.setNetworkConfig(networkConfig);
 
-        addTopicConfig(config, pDistributorConfig);
+        addTopicConfig(config, pConfig);
         return config;
     }
 
     @Override
     public void updated(final String pPid, final Dictionary<String, ?> pProperties) throws ConfigurationException {
-        final DistributorConfig distributorConfig = configBuilderFactory.create(DistributorConfig.class, pProperties).build();
-        final Config config = createConfig(distributorConfig);
+        final Config distributorConfig = configBuilderFactory.create(Config.class, pProperties).build();
+        final com.hazelcast.config.Config config = createConfig(distributorConfig);
         configs.put(pPid, distributorConfig);
         executorService.execute(() -> observer.configUpdated(config));
     }
 
     @Override
     public void deleted(final String pPid) {
-        final DistributorConfig distributorConfig = configs.remove(pPid);
-        if (distributorConfig != null) {
-            executorService.execute(() -> observer.configDeleted(distributorConfig.instanceName()));
+        final Config config = configs.remove(pPid);
+        if (config != null) {
+            executorService.execute(() -> observer.configDeleted(config.instanceName()));
         }
     }
 
-    private static boolean usesTopicConfigPid(final DistributorConfig pConfig, final String pDistributorTopicConfigPid) {
+    private static boolean usesTopicConfigPid(final Config pConfig, final String pDistributorTopicConfigPid) {
         return pDistributorTopicConfigPid.equals(pConfig.responseTopicConfigPID()) ||
                 pDistributorTopicConfigPid.equals(pConfig.deleteTopicConfigPID()) ||
                 pDistributorTopicConfigPid.equals(pConfig.transferTopicConfigPID()) ||
@@ -175,9 +174,9 @@ class DistributorConfigManager implements ManagedServiceFactory {
                 pDistributorTopicConfigPid.equals(pConfig.unlockTopicConfigPID());
     }
 
-    void configUpdated(final String pDistributorTopicConfigPid) throws ConfigurationException {
-        for (final Map.Entry<String, DistributorConfig> entry : configs.entrySet()) {
-            final DistributorConfig config = entry.getValue();
+    void topicConfigUpdated(final String pDistributorTopicConfigPid) throws ConfigurationException {
+        for (final Map.Entry<String, Config> entry : configs.entrySet()) {
+            final Config config = entry.getValue();
             if (usesTopicConfigPid(config, pDistributorTopicConfigPid)) {
                 try {
                     updated(entry.getKey(), configurationAdmin.getConfiguration(entry.getKey(), null).getProperties());
@@ -188,9 +187,9 @@ class DistributorConfigManager implements ManagedServiceFactory {
         }
     }
 
-    void configDeleted(final String pDistributorTopicConfigPid) {
-        for (final Map.Entry<String, DistributorConfig> entry : configs.entrySet()) {
-            final DistributorConfig config = entry.getValue();
+    void topicConfigDeleted(final String pDistributorTopicConfigPid) {
+        for (final Map.Entry<String, Config> entry : configs.entrySet()) {
+            final Config config = entry.getValue();
             if (usesTopicConfigPid(config, pDistributorTopicConfigPid)) {
                 try {
                     final Configuration configuration = configurationAdmin.getConfiguration(entry.getKey(), null);

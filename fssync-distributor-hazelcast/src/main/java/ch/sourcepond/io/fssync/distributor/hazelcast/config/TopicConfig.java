@@ -21,7 +21,7 @@ import static ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorTo
 @ObjectClassDefinition(name = "fssync-distributor-hazelcast Reliable Topic configuration",
         description = "Configuration of a Reliable Topic (incl. Ringbuffer)",
         factoryPid = {FACTORY_PID})
-public @interface DistributorTopicConfig {
+public @interface TopicConfig {
 
     // TODO: Use translation service for this
     @AttributeDefinition(description = "Minimum number of messages that Reliable Topic will try to read in batches.")
