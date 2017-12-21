@@ -25,16 +25,11 @@ import static java.util.concurrent.TimeUnit.MINUTES;
         description = "Configuration of a Hazelcast-Instance (incl. group-config, network, multicast and TCP/IP) for" +
                 "used by a distinct Distributor",
         factoryPid = {FACTORY_PID})
-public @interface Config {
+public @interface DistributorConfig {
     String DEFAULT_CONFIG = "default";
 
-    @AttributeDefinition(description = "The name of the associated Hazelcast Instance.")
+    @AttributeDefinition(description = "The name of the associated Hazelcast Instance (also used as Hazelcast group name).")
     String instanceName();
-
-    @AttributeDefinition(description = "You can separate your clusters in a simple way by specifying group names. A JVM " +
-            "can host multiple Hazelcast instances. Each Hazelcast instance can only participate in one group. Each " +
-            "Hazelcast instance only joins to its own group and does not interact with other groups.")
-    String groupName();
 
     @AttributeDefinition(description = "You can specify the ports that Hazelcast will use to communicate between cluster members.")
     int port() default 6701;

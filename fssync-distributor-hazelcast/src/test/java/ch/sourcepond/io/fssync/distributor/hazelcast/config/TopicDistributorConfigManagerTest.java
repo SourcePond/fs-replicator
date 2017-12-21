@@ -31,7 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-public class TopicConfigManagerTest {
+public class TopicDistributorConfigManagerTest {
     private static final String EXPECTED_PID = "expectedPid";
     private final ConfigManager observer = mock(ConfigManager.class);
     private final ConfigBuilderFactory configBuilderFactory = mock(ConfigBuilderFactory.class);
