@@ -22,7 +22,7 @@ import org.osgi.service.cm.ConfigurationException;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
-import static ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorTopicConfigManager.FACTORY_PID;
+import static ch.sourcepond.io.fssync.distributor.hazelcast.config.TopicConfigManager.FACTORY_PID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doThrow;
@@ -33,12 +33,12 @@ import static org.mockito.Mockito.when;
 
 public class TopicConfigManagerTest {
     private static final String EXPECTED_PID = "expectedPid";
-    private final DistributorConfigManager observer = mock(DistributorConfigManager.class);
+    private final ConfigManager observer = mock(ConfigManager.class);
     private final ConfigBuilderFactory configBuilderFactory = mock(ConfigBuilderFactory.class);
     private final ConfigBuilder<TopicConfig> builder = mock(ConfigBuilder.class);
     private final TopicConfig config = mock(TopicConfig.class);
     private final Dictionary<String, ?> properties = new Hashtable<>();
-    private final DistributorTopicConfigManager manager = new DistributorTopicConfigManager(observer, configBuilderFactory);
+    private final TopicConfigManager manager = new TopicConfigManager(observer, configBuilderFactory);
 
     @Before
     public void setup() throws Exception {

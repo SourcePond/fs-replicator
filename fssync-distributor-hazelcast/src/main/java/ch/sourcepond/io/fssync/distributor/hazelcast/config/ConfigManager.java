@@ -29,9 +29,9 @@ import static java.lang.reflect.Proxy.newProxyInstance;
 import static java.util.Arrays.asList;
 import static org.slf4j.LoggerFactory.getLogger;
 
-class DistributorConfigManager implements ManagedServiceFactory {
+class ConfigManager implements ManagedServiceFactory {
     static final String FACTORY_PID = "ch.sourcepond.io.fssync.distributor.hazelcast.Config";
-    private static final Logger LOG = getLogger(DistributorConfigManager.class);
+    private static final Logger LOG = getLogger(ConfigManager.class);
     private static final TopicConfig DEFAULT_TOPIC_CONFIG = (TopicConfig) newProxyInstance(TopicConfig.class.getClassLoader(),
             new Class<?>[]{TopicConfig.class}, (proxy, method, args) -> method.getDefaultValue());
     private static final String NAME_PATTERN = "__fssync_distributor.%s.%s";
@@ -49,10 +49,10 @@ class DistributorConfigManager implements ManagedServiceFactory {
     private final ConfigBuilderFactory configBuilderFactory;
     private final ConfigurationAdmin configurationAdmin;
 
-    public DistributorConfigManager(final ExecutorService pExecutor,
-                                    final ConfigChangeObserver pObserver,
-                                    final ConfigBuilderFactory pConfigBuilderFactory,
-                                    final ConfigurationAdmin pConfigurationAdmin) {
+    public ConfigManager(final ExecutorService pExecutor,
+                         final ConfigChangeObserver pObserver,
+                         final ConfigBuilderFactory pConfigBuilderFactory,
+                         final ConfigurationAdmin pConfigurationAdmin) {
         executorService = pExecutor;
         observer = pObserver;
         configBuilderFactory = pConfigBuilderFactory;

@@ -16,7 +16,7 @@ package ch.sourcepond.io.fssync.distributor.hazelcast.config;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-import static ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorTopicConfigManager.FACTORY_PID;
+import static ch.sourcepond.io.fssync.distributor.hazelcast.config.TopicConfigManager.FACTORY_PID;
 
 @ObjectClassDefinition(name = "fssync-distributor-hazelcast Reliable Topic configuration",
         description = "Configuration of a Reliable Topic (incl. Ringbuffer)",

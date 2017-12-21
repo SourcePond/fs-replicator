@@ -18,7 +18,7 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
 import java.util.concurrent.TimeUnit;
 
-import static ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfigManager.FACTORY_PID;
+import static ch.sourcepond.io.fssync.distributor.hazelcast.config.ConfigManager.FACTORY_PID;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 @ObjectClassDefinition(name = "fssync-distributor-hazelcast Hazelcast Distributor configuration",
