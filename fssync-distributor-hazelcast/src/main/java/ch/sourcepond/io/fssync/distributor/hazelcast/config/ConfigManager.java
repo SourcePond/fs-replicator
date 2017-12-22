@@ -69,12 +69,18 @@ class ConfigManager implements ManagedServiceFactory {
     }
 
     private <T extends Annotation> T getConfig(final Class<T> pConfigInterface, final String pFieldName, final String pPid)
-            throws ConfigurationException, IOException {
-        final Configuration config = configurationAdmin.getConfiguration(pPid, null);
+            throws ConfigurationException {
+        final Configuration config;
+        try {
+            config = configurationAdmin.getConfiguration(pPid, null);
+        } catch (final IOException e) {
+            // TODO: Translate this
+            throw new ConfigurationException(pFieldName, "Configuration could not be loaded", e);
+        }
         final Dictionary<String, ?> props = config.getProperties();
 
         if (props == null) {
-            throw new ConfigurationException(format("%s"), format("No config found for pid %s", pPid));
+            throw new ConfigurationException(pFieldName, format("No config found for pid %s", pPid));
         }
 
         return configBuilderFactory.create(pConfigInterface, props).build();
@@ -87,14 +93,8 @@ class ConfigManager implements ManagedServiceFactory {
     private void addTopicConfig(final com.hazelcast.config.Config pConfig, final String pInstanceName, final String pPostfix, final String pPid)
             throws ConfigurationException {
         final String name = format(NAME_PATTERN, pInstanceName, pPostfix);
-        final TopicConfig topicConfig;
-        try {
-            topicConfig = DEFAULT_CONFIG.equals(pPid) ? DEFAULT_TOPIC_CONFIG :
-                    getConfig(TopicConfig.class, toTopicConfigPidName(pPostfix), pPid);
-        } catch (final IOException e) {
-            // TODO: Translate this
-            throw new ConfigurationException(name, "Configuration could not be loaded", e);
-        }
+        final TopicConfig topicConfig = DEFAULT_CONFIG.equals(pPid) ? DEFAULT_TOPIC_CONFIG :
+                getConfig(TopicConfig.class, toTopicConfigPidName(pPostfix), pPid);
         final ReliableTopicConfig reliableTopicConfig = new ReliableTopicConfig(name);
         reliableTopicConfig.setReadBatchSize(topicConfig.readBatchSize());
         reliableTopicConfig.setStatisticsEnabled(topicConfig.statisticsEnabled());

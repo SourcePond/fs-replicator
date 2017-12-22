@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static ch.sourcepond.io.fssync.distributor.hazelcast.config.ConfigManager.FACTORY_PID;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -105,19 +106,19 @@ public abstract class DistributorConfigManagerTest {
     public static final String EXPECTED_PID = "expectedPid";
     public static final String EXPECTED_INSTANCE_NAME = "TEST";
 
-    private final ConfigurationAdmin configurationAdmin = mock(ConfigurationAdmin.class);
-    private final Configuration configuration = mock(Configuration.class);
-    private final AtomicReference<com.hazelcast.config.Config> hazelcastConfig = new AtomicReference<>();
-    private final ConfigChangeObserver observer = mock(ConfigChangeObserver.class, withSettings().defaultAnswer(inv -> {
+    protected final ConfigurationAdmin configurationAdmin = mock(ConfigurationAdmin.class);
+    protected final Configuration configuration = mock(Configuration.class);
+    protected final AtomicReference<com.hazelcast.config.Config> hazelcastConfig = new AtomicReference<>();
+    protected final ConfigChangeObserver observer = mock(ConfigChangeObserver.class, withSettings().defaultAnswer(inv -> {
         hazelcastConfig.set(inv.getArgument(0));
         return null;
     }));
-    private final ConfigBuilderFactory configBuilderFactory = mock(ConfigBuilderFactory.class);
-    private final ConfigBuilder<DistributorConfig> configBuilder = mock(ConfigBuilder.class);
-    private final DistributorConfig distributorConfig = mock(DistributorConfig.class, withSettings().defaultAnswer(inv -> inv.getMethod().getDefaultValue()));
-    private final Dictionary<String, ?> properties = mock(Dictionary.class);
-    private final ConfigManager manager = new ConfigManager(observer, configBuilderFactory, configurationAdmin);
-    private final ExpectedValues expectedValues = expectedValues();
+    protected final ConfigBuilderFactory configBuilderFactory = mock(ConfigBuilderFactory.class);
+    protected final ConfigBuilder<DistributorConfig> configBuilder = mock(ConfigBuilder.class);
+    protected final DistributorConfig distributorConfig = mock(DistributorConfig.class, withSettings().defaultAnswer(inv -> inv.getMethod().getDefaultValue()));
+    protected final Dictionary<String, ?> properties = mock(Dictionary.class);
+    protected final ConfigManager manager = new ConfigManager(observer, configBuilderFactory, configurationAdmin);
+    protected final ExpectedValues expectedValues = expectedValues();
 
     protected abstract ExpectedValues expectedValues();
 
@@ -178,5 +179,10 @@ public abstract class DistributorConfigManagerTest {
         verifyTopicConfig(EXPECTED_STORE_TOPIC_NAME);
         verifyTopicConfig(EXPECTED_LOCK_TOPIC_NAME);
         verifyTopicConfig(EXPECTED_UNLOCK_TOPIC_NAME);
+    }
+
+    @Test
+    public void getName() {
+        assertEquals(FACTORY_PID, manager.getName());
     }
 }
