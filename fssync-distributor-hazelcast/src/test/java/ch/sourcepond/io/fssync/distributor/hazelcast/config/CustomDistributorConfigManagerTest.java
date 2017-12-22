@@ -327,7 +327,7 @@ public class CustomDistributorConfigManagerTest extends DistributorConfigManager
     }
 
     @Test
-    public void deletedNoSuchConfig() throws Exception {
+    public void deletedNoSuchConfig() {
         manager.deleted(EXPECTED_PID);
         verifyZeroInteractions(observer);
     }
