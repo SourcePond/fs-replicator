@@ -21,6 +21,7 @@ import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.config.ReliableTopicConfig;
 import com.hazelcast.config.RingbufferConfig;
 import com.hazelcast.config.TcpIpConfig;
+import com.hazelcast.core.DuplicateInstanceNameException;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.ConfigurationException;
@@ -161,7 +162,12 @@ class ConfigManager implements ManagedServiceFactory {
         final DistributorConfig distributorDistributorConfig = configBuilderFactory.create(DistributorConfig.class, pProperties).build();
         final com.hazelcast.config.Config config = createConfig(distributorDistributorConfig);
         configs.put(pPid, distributorDistributorConfig);
-        observer.configUpdated(config);
+
+        try {
+            observer.configUpdated(config);
+        } catch (final DuplicateInstanceNameException e) {
+            throw new ConfigurationException("instanceName", e.getMessage(), e);
+        }
     }
 
     @Override
