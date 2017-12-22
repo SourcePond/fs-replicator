@@ -19,5 +19,5 @@ public interface ConfigChangeObserver {
 
     void configUpdated(Config pConfig);
 
-    void configDeleted(String pKey);
+    void configDeleted(String pInstanceName);
 }

@@ -14,9 +14,10 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.config;
 
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilder;
-import org.junit.Assert;
+import com.hazelcast.config.Config;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InOrder;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationException;
 
@@ -24,13 +25,25 @@ import java.io.IOException;
 import java.util.Dictionary;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 public class CustomDistributorConfigManagerTest extends DistributorConfigManagerTest {
+    private static final String EXPECTED_RESPONSE_TOPIC_PROPERTY = "responseTopicConfigPID";
+    private static final String EXPECTED_DELETE_TOPIC_PROPERTY = "deleteTopicConfigPID";
+    private static final String EXPECTED_TRANSFER_TOPIC_PROPERTY = "transferTopicConfigPID";
+    private static final String EXPECTED_DISCARD_TOPIC_PROPERTY = "discardTopicConfigPID";
+    private static final String EXPECTED_STORE_TOPIC_PROPERTY = "storeTopicConfigPID";
+    private static final String EXPECTED_LOCK_TOPIC_PROPERTY = "lockTopicConfigPID";
+    private static final String EXPECTED_UNLOCK_TOPIC_PROPERTY = "unlockTopicConfigPID";
     private static final String EXPECTED_RESPONSE_TOPIC_PID = "expectedResponseTopicPid";
     private static final String EXPECTED_DELETE_TOPIC_PID = "expectedDeleteTopicPid";
     private static final String EXPECTED_TRANSFER_TOPIC_PID = "expectedTransferTopicPid";
@@ -83,6 +96,7 @@ public class CustomDistributorConfigManagerTest extends DistributorConfigManager
     private final TopicConfig storeTopicConfig = mock(TopicConfig.class);
     private final TopicConfig lockTopicConfig = mock(TopicConfig.class);
     private final TopicConfig unlockTopicConfig = mock(TopicConfig.class);
+    private final Configuration configuration = mock(Configuration.class);
 
     @Override
     protected ExpectedValues expectedValues() {
@@ -195,6 +209,8 @@ public class CustomDistributorConfigManagerTest extends DistributorConfigManager
         setupTopicConfig(storeTopicConfig);
         setupTopicConfig(lockTopicConfig);
         setupTopicConfig(unlockTopicConfig);
+        when(configurationAdmin.getConfiguration(EXPECTED_PID, null)).thenReturn(configuration);
+        when(configuration.getProperties()).thenReturn(properties);
     }
 
     private void setupTopicConfig(final TopicConfig pTopicConfig) {
@@ -228,5 +244,91 @@ public class CustomDistributorConfigManagerTest extends DistributorConfigManager
         } catch (final ConfigurationException e) {
             assertEquals("responseTopicConfigPID", e.getProperty());
         }
+    }
+
+    @Test
+    public void topicConfigDeletedIOExceptionOccurred() throws Exception {
+        manager.updated(EXPECTED_PID, properties);
+        doThrow(IOException.class).when(configurationAdmin).getConfiguration(EXPECTED_PID, null);
+
+        // No exception should be thrown here
+        manager.topicConfigDeleted(EXPECTED_RESPONSE_TOPIC_PID);
+        verifyZeroInteractions(properties, configuration);
+    }
+
+    private void topicConfigDeleted(final String pExpectedTopicPid, final String pExpectedTopicProperty) throws Exception {
+        manager.updated(EXPECTED_PID, properties);
+        manager.topicConfigDeleted(pExpectedTopicPid);
+        final InOrder order = inOrder(properties, configuration);
+        order.verify(properties).put(pExpectedTopicProperty, DistributorConfig.DEFAULT_CONFIG);
+        order.verify(configuration).update(properties);
+    }
+
+    @Test
+    public void responseTopicConfigDeleted() throws Exception {
+        topicConfigDeleted(EXPECTED_RESPONSE_TOPIC_PID, EXPECTED_RESPONSE_TOPIC_PROPERTY);
+    }
+
+    @Test
+    public void deleteTopicConfigDeleted() throws Exception {
+        topicConfigDeleted(EXPECTED_DELETE_TOPIC_PID, EXPECTED_DELETE_TOPIC_PROPERTY);
+    }
+
+    @Test
+    public void transferTopicConfigDeleted() throws Exception {
+        topicConfigDeleted(EXPECTED_TRANSFER_TOPIC_PID, EXPECTED_TRANSFER_TOPIC_PROPERTY);
+    }
+
+    @Test
+    public void discardTopicConfigDeleted() throws Exception {
+        topicConfigDeleted(EXPECTED_DISCARD_TOPIC_PID, EXPECTED_DISCARD_TOPIC_PROPERTY);
+    }
+
+    @Test
+    public void storeTopicConfigDeleted() throws Exception {
+        topicConfigDeleted(EXPECTED_STORE_TOPIC_PID, EXPECTED_STORE_TOPIC_PROPERTY);
+    }
+
+    @Test
+    public void lockTopicConfigDeleted() throws Exception {
+        topicConfigDeleted(EXPECTED_LOCK_TOPIC_PID, EXPECTED_LOCK_TOPIC_PROPERTY);
+    }
+
+    @Test
+    public void unlockTopicConfigDeleted() throws Exception {
+        topicConfigDeleted(EXPECTED_UNLOCK_TOPIC_PID, EXPECTED_UNLOCK_TOPIC_PROPERTY);
+    }
+
+    @Test
+    public void topicConfigUpdated() throws Exception {
+        manager.updated(EXPECTED_PID, properties);
+        hazelcastConfig.set(null);
+        manager.topicConfigUpdated(EXPECTED_RESPONSE_TOPIC_PID);
+        assertNotNull(hazelcastConfig.get());
+        verify(observer).configUpdated(hazelcastConfig.get());
+    }
+
+    @Test
+    public void topicConfigUpdatedIOExceptionOccurred() throws Exception {
+        manager.updated(EXPECTED_PID, properties);
+        verify(observer).configUpdated(hazelcastConfig.get());
+        doThrow(IOException.class).when(configurationAdmin).getConfiguration(EXPECTED_PID, null);
+        manager.topicConfigUpdated(EXPECTED_RESPONSE_TOPIC_PID);
+        verifyNoMoreInteractions(observer);
+    }
+
+    @Test
+    public void deleted() throws Exception {
+        manager.updated(EXPECTED_PID, properties);
+        final Config cfg = hazelcastConfig.get();
+        verify(observer).configUpdated(cfg);
+        manager.deleted(EXPECTED_PID);
+        verify(observer).configDeleted(EXPECTED_INSTANCE_NAME);
+    }
+
+    @Test
+    public void deletedNoSuchConfig() throws Exception {
+        manager.deleted(EXPECTED_PID);
+        verifyZeroInteractions(observer);
     }
 }

@@ -116,7 +116,7 @@ public abstract class DistributorConfigManagerTest {
     protected final ConfigBuilderFactory configBuilderFactory = mock(ConfigBuilderFactory.class);
     protected final ConfigBuilder<DistributorConfig> configBuilder = mock(ConfigBuilder.class);
     protected final DistributorConfig distributorConfig = mock(DistributorConfig.class, withSettings().defaultAnswer(inv -> inv.getMethod().getDefaultValue()));
-    protected final Dictionary<String, ?> properties = mock(Dictionary.class);
+    protected final Dictionary<String, Object> properties = mock(Dictionary.class);
     protected final ConfigManager manager = new ConfigManager(observer, configBuilderFactory, configurationAdmin);
     protected final ExpectedValues expectedValues = expectedValues();
 

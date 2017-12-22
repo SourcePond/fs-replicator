@@ -182,7 +182,7 @@ class ConfigManager implements ManagedServiceFactory {
                 pDistributorTopicConfigPid.equals(pDistributorConfig.unlockTopicConfigPID());
     }
 
-    void topicConfigUpdated(final String pDistributorTopicConfigPid) throws ConfigurationException {
+    void topicConfigUpdated(final String pDistributorTopicConfigPid) {
         for (final Map.Entry<String, DistributorConfig> entry : configs.entrySet()) {
             final DistributorConfig distributorConfig = entry.getValue();
             if (usesTopicConfigPid(distributorConfig, pDistributorTopicConfigPid)) {
