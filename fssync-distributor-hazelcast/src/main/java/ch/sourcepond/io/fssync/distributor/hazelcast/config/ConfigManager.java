@@ -36,7 +36,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig.DEFAULT_CONFIG;
-import static com.hazelcast.topic.TopicOverloadPolicy.BLOCK;
 import static java.lang.String.format;
 import static java.lang.reflect.Proxy.newProxyInstance;
 import static java.util.Arrays.asList;
@@ -164,7 +163,7 @@ class ConfigManager implements ManagedServiceFactory {
         configs.put(pPid, distributorDistributorConfig);
 
         try {
-            observer.configUpdated(config);
+            observer.configUpdated(config, distributorDistributorConfig);
         } catch (final DuplicateInstanceNameException e) {
             throw new ConfigurationException("instanceName", e.getMessage(), e);
         }
@@ -201,6 +200,15 @@ class ConfigManager implements ManagedServiceFactory {
         }
     }
 
+    private static void putTopicConfigPid(final String pDistributorTopicConfigPid,
+                                          final String pTopicConfigPid,
+                                          final String pPostfix,
+                                          final Dictionary<String, Object> props) {
+        if (pDistributorTopicConfigPid.equals(pTopicConfigPid)) {
+            props.put(toTopicConfigPidName(pPostfix), DEFAULT_CONFIG);
+        }
+    }
+
     void topicConfigDeleted(final String pDistributorTopicConfigPid) {
         for (final Map.Entry<String, DistributorConfig> entry : configs.entrySet()) {
             final DistributorConfig distributorConfig = entry.getValue();
@@ -209,27 +217,13 @@ class ConfigManager implements ManagedServiceFactory {
                     final Configuration configuration = configurationAdmin.getConfiguration(entry.getKey(), null);
                     final Dictionary<String, Object> props = configuration.getProperties();
 
-                    if (pDistributorTopicConfigPid.equals(distributorConfig.responseTopicConfigPID())) {
-                        props.put(toTopicConfigPidName(RESPONSE_POSTFIX), DEFAULT_CONFIG);
-                    }
-                    if (pDistributorTopicConfigPid.equals(distributorConfig.deleteTopicConfigPID())) {
-                        props.put(toTopicConfigPidName(DELETE_POSTFIX), DEFAULT_CONFIG);
-                    }
-                    if (pDistributorTopicConfigPid.equals(distributorConfig.transferTopicConfigPID())) {
-                        props.put(toTopicConfigPidName(TRANSFER_POSTFIX), DEFAULT_CONFIG);
-                    }
-                    if (pDistributorTopicConfigPid.equals(distributorConfig.discardTopicConfigPID())) {
-                        props.put(toTopicConfigPidName(DISCARD_POSTFIX), DEFAULT_CONFIG);
-                    }
-                    if (pDistributorTopicConfigPid.equals(distributorConfig.storeTopicConfigPID())) {
-                        props.put(toTopicConfigPidName(STORE_POSTFIX), DEFAULT_CONFIG);
-                    }
-                    if (pDistributorTopicConfigPid.equals(distributorConfig.lockTopicConfigPID())) {
-                        props.put(toTopicConfigPidName(LOCK_POSTFIX), DEFAULT_CONFIG);
-                    }
-                    if (pDistributorTopicConfigPid.equals(distributorConfig.unlockTopicConfigPID())) {
-                        props.put(toTopicConfigPidName(UNLOCK_POSTFIX), DEFAULT_CONFIG);
-                    }
+                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.responseTopicConfigPID(), RESPONSE_POSTFIX, props);
+                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.deleteTopicConfigPID(), DELETE_POSTFIX, props);
+                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.transferTopicConfigPID(), TRANSFER_POSTFIX, props);
+                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.discardTopicConfigPID(), DISCARD_POSTFIX, props);
+                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.storeTopicConfigPID(), STORE_POSTFIX, props);
+                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.lockTopicConfigPID(), LOCK_POSTFIX, props);
+                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.unlockTopicConfigPID(), UNLOCK_POSTFIX, props);
                     configuration.update(props);
                 } catch (final IOException e) {
                     LOG.error(e.getMessage(), e);

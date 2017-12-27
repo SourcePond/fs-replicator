@@ -20,10 +20,12 @@ import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.config.ReliableTopicConfig;
 import com.hazelcast.config.RingbufferConfig;
 import com.hazelcast.config.TcpIpConfig;
+import com.hazelcast.core.DuplicateInstanceNameException;
 import org.junit.Before;
 import org.junit.Test;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
+import org.osgi.service.cm.ConfigurationException;
 
 import java.util.Dictionary;
 import java.util.HashMap;
@@ -34,6 +36,10 @@ import static ch.sourcepond.io.fssync.distributor.hazelcast.config.ConfigManager
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
@@ -144,6 +150,18 @@ public abstract class DistributorConfigManagerTest {
         assertEquals(values.expectedBackupCount, ringbufferConfig.getBackupCount());
         assertEquals(values.expectedAsyncBackupCount, ringbufferConfig.getAsyncBackupCount());
         assertEquals(values.expectedTimeToLiveSeconds, ringbufferConfig.getTimeToLiveSeconds());
+    }
+
+    @Test
+    public void verifyDuplicateInstance() throws Exception {
+        final DuplicateInstanceNameException expected = new DuplicateInstanceNameException("");
+        doThrow(expected).when(observer).configUpdated(any(), any());
+        try {
+            manager.updated(EXPECTED_PID, properties);
+            fail("Exception expected");
+        } catch (final ConfigurationException e) {
+            assertSame(expected, e.getCause());
+        }
     }
 
     @Test

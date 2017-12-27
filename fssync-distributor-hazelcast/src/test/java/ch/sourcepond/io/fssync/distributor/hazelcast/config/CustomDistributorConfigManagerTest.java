@@ -305,13 +305,13 @@ public class CustomDistributorConfigManagerTest extends DistributorConfigManager
         hazelcastConfig.set(null);
         manager.topicConfigUpdated(EXPECTED_RESPONSE_TOPIC_PID);
         assertNotNull(hazelcastConfig.get());
-        verify(observer).configUpdated(hazelcastConfig.get());
+        verify(observer).configUpdated(hazelcastConfig.get(), distributorConfig);
     }
 
     @Test
     public void topicConfigUpdatedIOExceptionOccurred() throws Exception {
         manager.updated(EXPECTED_PID, properties);
-        verify(observer).configUpdated(hazelcastConfig.get());
+        verify(observer).configUpdated(hazelcastConfig.get(), distributorConfig);
         doThrow(IOException.class).when(configurationAdmin).getConfiguration(EXPECTED_PID, null);
         manager.topicConfigUpdated(EXPECTED_RESPONSE_TOPIC_PID);
         verifyNoMoreInteractions(observer);
@@ -321,7 +321,7 @@ public class CustomDistributorConfigManagerTest extends DistributorConfigManager
     public void deleted() throws Exception {
         manager.updated(EXPECTED_PID, properties);
         final Config cfg = hazelcastConfig.get();
-        verify(observer).configUpdated(cfg);
+        verify(observer).configUpdated(cfg, distributorConfig);
         manager.deleted(EXPECTED_PID);
         verify(observer).configDeleted(EXPECTED_INSTANCE_NAME);
     }

@@ -17,7 +17,7 @@ import com.hazelcast.config.Config;
 
 public interface ConfigChangeObserver {
 
-    void configUpdated(Config pConfig);
+    void configUpdated(Config pHazelcastConfig, DistributorConfig pDistributorConfig);
 
     void configDeleted(String pInstanceName);
 }
