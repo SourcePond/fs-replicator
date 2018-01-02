@@ -19,9 +19,9 @@ import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Lock;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Store;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Transfer;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Unlock;
-import ch.sourcepond.io.fssync.distributor.hazelcast.binding.BindingModule;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.CommonModule;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.MessageListenerRegistration;
+import ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig;
 import ch.sourcepond.io.fssync.distributor.hazelcast.lock.LockModule;
 import ch.sourcepond.io.fssync.distributor.hazelcast.request.RequestModule;
 import ch.sourcepond.io.fssync.distributor.hazelcast.response.ResponseModule;
@@ -33,19 +33,18 @@ import static com.google.inject.Key.get;
 import static com.google.inject.multibindings.Multibinder.newSetBinder;
 
 class HazelcastDistributorModule extends AbstractModule {
-    private final Config config;
+    private final DistributorConfig config;
     private final SyncTarget compoundSyncTarget;
 
-    public HazelcastDistributorModule(final Config pConfig, final SyncTarget pCompoundSyncTarget) {
+    public HazelcastDistributorModule(final DistributorConfig pConfig, final SyncTarget pCompoundSyncTarget) {
         config = pConfig;
         compoundSyncTarget = pCompoundSyncTarget;
     }
 
     @Override
     protected void configure() {
-        bind(Config.class).toInstance(config);
+        bind(DistributorConfig.class).toInstance(config);
         bind(SyncTarget.class).toInstance(compoundSyncTarget);
-        install(new BindingModule());
         install(new CommonModule());
         install(new LockModule());
         install(new RequestModule());

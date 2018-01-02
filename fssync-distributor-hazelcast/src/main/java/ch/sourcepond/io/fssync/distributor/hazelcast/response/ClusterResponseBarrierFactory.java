@@ -13,9 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.response;
 
-import ch.sourcepond.io.fssync.distributor.hazelcast.Config;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Response;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.StatusMessage;
+import ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
 
@@ -27,12 +27,12 @@ import java.io.Serializable;
  */
 public class ClusterResponseBarrierFactory {
     private final HazelcastInstance hci;
-    private final Config config;
+    private final DistributorConfig config;
     private final ITopic<StatusMessage> responseTopic;
 
     @Inject
     ClusterResponseBarrierFactory(final HazelcastInstance pHci,
-                                  final Config pConfig,
+                                  final DistributorConfig pConfig,
                                   @Response final ITopic<StatusMessage> pResponseTopic) {
         hci = pHci;
         config = pConfig;

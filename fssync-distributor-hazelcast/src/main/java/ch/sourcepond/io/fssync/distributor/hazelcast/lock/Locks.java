@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.lock;
 
+import ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.LockException;
-import ch.sourcepond.io.fssync.distributor.hazelcast.Config;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ILock;
 import org.slf4j.Logger;
@@ -39,11 +39,11 @@ class Locks implements AutoCloseable {
     private final Condition shutdownDone = lock.newCondition();
     private final Map<String, ILock> locks = new HashMap<>();
     private final HazelcastInstance hci;
-    private final Config config;
+    private final DistributorConfig config;
     private boolean shutdown;
 
     @Inject
-    public Locks(final HazelcastInstance pHci, final Config pConfig) {
+    public Locks(final HazelcastInstance pHci, final DistributorConfig pConfig) {
         hci = pHci;
         config = pConfig;
     }

@@ -13,12 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.lock;
 
-import ch.sourcepond.io.fssync.distributor.hazelcast.exception.LockException;
-import ch.sourcepond.io.fssync.distributor.hazelcast.exception.UnlockException;
-import ch.sourcepond.io.fssync.distributor.hazelcast.Config;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Lock;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Unlock;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.DistributionMessage;
+import ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig;
+import ch.sourcepond.io.fssync.distributor.hazelcast.exception.LockException;
+import ch.sourcepond.io.fssync.distributor.hazelcast.exception.UnlockException;
 import ch.sourcepond.io.fssync.distributor.hazelcast.response.ClusterResponseBarrierFactory;
 import ch.sourcepond.io.fssync.distributor.hazelcast.response.ResponseException;
 import com.hazelcast.core.ITopic;
@@ -38,12 +38,12 @@ public class LockManager implements AutoCloseable {
     private final Locks locks;
     private final ITopic<DistributionMessage> lockRequestTopic;
     private final ITopic<DistributionMessage> unlockRequestTopic;
-    private final Config config;
+    private final DistributorConfig config;
 
     @Inject
     public LockManager(final ClusterResponseBarrierFactory pFactory,
                        final Locks pLocks,
-                       final Config pConfig,
+                       final DistributorConfig pConfig,
                        @Lock final ITopic<DistributionMessage> pLockRequestTopic,
                        @Unlock final ITopic<DistributionMessage> pUnlockRequestTopic) {
         factory = pFactory;

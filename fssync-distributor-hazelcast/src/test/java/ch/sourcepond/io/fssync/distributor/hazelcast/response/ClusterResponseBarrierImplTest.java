@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.response;
 
-import ch.sourcepond.io.fssync.distributor.hazelcast.Config;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.StatusMessage;
+import ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
@@ -59,7 +59,7 @@ public class ClusterResponseBarrierImplTest {
     private static final TimeUnit EXPECTED_UNIT = MILLISECONDS;
     private final ITopic<String> requestTopic = mock(ITopic.class);
     private final ITopic<StatusMessage> responseTopic = mock(ITopic.class);
-    private final Config config = mock(Config.class);
+    private final DistributorConfig config = mock(DistributorConfig.class);
     private final HazelcastInstance hci = mock(HazelcastInstance.class);
     private final Member member = mock(Member.class);
     private final Cluster cluster = mock(Cluster.class);

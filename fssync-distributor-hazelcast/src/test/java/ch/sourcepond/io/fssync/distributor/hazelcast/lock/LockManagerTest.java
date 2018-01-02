@@ -13,10 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.lock;
 
+import ch.sourcepond.io.fssync.distributor.hazelcast.common.DistributionMessage;
+import ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.LockException;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.UnlockException;
-import ch.sourcepond.io.fssync.distributor.hazelcast.Config;
-import ch.sourcepond.io.fssync.distributor.hazelcast.common.DistributionMessage;
 import ch.sourcepond.io.fssync.distributor.hazelcast.response.ClusterResponseBarrier;
 import ch.sourcepond.io.fssync.distributor.hazelcast.response.ClusterResponseBarrierFactory;
 import ch.sourcepond.io.fssync.distributor.hazelcast.response.ResponseException;
@@ -47,14 +47,13 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 public class LockManagerTest {
     private static final TimeUnit EXPECTED_TIME_UNIT = MILLISECONDS;
     private static final long EXPECTED_TIMEOUT = 500;
     private final Locks locks = mock(Locks.class);
-    private final Config config = mock(Config.class);
+    private final DistributorConfig config = mock(DistributorConfig.class);
     private final ClusterResponseBarrier<DistributionMessage> lockListener = mock(ClusterResponseBarrier.class);
     private final ClusterResponseBarrier<DistributionMessage> unlockListener = mock(ClusterResponseBarrier.class);
     private final ClusterResponseBarrierFactory factory = mock(ClusterResponseBarrierFactory.class);

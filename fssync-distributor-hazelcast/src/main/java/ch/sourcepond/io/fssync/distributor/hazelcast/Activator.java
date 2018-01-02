@@ -16,6 +16,7 @@ package ch.sourcepond.io.fssync.distributor.hazelcast;
 import ch.sourcepond.io.fssync.compound.BaseActivator;
 import ch.sourcepond.io.fssync.compound.CompoundServiceFactory;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
+import ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilderFactory;
 import org.osgi.framework.BundleActivator;
@@ -34,7 +35,7 @@ import static com.google.inject.Guice.createInjector;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.osgi.framework.Constants.SERVICE_PID;
 
-public class Activator extends BaseActivator<HazelcastDistributor, Config> {
+public class Activator extends BaseActivator<HazelcastDistributor, DistributorConfig> {
     static final String FACTORY_PID = "ch.sourcepond.io.fssync.distributor.hazelcast.configBuilderFactory";
     private final CompoundServiceFactory compoundServiceFactory;
     private final ExecutorService executor;
@@ -71,13 +72,13 @@ public class Activator extends BaseActivator<HazelcastDistributor, Config> {
     }
 
     @Override
-    protected String determineUniqueId(final Config pConfig) {
-        return pConfig.existingInstanceName();
+    protected String determineUniqueId(final DistributorConfig pConfig) {
+        return pConfig.instanceName();
     }
 
     @Override
-    protected Class<Config> getConfigAnnotation() {
-        return Config.class;
+    protected Class<DistributorConfig> getConfigAnnotation() {
+        return DistributorConfig.class;
     }
 
     @Override
@@ -86,7 +87,7 @@ public class Activator extends BaseActivator<HazelcastDistributor, Config> {
     }
 
     @Override
-    protected HazelcastDistributor createService(final Config pConfig) {
+    protected HazelcastDistributor createService(final DistributorConfig pConfig) {
         return createInjector(
                 new HazelcastDistributorModule(pConfig, compoundSyncTarget)).
                 getInstance(HazelcastDistributor.class);

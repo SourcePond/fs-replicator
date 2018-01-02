@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.response;
 
-import ch.sourcepond.io.fssync.distributor.hazelcast.Config;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.StatusMessage;
+import ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
@@ -48,12 +48,12 @@ final class ClusterResponseBarrierImpl<T extends Serializable> implements Messag
     private final HazelcastInstance hci;
     private final ITopic<StatusMessage> responseTopic;
     private final ITopic<T> requestTopic;
-    private final Config config;
+    private final DistributorConfig config;
     private final Map<Member, Object> responses = new HashMap<>();
 
     ClusterResponseBarrierImpl(final String pPath,
                                final HazelcastInstance pHci,
-                               final Config pConfig,
+                               final DistributorConfig pConfig,
                                final ITopic<StatusMessage> pResponseTopic,
                                final ITopic<T> pRequestTopic) {
         path = pPath;

@@ -16,6 +16,7 @@ package ch.sourcepond.io.fssync.distributor.hazelcast;
 import ch.sourcepond.io.fssync.compound.Configurable;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.MessageListenerRegistration;
+import ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.DeletionException;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.DiscardException;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.LockException;
@@ -33,7 +34,7 @@ import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 
-final class HazelcastDistributor extends Configurable<Config> implements Distributor {
+final class HazelcastDistributor extends Configurable<DistributorConfig> implements Distributor {
     static final byte[] EMPTY_CHECKSUM = new byte[0];
     private final IMap<String, byte[]> checksums;
     private final LockManager lockManager;

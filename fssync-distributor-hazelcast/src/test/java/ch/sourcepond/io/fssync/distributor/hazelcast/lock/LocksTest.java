@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.lock;
 
+import ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.LockException;
-import ch.sourcepond.io.fssync.distributor.hazelcast.Config;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ILock;
 import org.junit.After;
@@ -44,7 +44,7 @@ public class LocksTest {
     private final ScheduledExecutorService executor = newSingleThreadScheduledExecutor();
     private final HazelcastInstance hci = mock(HazelcastInstance.class);
     private final ILock globalLock = mock(ILock.class);
-    private final Config config = mock(Config.class);
+    private final DistributorConfig config = mock(DistributorConfig.class);
     private final CountDownLatch latch = new CountDownLatch(1);
     private final Locks locks = new Locks(hci, config);
     private volatile Exception expectedException;
