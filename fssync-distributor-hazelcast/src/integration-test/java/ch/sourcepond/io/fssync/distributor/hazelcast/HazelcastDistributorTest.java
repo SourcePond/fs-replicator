@@ -18,14 +18,11 @@ import ch.sourcepond.io.fssync.target.api.NodeInfo;
 import ch.sourcepond.io.fssync.target.api.SyncPath;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
-import org.mockito.Mockito;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
@@ -43,11 +40,8 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 
 import static java.lang.Thread.currentThread;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.ops4j.pax.exam.CoreOptions.bootDelegationPackage;
@@ -62,9 +56,9 @@ public class HazelcastDistributorTest {
     private static final String FACTORY_PID = "ch.sourcepond.io.fssync.distributor.hazelcast.Config";
     private static final ArgumentMatcher<NodeInfo> NODE_MATCHER = inv -> inv.isLocalNode() && inv.getLocal().equals(inv.getSender());
     private static final ArgumentMatcher<SyncPath> PATH_MATCHER = inv -> EXPECTED_SYNC_DIR.equals(inv.getSyncDir()) && EXPECTED_PATH.equals(inv.getPath());
-    private static final byte[] ARR_1 = new byte[] {1, 2, 3};
-    private static final byte[] ARR_2 = new byte[] {4, 5, 6};
-    private static final byte[] ARR_3 = new byte[] {7, 8, 9};
+    private static final byte[] ARR_1 = new byte[]{1, 2, 3};
+    private static final byte[] ARR_2 = new byte[]{4, 5, 6};
+    private static final byte[] ARR_3 = new byte[]{7, 8, 9};
 
     @Inject
     private BundleContext context;

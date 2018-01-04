@@ -24,7 +24,6 @@ import com.hazelcast.osgi.HazelcastOSGiService;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
-import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.ManagedServiceFactory;
@@ -35,11 +34,9 @@ import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
-import static ch.sourcepond.io.fssync.distributor.hazelcast.config.ServiceListenerImpl.registerListener;
+import static ch.sourcepond.io.fssync.compound.ServiceListenerRegistrar.registerListener;
 import static com.google.inject.Guice.createInjector;
-import static java.lang.String.format;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
-import static org.osgi.framework.Constants.OBJECTCLASS;
 
 public class Activator implements BundleActivator {
     private final Map<String, HazelcastDistributor> distributors = new HashMap<>();

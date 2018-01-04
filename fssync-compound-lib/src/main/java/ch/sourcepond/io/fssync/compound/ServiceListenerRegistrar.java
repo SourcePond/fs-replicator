@@ -11,14 +11,13 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.fssync.distributor.hazelcast.config;
+package ch.sourcepond.io.fssync.compound;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
-import org.osgi.service.cm.ConfigurationAdmin;
 
 import java.util.function.Consumer;
 
@@ -28,12 +27,12 @@ import static org.osgi.framework.ServiceEvent.MODIFIED_ENDMATCH;
 import static org.osgi.framework.ServiceEvent.REGISTERED;
 import static org.osgi.framework.ServiceEvent.UNREGISTERING;
 
-class ServiceListenerImpl<T> implements ServiceListener {
+public class ServiceListenerRegistrar<T> implements ServiceListener {
     private final BundleContext bundleContext;
     private final Consumer<T> registration;
     private final Runnable unregistration;
 
-    public ServiceListenerImpl(
+    private ServiceListenerRegistrar(
             final BundleContext pBundleContext,
             final Consumer<T> pRegistration,
             final Runnable pUnregistration) {
@@ -65,7 +64,7 @@ class ServiceListenerImpl<T> implements ServiceListener {
                                             final Consumer<T> pRegistration,
                                             final Runnable pUnregistration,
                                             final Class<T> pServiceInterface) {
-        final ServiceListener listener = new ServiceListenerImpl<>(pBundleContext, pRegistration, pUnregistration);
+        final ServiceListener listener = new ServiceListenerRegistrar<>(pBundleContext, pRegistration, pUnregistration);
         try {
             pBundleContext.addServiceListener(listener, format("(%s=%s)", OBJECTCLASS, pServiceInterface.getName()));
             for (final ServiceReference<T> reference : pBundleContext.getServiceReferences(pServiceInterface, null)) {
