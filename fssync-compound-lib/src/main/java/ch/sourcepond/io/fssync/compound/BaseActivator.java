@@ -71,7 +71,7 @@ public abstract class BaseActivator<T extends Configurable<C>, C extends Annotat
 
     protected abstract String getUniqueIdName();
 
-    protected abstract String determineUniqueId(C pConfig);
+    protected abstract String getUniqueId(C pConfig);
 
     protected abstract Class<C> getConfigAnnotation();
 
@@ -85,7 +85,7 @@ public abstract class BaseActivator<T extends Configurable<C>, C extends Annotat
 
         synchronized (uniqueIdToPid) {
             final String uniqueIdName = getUniqueIdName();
-            final String uniqueId = determineUniqueId(config);
+            final String uniqueId = getUniqueId(config);
             final String pid = uniqueIdToPid.get(uniqueId);
             if (pid != null && !pid.equals(pPid)) {
                 throw new ConfigurationException(uniqueIdName, format("'%s' with value %s is already used by PID %s", uniqueIdName, uniqueId, pid));
@@ -106,7 +106,7 @@ public abstract class BaseActivator<T extends Configurable<C>, C extends Annotat
             final T service = services.remove(pPid);
             if (service != null) {
                 service.close();
-                uniqueIdToPid.remove(determineUniqueId(service.getConfig()));
+                uniqueIdToPid.remove(getUniqueId(service.getConfig()));
             }
         }
     }

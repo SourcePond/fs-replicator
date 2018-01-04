@@ -13,6 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.config;
 
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Delete;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Discard;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Lock;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Response;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Store;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Transfer;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Unlock;
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilderFactory;
 import com.hazelcast.config.GroupConfig;
 import com.hazelcast.config.JoinConfig;
@@ -32,6 +39,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Dictionary;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -39,6 +47,7 @@ import static ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorCo
 import static java.lang.String.format;
 import static java.lang.reflect.Proxy.newProxyInstance;
 import static java.util.Arrays.asList;
+import static java.util.Objects.requireNonNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
 class ConfigManager implements ManagedServiceFactory {
@@ -46,33 +55,23 @@ class ConfigManager implements ManagedServiceFactory {
     private static final Logger LOG = getLogger(ConfigManager.class);
     private static final TopicConfig DEFAULT_TOPIC_CONFIG = (TopicConfig) newProxyInstance(TopicConfig.class.getClassLoader(),
             new Class<?>[]{TopicConfig.class}, (proxy, method, args) -> method.getDefaultValue());
-    private static final String NAME_PATTERN = "__fssync_distributor.%s.%s";
     private static final String TOPIC_CONFIG_PID_POSTFIX = "TopicConfigPID";
-    private static final String RESPONSE_POSTFIX = "response";
-    private static final String DELETE_POSTFIX = "delete";
-    private static final String TRANSFER_POSTFIX = "transfer";
-    private static final String DISCARD_POSTFIX = "discard";
-    private static final String STORE_POSTFIX = "store";
-    private static final String LOCK_POSTFIX = "lock";
-    private static final String UNLOCK_POSTFIX = "unlock";
     private final ConcurrentMap<String, DistributorConfig> configs = new ConcurrentHashMap<>();
-    private final ConfigChangeObserver observer;
+    private final Activator observer;
     private final ConfigBuilderFactory configBuilderFactory;
-    private final ConfigurationAdmin configurationAdmin;
+    private volatile ConfigurationAdmin configurationAdmin;
 
-    public ConfigManager(final ConfigChangeObserver pObserver,
-                         final ConfigBuilderFactory pConfigBuilderFactory,
-                         final ConfigurationAdmin pConfigurationAdmin) {
+    public ConfigManager(final Activator pObserver,
+                         final ConfigBuilderFactory pConfigBuilderFactory) {
         observer = pObserver;
         configBuilderFactory = pConfigBuilderFactory;
-        configurationAdmin = pConfigurationAdmin;
     }
 
     private <T extends Annotation> T getConfig(final Class<T> pConfigInterface, final String pFieldName, final String pPid)
             throws ConfigurationException {
         final Configuration config;
         try {
-            config = configurationAdmin.getConfiguration(pPid, null);
+            config = requireNonNull(configurationAdmin, "ConfigurationAdmin service not set!").getConfiguration(pPid, null);
         } catch (final IOException e) {
             // TODO: Translate this
             throw new ConfigurationException(pFieldName, "Configuration could not be loaded", e);
@@ -90,16 +89,15 @@ class ConfigManager implements ManagedServiceFactory {
         return format("%s%s", pPostfix, TOPIC_CONFIG_PID_POSTFIX);
     }
 
-    private void addTopicConfig(final com.hazelcast.config.Config pConfig, final String pInstanceName, final String pPostfix, final String pPid)
+    private void addTopicConfig(final com.hazelcast.config.Config pConfig, final String pName, final String pPid)
             throws ConfigurationException {
-        final String name = format(NAME_PATTERN, pInstanceName, pPostfix);
         final TopicConfig topicConfig = DEFAULT_CONFIG.equals(pPid) ? DEFAULT_TOPIC_CONFIG :
-                getConfig(TopicConfig.class, toTopicConfigPidName(pPostfix), pPid);
-        final ReliableTopicConfig reliableTopicConfig = new ReliableTopicConfig(name);
+                getConfig(TopicConfig.class, toTopicConfigPidName(pName), pPid);
+        final ReliableTopicConfig reliableTopicConfig = new ReliableTopicConfig(pName);
         reliableTopicConfig.setReadBatchSize(topicConfig.readBatchSize());
         reliableTopicConfig.setStatisticsEnabled(topicConfig.statisticsEnabled());
 
-        final RingbufferConfig ringbufferConfig = new RingbufferConfig(name);
+        final RingbufferConfig ringbufferConfig = new RingbufferConfig(pName);
         ringbufferConfig.setCapacity(topicConfig.capacity());
         ringbufferConfig.setBackupCount(topicConfig.backupCount());
         ringbufferConfig.setAsyncBackupCount(topicConfig.asyncBackupCount());
@@ -110,13 +108,13 @@ class ConfigManager implements ManagedServiceFactory {
     }
 
     private void addTopicConfig(final com.hazelcast.config.Config config, DistributorConfig instance) throws ConfigurationException {
-        addTopicConfig(config, instance.instanceName(), RESPONSE_POSTFIX, instance.responseTopicConfigPID());
-        addTopicConfig(config, instance.instanceName(), DELETE_POSTFIX, instance.deleteTopicConfigPID());
-        addTopicConfig(config, instance.instanceName(), TRANSFER_POSTFIX, instance.transferTopicConfigPID());
-        addTopicConfig(config, instance.instanceName(), DISCARD_POSTFIX, instance.discardTopicConfigPID());
-        addTopicConfig(config, instance.instanceName(), STORE_POSTFIX, instance.storeTopicConfigPID());
-        addTopicConfig(config, instance.instanceName(), LOCK_POSTFIX, instance.lockTopicConfigPID());
-        addTopicConfig(config, instance.instanceName(), UNLOCK_POSTFIX, instance.unlockTopicConfigPID());
+        addTopicConfig(config, Response.NAME, instance.responseTopicConfigPID());
+        addTopicConfig(config, Delete.NAME, instance.deleteTopicConfigPID());
+        addTopicConfig(config, Transfer.NAME, instance.transferTopicConfigPID());
+        addTopicConfig(config, Discard.NAME, instance.discardTopicConfigPID());
+        addTopicConfig(config, Store.NAME, instance.storeTopicConfigPID());
+        addTopicConfig(config, Lock.NAME, instance.lockTopicConfigPID());
+        addTopicConfig(config, Unlock.NAME, instance.unlockTopicConfigPID());
     }
 
     @Override
@@ -217,18 +215,22 @@ class ConfigManager implements ManagedServiceFactory {
                     final Configuration configuration = configurationAdmin.getConfiguration(entry.getKey(), null);
                     final Dictionary<String, Object> props = configuration.getProperties();
 
-                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.responseTopicConfigPID(), RESPONSE_POSTFIX, props);
-                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.deleteTopicConfigPID(), DELETE_POSTFIX, props);
-                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.transferTopicConfigPID(), TRANSFER_POSTFIX, props);
-                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.discardTopicConfigPID(), DISCARD_POSTFIX, props);
-                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.storeTopicConfigPID(), STORE_POSTFIX, props);
-                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.lockTopicConfigPID(), LOCK_POSTFIX, props);
-                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.unlockTopicConfigPID(), UNLOCK_POSTFIX, props);
+                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.responseTopicConfigPID(), Response.NAME, props);
+                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.deleteTopicConfigPID(), Delete.NAME, props);
+                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.transferTopicConfigPID(), Transfer.NAME, props);
+                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.discardTopicConfigPID(), Discard.NAME, props);
+                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.storeTopicConfigPID(), Store.NAME, props);
+                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.lockTopicConfigPID(), Lock.NAME, props);
+                    putTopicConfigPid(pDistributorTopicConfigPid, distributorConfig.unlockTopicConfigPID(), Unlock.NAME, props);
                     configuration.update(props);
                 } catch (final IOException e) {
                     LOG.error(e.getMessage(), e);
                 }
             }
         }
+    }
+
+    public void setConfigAdmin(final ConfigurationAdmin configAdmin) {
+        configurationAdmin = configAdmin;
     }
 }

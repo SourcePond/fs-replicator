@@ -35,7 +35,7 @@ public class TestActivator extends BaseActivator<DefaultTestService, TestConfig>
     }
 
     @Override
-    protected String determineUniqueId(final TestConfig pConfig) {
+    protected String getUniqueId(final TestConfig pConfig) {
         return pConfig.someString();
     }
 

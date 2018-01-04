@@ -25,4 +25,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Qualifier
 public @interface Transfer {
+    String NAME = "transfer";
 }

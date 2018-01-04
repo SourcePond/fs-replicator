@@ -62,7 +62,7 @@ public abstract class BaseActivatorTest<S extends Configurable<C>, T extends Bas
 
         // There must be a corresponding method
         getConfigAnnotation().getMethod(activator.getUniqueIdName());
-        assertEquals(EXPECTED_UNIQUE_ID, activator.determineUniqueId(config));
+        assertEquals(EXPECTED_UNIQUE_ID, activator.getUniqueId(config));
     }
 
     @Test

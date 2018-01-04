@@ -13,6 +13,14 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.config;
 
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Delete;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Discard;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Lock;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Response;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Store;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Transfer;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Unlock;
+
 public class DefaultDistributorConfigManagerTest extends DistributorConfigManagerTest {
 
     @Override
@@ -37,34 +45,34 @@ public class DefaultDistributorConfigManagerTest extends DistributorConfigManage
         responseTopicValues.expectedAsyncBackupCount = 0;
         responseTopicValues.expectedBackupCount = 1;
         responseTopicValues.expectedCapacity = 2000;
-        responseTopicValues.expectedName = EXPECTED_RESPONSE_TOPIC_NAME;
+        responseTopicValues.expectedName = Response.NAME;
         responseTopicValues.expectedTimeToLiveSeconds = 300;
 
         final ExpectedTopicValues deleteTopicValues = responseTopicValues.clone();
-        deleteTopicValues.expectedName = EXPECTED_DELETE_TOPIC_NAME;
+        deleteTopicValues.expectedName = Delete.NAME;
 
         final ExpectedTopicValues transferTopicValues = responseTopicValues.clone();
-        deleteTopicValues.expectedName = EXPECTED_TRANSFER_TOPIC_NAME;
+        deleteTopicValues.expectedName = Transfer.NAME;
 
         final ExpectedTopicValues discardTopicValues = responseTopicValues.clone();
-        deleteTopicValues.expectedName = EXPECTED_DISCARD_TOPIC_NAME;
+        deleteTopicValues.expectedName = Discard.NAME;
 
         final ExpectedTopicValues storeTopicValues = responseTopicValues.clone();
-        deleteTopicValues.expectedName = EXPECTED_STORE_TOPIC_NAME;
+        deleteTopicValues.expectedName = Store.NAME;
 
         final ExpectedTopicValues lockTopicValues = responseTopicValues.clone();
-        deleteTopicValues.expectedName = EXPECTED_LOCK_TOPIC_NAME;
+        deleteTopicValues.expectedName = Lock.NAME;
 
         final ExpectedTopicValues unlockTopicValues = responseTopicValues.clone();
-        deleteTopicValues.expectedName = EXPECTED_UNLOCK_TOPIC_NAME;
+        deleteTopicValues.expectedName = Unlock.NAME;
 
-        values.expectedTopicValues.put(EXPECTED_RESPONSE_TOPIC_NAME, responseTopicValues);
-        values.expectedTopicValues.put(EXPECTED_DELETE_TOPIC_NAME, deleteTopicValues);
-        values.expectedTopicValues.put(EXPECTED_TRANSFER_TOPIC_NAME, transferTopicValues);
-        values.expectedTopicValues.put(EXPECTED_DISCARD_TOPIC_NAME, discardTopicValues);
-        values.expectedTopicValues.put(EXPECTED_STORE_TOPIC_NAME, storeTopicValues);
-        values.expectedTopicValues.put(EXPECTED_LOCK_TOPIC_NAME, lockTopicValues);
-        values.expectedTopicValues.put(EXPECTED_UNLOCK_TOPIC_NAME, unlockTopicValues);
+        values.expectedTopicValues.put(Response.NAME, responseTopicValues);
+        values.expectedTopicValues.put(Delete.NAME, deleteTopicValues);
+        values.expectedTopicValues.put(Transfer.NAME, transferTopicValues);
+        values.expectedTopicValues.put(Discard.NAME, discardTopicValues);
+        values.expectedTopicValues.put(Store.NAME, storeTopicValues);
+        values.expectedTopicValues.put(Lock.NAME, lockTopicValues);
+        values.expectedTopicValues.put(Unlock.NAME, unlockTopicValues);
 
         return values;
     }

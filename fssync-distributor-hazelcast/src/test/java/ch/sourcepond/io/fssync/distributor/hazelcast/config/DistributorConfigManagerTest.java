@@ -13,6 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.config;
 
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Delete;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Discard;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Lock;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Response;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Store;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Transfer;
+import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Unlock;
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilder;
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilderFactory;
 import com.hazelcast.config.MulticastConfig;
@@ -102,20 +109,13 @@ public abstract class DistributorConfigManagerTest {
         final Map<String, ExpectedTopicValues> expectedTopicValues = new HashMap<>();
     }
 
-    public static final String EXPECTED_RESPONSE_TOPIC_NAME = "__fssync_distributor.TEST.response";
-    public static final String EXPECTED_DELETE_TOPIC_NAME = "__fssync_distributor.TEST.delete";
-    public static final String EXPECTED_TRANSFER_TOPIC_NAME = "__fssync_distributor.TEST.transfer";
-    public static final String EXPECTED_DISCARD_TOPIC_NAME = "__fssync_distributor.TEST.discard";
-    public static final String EXPECTED_STORE_TOPIC_NAME = "__fssync_distributor.TEST.store";
-    public static final String EXPECTED_LOCK_TOPIC_NAME = "__fssync_distributor.TEST.lock";
-    public static final String EXPECTED_UNLOCK_TOPIC_NAME = "__fssync_distributor.TEST.unlock";
     public static final String EXPECTED_PID = "expectedPid";
     public static final String EXPECTED_INSTANCE_NAME = "TEST";
 
     protected final ConfigurationAdmin configurationAdmin = mock(ConfigurationAdmin.class);
     protected final Configuration configuration = mock(Configuration.class);
     protected final AtomicReference<com.hazelcast.config.Config> hazelcastConfig = new AtomicReference<>();
-    protected final ConfigChangeObserver observer = mock(ConfigChangeObserver.class, withSettings().defaultAnswer(inv -> {
+    protected final Activator observer = mock(Activator.class, withSettings().defaultAnswer(inv -> {
         hazelcastConfig.set(inv.getArgument(0));
         return null;
     }));
@@ -123,13 +123,14 @@ public abstract class DistributorConfigManagerTest {
     protected final ConfigBuilder<DistributorConfig> configBuilder = mock(ConfigBuilder.class);
     protected final DistributorConfig distributorConfig = mock(DistributorConfig.class, withSettings().defaultAnswer(inv -> inv.getMethod().getDefaultValue()));
     protected final Dictionary<String, Object> properties = mock(Dictionary.class);
-    protected final ConfigManager manager = new ConfigManager(observer, configBuilderFactory, configurationAdmin);
+    protected final ConfigManager manager = new ConfigManager(observer, configBuilderFactory);
     protected final ExpectedValues expectedValues = expectedValues();
 
     protected abstract ExpectedValues expectedValues();
 
     @Before
     public void setup() throws Exception {
+        manager.setConfigAdmin(configurationAdmin);
         when(distributorConfig.instanceName()).thenReturn(EXPECTED_INSTANCE_NAME);
         when(configBuilderFactory.create(DistributorConfig.class, properties)).thenReturn(configBuilder);
         when(configBuilder.build()).thenReturn(distributorConfig);
@@ -190,13 +191,13 @@ public abstract class DistributorConfigManagerTest {
         assertEquals(expectedValues.expectedTcpipEnabled, tcpIpConfig.isEnabled());
         assertArrayEquals(expectedValues.expectedTcpipMembers, tcpIpConfig.getMembers().toArray());
 
-        verifyTopicConfig(EXPECTED_RESPONSE_TOPIC_NAME);
-        verifyTopicConfig(EXPECTED_DELETE_TOPIC_NAME);
-        verifyTopicConfig(EXPECTED_TRANSFER_TOPIC_NAME);
-        verifyTopicConfig(EXPECTED_DISCARD_TOPIC_NAME);
-        verifyTopicConfig(EXPECTED_STORE_TOPIC_NAME);
-        verifyTopicConfig(EXPECTED_LOCK_TOPIC_NAME);
-        verifyTopicConfig(EXPECTED_UNLOCK_TOPIC_NAME);
+        verifyTopicConfig(Response.NAME);
+        verifyTopicConfig(Delete.NAME);
+        verifyTopicConfig(Transfer.NAME);
+        verifyTopicConfig(Discard.NAME);
+        verifyTopicConfig(Store.NAME);
+        verifyTopicConfig(Lock.NAME);
+        verifyTopicConfig(Unlock.NAME);
     }
 
     @Test

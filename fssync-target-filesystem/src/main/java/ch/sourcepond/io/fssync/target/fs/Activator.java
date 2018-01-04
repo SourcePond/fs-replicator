@@ -57,7 +57,7 @@ public class Activator extends BaseActivator<TargetDirectory, Config> {
     }
 
     @Override
-    protected String determineUniqueId(Config pConfig) {
+    protected String getUniqueId(Config pConfig) {
         return pConfig.syncDir();
     }
 
