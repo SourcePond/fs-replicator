@@ -15,6 +15,7 @@ package ch.sourcepond.io.fssync.distributor.hazelcast;
 
 import ch.sourcepond.io.fssync.compound.Configurable;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
+import ch.sourcepond.io.fssync.distributor.hazelcast.common.MessageListenerRegistration;
 import ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.DeletionException;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.DiscardException;
@@ -29,6 +30,7 @@ import com.hazelcast.core.IMap;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 
@@ -37,14 +39,17 @@ public class HazelcastDistributor extends Configurable<DistributorConfig> implem
     private final IMap<String, byte[]> checksums;
     private final LockManager lockManager;
     private final RequestDistributor requestDistributor;
+    private final Set<MessageListenerRegistration> listenerRegistrations;
 
     @Inject
     HazelcastDistributor(final IMap<String, byte[]> pChecksums,
                          final LockManager pLockManager,
-                         final RequestDistributor pRequestDistributor) {
+                         final RequestDistributor pRequestDistributor,
+                         final Set<MessageListenerRegistration> pListenerRegistrations) {
         checksums = pChecksums;
         lockManager = pLockManager;
         requestDistributor = pRequestDistributor;
+        listenerRegistrations = pListenerRegistrations;
     }
 
     @Override
@@ -97,6 +102,7 @@ public class HazelcastDistributor extends Configurable<DistributorConfig> implem
     @Override
     public void close() {
         super.close();
+        listenerRegistrations.forEach(r -> r.close());
         lockManager.close();
     }
 }

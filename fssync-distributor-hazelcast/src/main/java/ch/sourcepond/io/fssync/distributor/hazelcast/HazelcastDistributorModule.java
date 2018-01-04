@@ -22,6 +22,7 @@ import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Transfer;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Unlock;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.CommonModule;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.DistributionMessage;
+import ch.sourcepond.io.fssync.distributor.hazelcast.common.MessageListenerRegistration;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.StatusMessage;
 import ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig;
 import ch.sourcepond.io.fssync.distributor.hazelcast.lock.LockModule;
@@ -30,7 +31,9 @@ import ch.sourcepond.io.fssync.distributor.hazelcast.request.TransferRequest;
 import ch.sourcepond.io.fssync.distributor.hazelcast.response.ResponseModule;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import com.google.inject.AbstractModule;
+import com.google.inject.Key;
 import com.google.inject.Provides;
+import com.google.inject.multibindings.Multibinder;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
@@ -38,6 +41,8 @@ import com.hazelcast.core.ITopic;
 
 import javax.inject.Singleton;
 
+import static com.google.inject.Key.get;
+import static com.google.inject.multibindings.Multibinder.newSetBinder;
 import static com.hazelcast.core.Hazelcast.newHazelcastInstance;
 
 public class HazelcastDistributorModule extends AbstractModule {
@@ -60,6 +65,15 @@ public class HazelcastDistributorModule extends AbstractModule {
         install(new LockModule());
         install(new RequestModule());
         install(new ResponseModule());
+
+        Multibinder<MessageListenerRegistration> registrations = newSetBinder(binder(), MessageListenerRegistration.class);
+        registrations.addBinding().to(get(MessageListenerRegistration.class, Lock.class));
+        registrations.addBinding().to(get(MessageListenerRegistration.class, Unlock.class));
+        registrations.addBinding().to(get(MessageListenerRegistration.class, Delete.class));
+        registrations.addBinding().to(get(MessageListenerRegistration.class, Transfer.class));
+        registrations.addBinding().to(get(MessageListenerRegistration.class, Discard.class));
+        registrations.addBinding().to(get(MessageListenerRegistration.class, Store.class));
+
         bind(HazelcastDistributor.class);
     }
 
@@ -114,7 +128,7 @@ public class HazelcastDistributorModule extends AbstractModule {
     @Provides
     @Singleton
     @Unlock
-    public ITopic<DistributionMessage> unlockRequestTopic(final HazelcastInstance pHci) {
+    ITopic<DistributionMessage> unlockRequestTopic(final HazelcastInstance pHci) {
         return pHci.getTopic(Unlock.NAME);
     }
 

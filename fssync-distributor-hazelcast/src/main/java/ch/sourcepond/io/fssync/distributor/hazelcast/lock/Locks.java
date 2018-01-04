@@ -97,7 +97,11 @@ class Locks implements AutoCloseable {
         } catch (final InterruptedException e) {
             currentThread().interrupt();
         } finally {
-            lock.unlock();
+            try {
+                hci.shutdown();
+            } finally {
+                lock.unlock();
+            }
         }
     }
 }

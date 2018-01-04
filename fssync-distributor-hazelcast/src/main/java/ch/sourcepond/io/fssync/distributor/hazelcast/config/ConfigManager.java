@@ -125,6 +125,7 @@ class ConfigManager implements ManagedServiceFactory {
 
     private com.hazelcast.config.Config createConfig(final DistributorConfig pDistributorConfig) throws ConfigurationException {
         final com.hazelcast.config.Config config = new com.hazelcast.config.Config();
+        config.setClassLoader(getClass().getClassLoader());
         config.setInstanceName(pDistributorConfig.instanceName());
         config.setGroupConfig(new GroupConfig().setName(pDistributorConfig.instanceName()));
 

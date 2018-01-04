@@ -100,6 +100,13 @@ public class Activator implements BundleActivator {
         registerListener(pBundleContext, this::setHazelcastOSGiService, this::unsetHazelcastOSGiService, HazelcastOSGiService.class);
     }
 
+    @Override
+    public void stop(final BundleContext bundleContext) {
+        synchronized (distributors) {
+            distributors.values().forEach(distributor -> distributor.close());
+        }
+    }
+
     private void setConfigAdmin(final ConfigurationAdmin pConfigAdmin) {
         configurationAdmin = pConfigAdmin;
         registerConfigManager();
@@ -133,13 +140,6 @@ public class Activator implements BundleActivator {
             configManager.setConfigAdmin(configurationAdmin);
             configManagerRegistration = register(configManager, ConfigManager.FACTORY_PID);
             topicConfigManagerRegistration = register(topicConfigManager, TopicConfigManager.FACTORY_PID);
-        }
-    }
-
-    @Override
-    public void stop(final BundleContext bundleContext) {
-        synchronized (distributors) {
-            distributors.values().forEach(distributor -> distributor.close());
         }
     }
 

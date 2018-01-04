@@ -38,28 +38,28 @@ public class LockModule extends AbstractModule {
     @Provides
     @Singleton
     @Lock
-    public MessageListener<DistributionMessage> lockListener(final ClientMessageListenerFactory pFactory, final ClientLockProcessor pProcessor) {
+    MessageListener<DistributionMessage> lockListener(final ClientMessageListenerFactory pFactory, final ClientLockProcessor pProcessor) {
         return pFactory.createListener(pProcessor);
     }
 
     @Provides
     @Singleton
     @Unlock
-    public MessageListener<DistributionMessage> unlockListener(final ClientMessageListenerFactory pFactory, final ClientUnlockProcessor pProcessor) {
+    MessageListener<DistributionMessage> unlockListener(final ClientMessageListenerFactory pFactory, final ClientUnlockProcessor pProcessor) {
         return pFactory.createListener(pProcessor);
     }
 
     @Provides
     @Singleton
     @Lock
-    public MessageListenerRegistration registerLockListener(final @Lock ITopic<DistributionMessage> pLockTopic, final @Lock MessageListener<DistributionMessage> pLockListener) {
+    MessageListenerRegistration registerLockListener(final @Lock ITopic<DistributionMessage> pLockTopic, final @Lock MessageListener<DistributionMessage> pLockListener) {
         return MessageListenerRegistration.register(pLockTopic, pLockListener);
     }
 
     @Provides
     @Singleton
     @Unlock
-    public MessageListenerRegistration registerUnlockListener(final @Unlock ITopic<DistributionMessage> pUnlockTopic, final @Unlock MessageListener<DistributionMessage> pUnlockListener) {
+    MessageListenerRegistration registerUnlockListener(final @Unlock ITopic<DistributionMessage> pUnlockTopic, final @Unlock MessageListener<DistributionMessage> pUnlockListener) {
         return MessageListenerRegistration.register(pUnlockTopic, pUnlockListener);
     }
 }

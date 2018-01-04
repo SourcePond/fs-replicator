@@ -19,6 +19,7 @@ dependencies {
     compile 'com.hazelcast:hazelcast:3.8.6'
     compile 'org.slf4j:slf4j-api:1.7.25'
     compile 'com.google.inject:guice:4.1.0'
+    compile 'com.google.inject.extensions:guice-multibindings:4.1.0'
     compile 'org.osgi:org.osgi.core:6.0.0'
     compile 'org.osgi:osgi.cmpn:6.0.0'
     testCompile project(path: ":fssync-compound-lib", configuration: 'testArtifacts')

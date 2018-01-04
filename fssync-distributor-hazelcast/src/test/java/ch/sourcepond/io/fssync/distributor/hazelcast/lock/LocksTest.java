@@ -36,6 +36,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
@@ -109,6 +110,7 @@ public class LocksTest {
         locks.tryLock(EXPECTED_KEY);
         locks.close();
         assertTrue(main.isInterrupted());
+        verify(hci).shutdown();
     }
 
     @Test(timeout = 1000)
@@ -118,5 +120,6 @@ public class LocksTest {
         when(globalLock.tryLock(EXPECTED_LOCK_TIMEOUT, EXPECTED_LOCK_TIMEOUT_UNIT, 1000, MILLISECONDS)).thenReturn(true);
         locks.tryLock(EXPECTED_KEY);
         locks.close();
+        verify(hci).shutdown();
     }
 }

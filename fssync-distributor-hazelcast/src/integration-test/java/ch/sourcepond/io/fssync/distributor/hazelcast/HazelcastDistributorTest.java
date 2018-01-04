@@ -14,36 +14,57 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast;
 
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
+import ch.sourcepond.io.fssync.target.api.NodeInfo;
+import ch.sourcepond.io.fssync.target.api.SyncPath;
+import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
+import org.mockito.InOrder;
+import org.mockito.Mockito;
 import org.ops4j.pax.exam.Configuration;
-import org.ops4j.pax.exam.CoreOptions;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceListener;
+import org.osgi.framework.ServiceRegistration;
+import org.osgi.framework.wiring.BundleWiring;
 import org.osgi.service.cm.ConfigurationAdmin;
 
 import javax.inject.Inject;
-
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
-import static java.lang.String.format;
+import static java.lang.Thread.currentThread;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.ops4j.pax.exam.CoreOptions.bootDelegationPackage;
 import static org.ops4j.pax.exam.CoreOptions.junitBundles;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
-import static org.osgi.framework.Constants.OBJECTCLASS;
 
 @RunWith(PaxExam.class)
 public class HazelcastDistributorTest {
-    static final String FACTORY_PID = "ch.sourcepond.io.fssync.distributor.hazelcast.Config";
+    private static final String EXPECTED_FAILURE = "expectedFailure";
+    private static final String EXPECTED_SYNC_DIR = "someExpectedSyncDir";
+    private static final String EXPECTED_PATH = "someExpectedPath";
+    private static final String FACTORY_PID = "ch.sourcepond.io.fssync.distributor.hazelcast.Config";
+    private static final ArgumentMatcher<NodeInfo> NODE_MATCHER = inv -> inv.isLocalNode() && inv.getLocal().equals(inv.getSender());
+    private static final ArgumentMatcher<SyncPath> PATH_MATCHER = inv -> EXPECTED_SYNC_DIR.equals(inv.getSyncDir()) && EXPECTED_PATH.equals(inv.getPath());
+    private static final byte[] ARR_1 = new byte[] {1, 2, 3};
+    private static final byte[] ARR_2 = new byte[] {4, 5, 6};
+    private static final byte[] ARR_3 = new byte[] {7, 8, 9};
 
     @Inject
     private BundleContext context;
@@ -51,8 +72,12 @@ public class HazelcastDistributorTest {
     @Inject
     private ConfigurationAdmin configAdmin;
 
-    private Bundle distributorBundle;
+    private SyncTarget target;
+    private ServiceRegistration<SyncTarget> targetRegistration;
+
     private DistributorListener listener;
+    private Distributor distributor;
+    private org.osgi.service.cm.Configuration config;
 
     @Configuration
     public Option[] configure() {
@@ -60,6 +85,7 @@ public class HazelcastDistributorTest {
                 junitBundles(),
                 bootDelegationPackage("com.sun.*"),
                 mavenBundle("com.google.inject", "guice").classifier("no_aop").version("4.1.0"),
+                mavenBundle("com.google.inject.extensions", "guice-multibindings").version("4.1.0").noStart(),
                 mavenBundle("com.google.guava", "guava").version("19.0"),
                 mavenBundle("com.hazelcast", "hazelcast").version("3.8.6"),
                 mavenBundle("ch.sourcepond.osgi.cmpn", "metatype-builder-lib").version("0.1-SNAPSHOT"),
@@ -68,36 +94,95 @@ public class HazelcastDistributorTest {
                 mavenBundle("ch.sourcepond.io.fssync", "fssync-target-api").version("0.1-SNAPSHOT"),
                 mavenBundle("ch.sourcepond.io.fssync", "fssync-distributor-hazelcast").version("0.1-SNAPSHOT"),
                 mavenBundle("org.apache.felix", "org.apache.felix.metatype").version("1.1.6"),
-                mavenBundle("org.apache.felix", "org.apache.felix.configadmin").version("1.8.16")
+                mavenBundle("org.apache.felix", "org.apache.felix.configadmin").version("1.8.16"),
+                mavenBundle("org.objenesis", "objenesis").version("2.6"),
+                mavenBundle("org.mockito", "mockito-core").version("2.13.0"),
+                mavenBundle("net.bytebuddy", "byte-buddy").version("1.7.9"),
+                mavenBundle("net.bytebuddy", "byte-buddy-agent").version("1.7.9")
         };
+    }
+
+    private Bundle getDistributorBundle() {
+        for (final Bundle bundle : context.getBundles()) {
+            if ("fssync-distributor-hazelcast".equals(bundle.getSymbolicName())) {
+                return bundle;
+            }
+        }
+        throw new AssertionError("Bundle not found");
     }
 
     @Before
     public void setup() throws Exception {
-        for (final Bundle bundle : context.getBundles()) {
-            if ("fssync-distributor-hazelcast".equals(bundle.getSymbolicName())) {
-                distributorBundle = bundle;
-                break;
-            }
+        final ClassLoader current = currentThread().getContextClassLoader();
+        currentThread().setContextClassLoader(context.getBundle().adapt(BundleWiring.class).getClassLoader());
+        try {
+            target = mock(SyncTarget.class);
+        } finally {
+            currentThread().setContextClassLoader(current);
         }
-        assertNotNull("Bundle not found", distributorBundle);
 
+        targetRegistration = context.registerService(SyncTarget.class, target, null);
         listener = new DistributorListener(context);
         listener.register();
-    }
 
-    @After
-    public void tearDown() throws Exception {
-        listener.unregister();
-    }
-
-    @Test
-    public void verifyGetDistributor() throws Exception {
-        final org.osgi.service.cm.Configuration config = configAdmin.createFactoryConfiguration(FACTORY_PID, null);
+        config = configAdmin.createFactoryConfiguration(FACTORY_PID, null);
         final Dictionary<String, Object> props = new Hashtable<>();
         props.put("instanceName", "testInstance");
         config.update(props);
 
-        final Distributor distributor = listener.getDistributor();
+        distributor = listener.getDistributor();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        distributor.unlock(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+        listener.unregister();
+        targetRegistration.unregister();
+        config.delete();
+    }
+
+    @Test
+    public void delete() throws Exception {
+        assertTrue(distributor.tryLock(EXPECTED_SYNC_DIR, EXPECTED_PATH));
+        distributor.delete(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+        distributor.unlock(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+        final InOrder order = inOrder(target);
+        order.verify(target).lock(argThat(NODE_MATCHER), argThat(PATH_MATCHER));
+        order.verify(target).delete(argThat(NODE_MATCHER), argThat(PATH_MATCHER));
+        order.verify(target).unlock(argThat(NODE_MATCHER), argThat(PATH_MATCHER));
+        order.verifyNoMoreInteractions();
+    }
+
+    @Test
+    public void transferStore() throws Exception {
+        assertTrue(distributor.tryLock(EXPECTED_SYNC_DIR, EXPECTED_PATH));
+        distributor.transfer(EXPECTED_SYNC_DIR, EXPECTED_PATH, ByteBuffer.wrap(ARR_1));
+        distributor.transfer(EXPECTED_SYNC_DIR, EXPECTED_PATH, ByteBuffer.wrap(ARR_2));
+        distributor.transfer(EXPECTED_SYNC_DIR, EXPECTED_PATH, ByteBuffer.wrap(ARR_3));
+        distributor.store(EXPECTED_SYNC_DIR, EXPECTED_PATH, new byte[0]);
+        distributor.unlock(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+        final InOrder order = inOrder(target);
+        order.verify(target).lock(argThat(NODE_MATCHER), argThat(PATH_MATCHER));
+        order.verify(target).transfer(argThat(NODE_MATCHER), argThat(PATH_MATCHER), argThat(inv -> Arrays.equals(ARR_1, inv.array())));
+        order.verify(target).transfer(argThat(NODE_MATCHER), argThat(PATH_MATCHER), argThat(inv -> Arrays.equals(ARR_2, inv.array())));
+        order.verify(target).transfer(argThat(NODE_MATCHER), argThat(PATH_MATCHER), argThat(inv -> Arrays.equals(ARR_3, inv.array())));
+        order.verify(target).store(argThat(NODE_MATCHER), argThat(PATH_MATCHER));
+        order.verify(target).unlock(argThat(NODE_MATCHER), argThat(PATH_MATCHER));
+        order.verifyNoMoreInteractions();
+    }
+
+    @Test
+    public void transferDiscard() throws Exception {
+        final IOException expected = new IOException(EXPECTED_FAILURE);
+        assertTrue(distributor.tryLock(EXPECTED_SYNC_DIR, EXPECTED_PATH));
+        distributor.transfer(EXPECTED_SYNC_DIR, EXPECTED_PATH, ByteBuffer.wrap(ARR_1));
+        distributor.discard(EXPECTED_SYNC_DIR, EXPECTED_PATH, expected);
+        distributor.unlock(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+        final InOrder order = inOrder(target);
+        order.verify(target).lock(argThat(NODE_MATCHER), argThat(PATH_MATCHER));
+        order.verify(target).transfer(argThat(NODE_MATCHER), argThat(PATH_MATCHER), argThat(inv -> Arrays.equals(ARR_1, inv.array())));
+        order.verify(target).discard(argThat(NODE_MATCHER), argThat(PATH_MATCHER), argThat(inv -> EXPECTED_FAILURE.equals(inv.getMessage())));
+        order.verify(target).unlock(argThat(NODE_MATCHER), argThat(PATH_MATCHER));
+        order.verifyNoMoreInteractions();
     }
 }
