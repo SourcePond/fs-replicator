@@ -11,10 +11,10 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.fssync.impl.trigger;
+package ch.sourcepond.io.fssync.source.fs.trigger;
 
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
-import ch.sourcepond.io.fssync.impl.Config;
+import ch.sourcepond.io.fssync.source.fs.Config;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -23,11 +23,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Path;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static ch.sourcepond.io.fssync.impl.Constants.TMP_FILE_PREFIX;
 import static java.nio.ByteBuffer.allocate;
 import static java.nio.channels.FileChannel.open;
 import static java.nio.file.StandardOpenOption.READ;
@@ -38,23 +36,26 @@ public class ReplicationTrigger {
     private final Distributor distributor;
     private final SyncTriggerFactory syncTriggerFactory;
     private final ScheduledExecutorService executor;
+    private final MessageDigestFactory messageDigestFactory;
     private final Config config;
 
     @Inject
     public ReplicationTrigger(final Distributor pDistributor,
                               final SyncTriggerFactory pSyncTriggerFactory,
                               final ScheduledExecutorService pExecutor,
+                              final MessageDigestFactory pMessageDigesterFactory,
                               final Config pConfig) {
         distributor = pDistributor;
         syncTriggerFactory = pSyncTriggerFactory;
         executor = pExecutor;
+        messageDigestFactory = pMessageDigesterFactory;
         config = pConfig;
     }
 
     private void transfer(final SyncPath pPath) throws IOException {
         try (final ReadableByteChannel source = open(pPath.getPath(), READ)) {
-            final ByteBuffer buffer = allocate(1024);
-            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            final ByteBuffer buffer = allocate(config.readBufferSize());
+            final MessageDigest digest = messageDigestFactory.create();
             try {
                 while (source.read(buffer) != -1) {
                     buffer.rewind();
@@ -66,30 +67,20 @@ public class ReplicationTrigger {
                 distributor.store(pPath.getSyncDirAsString(), pPath.getPathAsString(), digest.digest());
             } catch (final IOException e) {
                 distributor.discard(pPath.getSyncDirAsString(), pPath.getPathAsString(), e);
+                LOG.warn(e.getMessage(), e);
             }
-        } catch (final NoSuchAlgorithmException e) {
-            // This should never happen
-            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 
-    private boolean isRegularFile(final Path pFile) {
-        return !pFile.getFileName().startsWith(TMP_FILE_PREFIX);
+    public void delete(final Path pSyncDir, final Path pFile) {
+        executor.execute(syncTriggerFactory.create(new SyncPath(pSyncDir, pFile), p ->
+                distributor.delete(p.getSyncDirAsString(), p.getPathAsString())));
     }
 
-    public void delete(final Path pSyncDir, final Path pFile) throws IOException {
-        if (isRegularFile(pFile)) {
-            executor.execute(syncTriggerFactory.create(new SyncPath(pSyncDir, pFile), p ->
-                    distributor.delete(p.getSyncDirAsString(), p.getPathAsString())));
-        }
-    }
-
-    public void modify(final Path pSyncDir, final Path pFile, final byte[] pChecksum) throws IOException {
-        if (isRegularFile(pFile)) {
-            final SyncPath path = new SyncPath(pSyncDir, pFile);
-            if (!Arrays.equals(distributor.getChecksum(path.getSyncDirAsString(), path.getPathAsString()), pChecksum)) {
-                executor.execute(syncTriggerFactory.create(path, this::transfer));
-            }
+    public void modify(final Path pSyncDir, final Path pFile, final byte[] pChecksum) {
+        final SyncPath path = new SyncPath(pSyncDir, pFile);
+        if (!Arrays.equals(distributor.getChecksum(path.getSyncDirAsString(), path.getPathAsString()), pChecksum)) {
+            executor.execute(syncTriggerFactory.create(path, this::transfer));
         }
     }
 }

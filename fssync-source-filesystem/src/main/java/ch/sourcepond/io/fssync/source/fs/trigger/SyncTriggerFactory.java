@@ -11,10 +11,10 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.fssync.impl.trigger;
+package ch.sourcepond.io.fssync.source.fs.trigger;
 
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
-import ch.sourcepond.io.fssync.impl.Config;
+import ch.sourcepond.io.fssync.source.fs.Config;
 
 import javax.inject.Inject;
 import java.util.concurrent.ScheduledExecutorService;

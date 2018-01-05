@@ -11,14 +11,16 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.fssync.impl.fswatch;
+package ch.sourcepond.io.fssync.source.fs.fswatch;
 
 import ch.sourcepond.io.checksum.api.Resource;
 import ch.sourcepond.io.checksum.api.ResourceProducer;
 import ch.sourcepond.io.checksum.api.Update;
-import ch.sourcepond.io.fssync.impl.trigger.ReplicationTrigger;
+import ch.sourcepond.io.fssync.source.fs.trigger.ReplicationTrigger;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.FileVisitResult;
@@ -32,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static ch.sourcepond.io.checksum.api.Algorithm.SHA256;
+import static java.lang.String.format;
 import static java.lang.Thread.currentThread;
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.Files.isDirectory;
@@ -42,9 +45,10 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class WatchServiceInstaller extends SimpleFileVisitor<Path> implements Runnable {
+public class WatchServiceInstaller extends SimpleFileVisitor<Path> implements Runnable, Closeable {
     private static final Logger LOG = getLogger(WatchServiceInstaller.class);
     private final ConcurrentMap<Path, Object> tree = new ConcurrentHashMap<>();
+    private final Thread thread;
     private final ResourceProducer resourceProducer;
     private final WatchService watchService;
     private final ReplicationTrigger trigger;
@@ -58,6 +62,17 @@ public class WatchServiceInstaller extends SimpleFileVisitor<Path> implements Ru
         watchService = pWatchService;
         trigger = pTrigger;
         syncDir = pSyncDir;
+        thread = new Thread(this, format("%s: %s", getClass().getSimpleName(), pSyncDir));
+    }
+
+    @Override
+    public void close() throws IOException {
+        thread.interrupt();
+        watchService.close();
+    }
+
+    public void start() {
+        thread.start();
     }
 
     @Override

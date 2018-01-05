@@ -11,10 +11,10 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.fssync.impl.trigger;
+package ch.sourcepond.io.fssync.source.fs.trigger;
 
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
-import ch.sourcepond.io.fssync.impl.Config;
+import ch.sourcepond.io.fssync.source.fs.Config;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -46,11 +46,11 @@ class SyncTrigger implements Runnable {
     @Override
     public void run() {
         try {
-            if (distributor.tryLock(path.getSyncDir(), path.getPath())) {
+            if (distributor.tryLock(path.getSyncDirAsString(), path.getPathAsString())) {
                 try {
-                    trigger.process(path.getSyncDir(), path.getPath());
+                    trigger.process(path);
                 } finally {
-                    distributor.unlock(path.getSyncDir(), path.getPath());
+                    distributor.unlock(path.getSyncDirAsString(), path.getPathAsString());
                 }
             } else if (config.retryAttempts() > retries++) {
                 executor.schedule(this, config.retryDelay(), config.retryDelayUnit());

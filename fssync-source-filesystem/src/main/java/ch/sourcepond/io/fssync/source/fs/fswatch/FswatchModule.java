@@ -1,4 +1,4 @@
-/*Copyright (C) 2017 Roland Hauser, <sourcepond@gmail.com>
+/*Copyright (C) 2018 Roland Hauser, <sourcepond@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -11,12 +11,14 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.fssync.impl.trigger;
+package ch.sourcepond.io.fssync.source.fs.fswatch;
 
-import java.io.IOException;
+import com.google.inject.AbstractModule;
 
-@FunctionalInterface
-public interface SyncTriggerFunction {
+public class FswatchModule extends AbstractModule {
 
-    void process(SyncPath pPath) throws IOException;
+    @Override
+    protected void configure() {
+        bind(WatchServiceInstallerFactory.class);
+    }
 }
