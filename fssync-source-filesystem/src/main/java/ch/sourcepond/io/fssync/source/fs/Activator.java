@@ -15,6 +15,7 @@ package ch.sourcepond.io.fssync.source.fs;
 
 import ch.sourcepond.io.checksum.api.ResourceProducerFactory;
 import ch.sourcepond.io.fssync.compound.CompoundServiceFactory;
+import ch.sourcepond.io.fssync.compound.ServiceListenerRegistrar;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.io.fssync.source.fs.fswatch.WatchServiceInstaller;
 import ch.sourcepond.io.fssync.source.fs.fswatch.WatchServiceInstallerFactory;
@@ -22,7 +23,6 @@ import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilderFactory;
 import com.google.inject.Injector;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedServiceFactory;
 import org.slf4j.Logger;
@@ -36,8 +36,8 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 
-import static ch.sourcepond.io.fssync.compound.ServiceListenerRegistrar.registerListener;
 import static com.google.inject.Guice.createInjector;
 import static org.osgi.framework.Constants.SERVICE_PID;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -48,7 +48,9 @@ public class Activator implements ManagedServiceFactory, BundleActivator {
     private final FileSystem fs;
     private final ConfigBuilderFactory configBuilderFactory;
     private final CompoundServiceFactory compoundServiceFactory;
-    private final ExecutorService executor;
+    private final ExecutorService distributionExecutor;
+    private final ScheduledExecutorService watchServiceExecutor;
+    private final ServiceListenerRegistrar registrar;
     private final Map<String, Config> configs = new HashMap<>();
     private final Map<String, WatchServiceInstaller> installers = new HashMap<>();
     private volatile Distributor distributor;
@@ -57,33 +59,37 @@ public class Activator implements ManagedServiceFactory, BundleActivator {
     public Activator(final FileSystem pFs,
                      final ConfigBuilderFactory pConfigBuildFactory,
                      final CompoundServiceFactory pCompoundServiceFactory,
-                     final ExecutorService pExecutor) {
+                     final ExecutorService pDistributionExecutor,
+                     final ScheduledExecutorService pWatchServiceExecutor,
+                     final ServiceListenerRegistrar pRegistrar) {
         fs = pFs;
         configBuilderFactory = pConfigBuildFactory;
         compoundServiceFactory = pCompoundServiceFactory;
-        executor = pExecutor;
+        distributionExecutor = pDistributionExecutor;
+        watchServiceExecutor = pWatchServiceExecutor;
+        registrar = pRegistrar;
     }
 
     @Override
-    public void start(final BundleContext bundleContext) throws Exception {
-        distributor = compoundServiceFactory.create(bundleContext, executor, Distributor.class);
-        registerListener(bundleContext, this::setResourceProducerFactory, this::unsetResourceProducerFactory, ResourceProducerFactory.class);
+    public void start(final BundleContext bundleContext) {
+        distributor = compoundServiceFactory.create(bundleContext, distributionExecutor, Distributor.class);
+        registrar.registerListener(bundleContext, this::setResourceProducerFactory, this::unsetResourceProducerFactory, ResourceProducerFactory.class);
         final Dictionary<String, Object> props = new Hashtable<>();
         props.put(SERVICE_PID, FACTORY_PID);
         bundleContext.registerService(ManagedServiceFactory.class, this, props);
     }
 
     @Override
-    public synchronized void stop(final BundleContext bundleContext) throws Exception {
+    public synchronized void stop(final BundleContext bundleContext) {
         stopInstallers();
     }
 
-    private synchronized void setResourceProducerFactory(final ResourceProducerFactory pResourceProducerFactory) {
+    synchronized void setResourceProducerFactory(final ResourceProducerFactory pResourceProducerFactory) {
         resourceProducerFactory = pResourceProducerFactory;
         startInstallers();
     }
 
-    private synchronized void unsetResourceProducerFactory() {
+    synchronized void unsetResourceProducerFactory() {
         resourceProducerFactory = null;
         stopInstallers();
     }
@@ -105,7 +111,8 @@ public class Activator implements ManagedServiceFactory, BundleActivator {
     private WatchServiceInstaller startInstaller(final Config pConfig) throws IOException {
         final WatchService watchService = fs.newWatchService();
         final Injector injector = createInjector(new SourceFsModule(distributor,
-                resourceProducerFactory.create(pConfig.checksumConcurrency()), watchService, pConfig));
+                resourceProducerFactory.create(pConfig.checksumConcurrency()),
+                watchService, watchServiceExecutor, pConfig));
         final Path watchedDirectory = fs.getPath(pConfig.watchedDirectory());
         final WatchServiceInstaller installer = injector.getInstance(WatchServiceInstallerFactory.class).create(watchedDirectory);
         installer.start();

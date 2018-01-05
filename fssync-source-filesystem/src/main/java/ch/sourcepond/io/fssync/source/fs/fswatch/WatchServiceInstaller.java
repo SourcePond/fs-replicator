@@ -19,7 +19,6 @@ import ch.sourcepond.io.checksum.api.Update;
 import ch.sourcepond.io.fssync.source.fs.trigger.ReplicationTrigger;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -93,11 +92,7 @@ public class WatchServiceInstaller extends SimpleFileVisitor<Path> implements Ru
 
     private void updateResource(final Update pUpdate, final Path pFile) {
         if (pUpdate.hasChanged()) {
-            try {
-                trigger.modify(syncDir, pFile, pUpdate.getCurrent().toByteArray());
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
+            trigger.modify(syncDir, pFile, pUpdate.getCurrent().toByteArray());
         }
     }
 
