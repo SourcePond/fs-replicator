@@ -23,6 +23,7 @@ import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilderFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -34,9 +35,11 @@ import java.nio.file.WatchService;
 import java.util.Dictionary;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Consumer;
 
 import static ch.sourcepond.io.fssync.source.fs.Activator.FACTORY_PID;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -87,5 +90,8 @@ public class ActivatorTest {
     @Test
     public void verifyStart() {
         verify(context).registerService(Mockito.eq(ManagedServiceFactory.class), Mockito.same(activator), argThat(inv -> FACTORY_PID.equals(inv.get(SERVICE_PID))));
+        final ArgumentCaptor<Consumer<ResourceProducerFactory>> registrationCaptor = ArgumentCaptor.forClass(Consumer.class);
+        final ArgumentCaptor<Runnable> unregistrationCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(registrar).registerListener(eq(context), registrationCaptor.capture(), unregistrationCaptor.capture(), eq(ResourceProducerFactory.class));
     }
 }
