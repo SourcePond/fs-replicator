@@ -11,7 +11,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.fssync.compound;
+package ch.sourcepond.io.fssync.common;
 
 import org.junit.After;
 import org.junit.Before;
@@ -31,8 +31,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-import static ch.sourcepond.io.fssync.compound.Constants.EXPECTED_PATH;
-import static ch.sourcepond.io.fssync.compound.Constants.EXPECTED_SYNC_DIR;
+import static ch.sourcepond.io.fssync.common.Constants.EXPECTED_PATH;
+import static ch.sourcepond.io.fssync.common.Constants.EXPECTED_SYNC_DIR;
 import static java.lang.reflect.Proxy.newProxyInstance;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static org.junit.Assert.assertEquals;

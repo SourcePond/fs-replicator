@@ -11,7 +11,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.fssync.compound;
+package ch.sourcepond.io.fssync.common;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -50,7 +50,7 @@ public class CompoundServiceFactoryTest {
         return new Option[]{
                 junitBundles(),
                 mavenBundle("ch.sourcepond.osgi.cmpn", "metatype-builder-lib").version("0.1-SNAPSHOT"),
-                mavenBundle("ch.sourcepond.io.fssync", "fssync-compound-lib").version("0.1-SNAPSHOT"),
+                mavenBundle("ch.sourcepond.io.fssync", "fssync-common-lib").version("0.1-SNAPSHOT"),
                 mavenBundle("org.apache.felix", "org.apache.felix.metatype").version("1.1.6"),
                 mavenBundle("org.apache.felix", "org.apache.felix.configadmin").version("1.8.16")
         };

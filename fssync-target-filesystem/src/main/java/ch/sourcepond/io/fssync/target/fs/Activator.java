@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.target.fs;
 
-import ch.sourcepond.io.fssync.compound.BaseActivator;
+import ch.sourcepond.io.fssync.common.BaseActivator;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilderFactory;
 import org.osgi.framework.BundleActivator;

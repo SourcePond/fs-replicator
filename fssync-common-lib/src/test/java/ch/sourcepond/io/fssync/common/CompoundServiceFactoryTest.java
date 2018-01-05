@@ -11,7 +11,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.fssync.compound;
+package ch.sourcepond.io.fssync.common;
 
 import org.junit.After;
 import org.junit.Test;
@@ -21,8 +21,8 @@ import org.osgi.framework.ServiceReference;
 
 import java.util.concurrent.ExecutorService;
 
-import static ch.sourcepond.io.fssync.compound.Constants.EXPECTED_PATH;
-import static ch.sourcepond.io.fssync.compound.Constants.EXPECTED_SYNC_DIR;
+import static ch.sourcepond.io.fssync.common.Constants.EXPECTED_PATH;
+import static ch.sourcepond.io.fssync.common.Constants.EXPECTED_SYNC_DIR;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -59,7 +59,7 @@ public class CompoundServiceFactoryTest {
     public void create() throws Exception {
         final ServiceReference<TestService> reference = mock(ServiceReference.class);
         final ServiceReference<?>[] references = new ServiceReference<?>[]{reference};
-        when(context.getServiceReferences(TestService.class.getName(), "(objectClass=ch.sourcepond.io.fssync.compound.TestService)")).thenReturn(references);
+        when(context.getServiceReferences(TestService.class.getName(), "(objectClass=ch.sourcepond.io.fssync.common.TestService)")).thenReturn(references);
         when(context.getService(reference)).thenReturn(service);
         final TestService proxy = factory.create(context, executor, TestService.class);
         proxy.start(EXPECTED_SYNC_DIR, EXPECTED_PATH);

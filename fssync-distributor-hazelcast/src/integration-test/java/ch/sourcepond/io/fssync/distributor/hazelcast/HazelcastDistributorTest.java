@@ -83,7 +83,7 @@ public class HazelcastDistributorTest {
                 mavenBundle("com.google.guava", "guava").version("19.0"),
                 mavenBundle("com.hazelcast", "hazelcast").version("3.8.6"),
                 mavenBundle("ch.sourcepond.osgi.cmpn", "metatype-builder-lib").version("0.1-SNAPSHOT"),
-                mavenBundle("ch.sourcepond.io.fssync", "fssync-compound-lib").version("0.1-SNAPSHOT"),
+                mavenBundle("ch.sourcepond.io.fssync", "fssync-common-lib").version("0.1-SNAPSHOT"),
                 mavenBundle("ch.sourcepond.io.fssync", "fssync-distributor-api").version("0.1-SNAPSHOT"),
                 mavenBundle("ch.sourcepond.io.fssync", "fssync-target-api").version("0.1-SNAPSHOT"),
                 mavenBundle("ch.sourcepond.io.fssync", "fssync-distributor-hazelcast").version("0.1-SNAPSHOT"),

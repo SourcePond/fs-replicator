@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast;
 
-import ch.sourcepond.io.fssync.compound.Configurable;
+import ch.sourcepond.io.fssync.common.Configurable;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.MessageListenerRegistration;
 import ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig;

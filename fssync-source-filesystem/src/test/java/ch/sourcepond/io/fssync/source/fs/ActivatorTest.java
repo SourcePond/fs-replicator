@@ -15,8 +15,8 @@ package ch.sourcepond.io.fssync.source.fs;
 
 import ch.sourcepond.io.checksum.api.ResourceProducer;
 import ch.sourcepond.io.checksum.api.ResourceProducerFactory;
-import ch.sourcepond.io.fssync.compound.CompoundServiceFactory;
-import ch.sourcepond.io.fssync.compound.ServiceListenerRegistrar;
+import ch.sourcepond.io.fssync.common.CompoundServiceFactory;
+import ch.sourcepond.io.fssync.common.ServiceListenerRegistrar;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilder;
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilderFactory;

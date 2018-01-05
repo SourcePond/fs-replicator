@@ -11,12 +11,29 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.fssync.compound;
+package ch.sourcepond.io.fssync.common;
 
-import org.osgi.service.cm.ConfigurationException;
+import java.io.IOException;
 
-@FunctionalInterface
-public interface Update {
+public class DefaultTestService extends Configurable<TestConfig> implements TestService {
 
-    void update() throws ConfigurationException;
+    @Override
+    public void start(String pSyncDir, String pPath) throws IOException {
+
+    }
+
+    @Override
+    public void doStuff(String pSyncDir, String pPath) throws IOException {
+
+    }
+
+    @Override
+    public void doMoreStuff(String pSyncDir, String pPath) throws IOException {
+
+    }
+
+    @Override
+    public void end(String pSyncDir, String pPath) throws IOException {
+
+    }
 }

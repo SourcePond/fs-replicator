@@ -11,7 +11,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.fssync.compound;
+package ch.sourcepond.io.fssync.common;
 
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilder;
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilderFactory;
@@ -26,7 +26,7 @@ import org.osgi.service.cm.ManagedServiceFactory;
 
 import java.util.Dictionary;
 
-import static ch.sourcepond.io.fssync.compound.TestActivator.FACTORY_PID;
+import static ch.sourcepond.io.fssync.common.TestActivator.FACTORY_PID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.argThat;

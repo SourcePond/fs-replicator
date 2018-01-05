@@ -11,11 +11,14 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package ch.sourcepond.io.fssync.compound;
+package ch.sourcepond.io.fssync.common;
 
-import java.io.IOException;
+import java.lang.annotation.Retention;
 
-public interface TestServiceWithNonVoidMethods {
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-    String illegalMethod(String pSyncDir, String pPath) throws IOException;
+@Retention(RUNTIME)
+public @interface TestConfig {
+
+    String someString() default "someDefault";
 }
