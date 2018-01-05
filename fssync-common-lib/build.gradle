@@ -5,7 +5,7 @@ dependencies {
     compile 'org.osgi:osgi.cmpn:6.0.0'
     testCompile 'ch.qos.logback:logback-classic:1.2.3'
     testCompile 'org.mockito:mockito-core:2.11.0'
-    integrationTestCompile project(':fssync-compound-lib')
+    integrationTestCompile project(':fssync-common-lib')
     integrationTestCompile 'org.apache.felix:org.apache.felix.metatype:1.1.6'
     integrationTestCompile 'org.apache.felix:org.apache.felix.configadmin:1.8.16'
     integrationTestCompile 'org.apache.servicemix.bundles:org.apache.servicemix.bundles.javax-inject:1_2'

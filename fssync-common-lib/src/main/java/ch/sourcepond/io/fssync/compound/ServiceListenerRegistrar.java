@@ -27,44 +27,13 @@ import static org.osgi.framework.ServiceEvent.MODIFIED_ENDMATCH;
 import static org.osgi.framework.ServiceEvent.REGISTERED;
 import static org.osgi.framework.ServiceEvent.UNREGISTERING;
 
-public class ServiceListenerRegistrar<T> implements ServiceListener {
-    private final BundleContext bundleContext;
-    private final Consumer<T> registration;
-    private final Runnable unregistration;
+public class ServiceListenerRegistrar {
 
-    private ServiceListenerRegistrar(
-            final BundleContext pBundleContext,
-            final Consumer<T> pRegistration,
-            final Runnable pUnregistration) {
-        bundleContext = pBundleContext;
-        unregistration = pUnregistration;
-        registration = pRegistration;
-    }
-
-    @Override
-    public void serviceChanged(final ServiceEvent serviceEvent) {
-        switch (serviceEvent.getType()) {
-            case UNREGISTERING:
-            case MODIFIED_ENDMATCH: {
-                unregistration.run();
-                bundleContext.ungetService(serviceEvent.getServiceReference());
-                break;
-            }
-            case REGISTERED: {
-                registration.accept((T) bundleContext.getService(serviceEvent.getServiceReference()));
-                break;
-            }
-            default: {
-                // noop
-            }
-        }
-    }
-
-    public static <T> void registerListener(final BundleContext pBundleContext,
-                                            final Consumer<T> pRegistration,
-                                            final Runnable pUnregistration,
-                                            final Class<T> pServiceInterface) {
-        final ServiceListener listener = new ServiceListenerRegistrar<>(pBundleContext, pRegistration, pUnregistration);
+    public <T> void registerListener(final BundleContext pBundleContext,
+                                     final Consumer<T> pRegistration,
+                                     final Runnable pUnregistration,
+                                     final Class<T> pServiceInterface) {
+        final ServiceListener listener = new ServiceListenerImpl<>(pBundleContext, pRegistration, pUnregistration);
         try {
             pBundleContext.addServiceListener(listener, format("(%s=%s)", OBJECTCLASS, pServiceInterface.getName()));
             for (final ServiceReference<T> reference : pBundleContext.getServiceReferences(pServiceInterface, null)) {

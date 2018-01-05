@@ -14,7 +14,7 @@ repositories {
 dependencies {
     compile project(':fssync-distributor-api')
     compile project(':fssync-target-api')
-    compile project(':fssync-compound-lib')
+    compile project(':fssync-common-lib')
     compile 'ch.sourcepond.osgi.cmpn:metatype-builder-lib:0.1-SNAPSHOT'
     compile 'com.hazelcast:hazelcast:3.8.6'
     compile 'org.slf4j:slf4j-api:1.7.25'
@@ -22,7 +22,7 @@ dependencies {
     compile 'com.google.inject.extensions:guice-multibindings:4.1.0'
     compile 'org.osgi:org.osgi.core:6.0.0'
     compile 'org.osgi:osgi.cmpn:6.0.0'
-    testCompile project(path: ":fssync-compound-lib", configuration: 'testArtifacts')
+    testCompile project(path: ":fssync-common-lib", configuration: 'testArtifacts')
     testCompile 'org.mockito:mockito-core:2.11.0'
     testCompile group: 'junit', name: 'junit', version: '4.12'
     integrationTestCompile 'org.apache.felix:org.apache.felix.metatype:1.1.6'
