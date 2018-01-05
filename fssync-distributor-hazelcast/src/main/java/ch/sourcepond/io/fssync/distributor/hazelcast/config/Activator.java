@@ -14,6 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.config;
 
 import ch.sourcepond.io.fssync.compound.CompoundServiceFactory;
+import ch.sourcepond.io.fssync.compound.ServiceListenerRegistrar;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.io.fssync.distributor.hazelcast.HazelcastDistributor;
 import ch.sourcepond.io.fssync.distributor.hazelcast.HazelcastDistributorModule;
@@ -34,7 +35,6 @@ import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
-import static ch.sourcepond.io.fssync.compound.ServiceListenerRegistrar.registerListener;
 import static com.google.inject.Guice.createInjector;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
@@ -44,6 +44,7 @@ public class Activator implements BundleActivator {
     private final TopicConfigManager topicConfigManager;
     private final CompoundServiceFactory compoundServiceFactory;
     private final ExecutorService executor;
+    private final ServiceListenerRegistrar registrar;
     private volatile ConfigurationAdmin configurationAdmin;
     private volatile HazelcastOSGiService hazelcastOSGiService;
     private volatile SyncTarget compoundSyncTarget;
@@ -57,16 +58,19 @@ public class Activator implements BundleActivator {
         topicConfigManager = new TopicConfigManager(configManager, factory);
         compoundServiceFactory = new CompoundServiceFactory();
         executor = /* TODO: Implement more flexible solution here */ newSingleThreadExecutor();
+        registrar = new ServiceListenerRegistrar();
     }
 
     public Activator(final ConfigManager pConfigManager,
                      final TopicConfigManager pTopicConfigManager,
                      final CompoundServiceFactory pCompoundServiceFactory,
-                     final ExecutorService pExecutor) {
+                     final ExecutorService pExecutor,
+                     final ServiceListenerRegistrar pRegistrar) {
         configManager = pConfigManager;
         topicConfigManager = pTopicConfigManager;
         compoundServiceFactory = pCompoundServiceFactory;
         executor = pExecutor;
+        registrar = pRegistrar;
     }
 
     public void configUpdated(final Config pHazelcastConfig, final DistributorConfig pDistributorConfig) {
@@ -93,8 +97,8 @@ public class Activator implements BundleActivator {
     public void start(final BundleContext pBundleContext) throws Exception {
         bundleContext = pBundleContext;
         compoundSyncTarget = compoundServiceFactory.create(pBundleContext, executor, SyncTarget.class);
-        registerListener(pBundleContext, this::setConfigAdmin, this::unsetConfigAdmin, ConfigurationAdmin.class);
-        registerListener(pBundleContext, this::setHazelcastOSGiService, this::unsetHazelcastOSGiService, HazelcastOSGiService.class);
+        registrar.registerListener(pBundleContext, this::setConfigAdmin, this::unsetConfigAdmin, ConfigurationAdmin.class);
+        registrar.registerListener(pBundleContext, this::setHazelcastOSGiService, this::unsetHazelcastOSGiService, HazelcastOSGiService.class);
     }
 
     @Override
