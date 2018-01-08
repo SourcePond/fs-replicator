@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_DATA;
-import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_PATH;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.mock;
@@ -37,7 +36,7 @@ public class TransferRequestProcessorTest extends ClientMessageProcessorTest<Tra
     @Override
     protected TransferRequest createMessage() {
         final TransferRequest message = mock(TransferRequest.class);
-        when(message.getPath()).thenReturn(EXPECTED_PATH);
+        when(message.getPath()).thenReturn(syncPath);
         when(message.getData()).thenReturn(EXPECTED_DATA);
         return message;
     }

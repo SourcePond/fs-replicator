@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast;
 
+import ch.sourcepond.io.fssync.common.api.SyncPath;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Delete;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Discard;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Lock;
@@ -134,7 +135,7 @@ public class HazelcastDistributorModule extends AbstractModule {
 
     @Provides
     @Singleton
-    IMap<String, byte[]> checksumMap(final HazelcastInstance pHci) {
+    IMap<SyncPath, byte[]> checksumMap(final HazelcastInstance pHci) {
         return pHci.getMap(MAP_NAME);
     }
 }

@@ -13,19 +13,21 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast;
 
+import ch.sourcepond.io.fssync.common.api.SyncPath;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.DistributionMessage;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 
 public abstract class DistributionMessageTest<T extends DistributionMessage> {
-    public static final String EXPECTED_PATH = "somePath";
+    protected final SyncPath path = mock(SyncPath.class);
     protected final T message = createMessage();
 
     protected abstract T createMessage();
 
     @Test
     public void getPath() {
-        assertEquals(EXPECTED_PATH, message.getPath());
+        assertEquals(path, message.getPath());
     }
 }

@@ -14,7 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.target.fs;
 
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
-import ch.sourcepond.io.fssync.target.api.SyncPath;
+import ch.sourcepond.io.fssync.common.api.SyncPath;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

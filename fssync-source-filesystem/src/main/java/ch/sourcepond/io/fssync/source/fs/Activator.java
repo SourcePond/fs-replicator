@@ -14,8 +14,8 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.source.fs;
 
 import ch.sourcepond.io.checksum.api.ResourceProducerFactory;
-import ch.sourcepond.io.fssync.common.CompoundServiceFactory;
-import ch.sourcepond.io.fssync.common.ServiceListenerRegistrar;
+import ch.sourcepond.io.fssync.common.lib.CompoundServiceFactory;
+import ch.sourcepond.io.fssync.common.lib.ServiceListenerRegistrar;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.io.fssync.source.fs.fswatch.WatchServiceInstaller;
 import ch.sourcepond.io.fssync.source.fs.fswatch.WatchServiceInstallerFactory;

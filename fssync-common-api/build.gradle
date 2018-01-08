@@ -1,0 +1,18 @@
+group 'ch.sourcepond.io.fssync'
+version '0.1-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+jar {
+    manifest {
+        attributes('Export-Package': 'ch.sourcepond.io.fssync.common.api')
+    }
+}

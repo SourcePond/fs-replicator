@@ -114,24 +114,22 @@ public class WatchServiceInstaller extends SimpleFileVisitor<Path> implements Ru
         }
     }
 
-    private void delete(final Path pPath) throws IOException {
+    private void delete(final Path pPath) {
         final Object obj = tree.remove(pPath);
         if (isDirectory(pPath)) {
-            final Directory dirOrNull = (Directory) obj;
-            if (dirOrNull != null) {
-                dirOrNull.close();
+            final WatchKey watchKeyOrNull = (WatchKey) obj;
+            if (watchKeyOrNull != null) {
+                watchKeyOrNull.cancel();
             }
         } else if (isRegularFile(pPath) && obj != null) {
             trigger.delete(syncDir, pPath);
         }
     }
 
-    private void registerDirectory(final Path pPath) throws IOException {
+    private void registerDirectory(final Path pPath) {
         tree.computeIfAbsent(pPath, d -> {
-            final Path parentPathOrNull = pPath.getParent();
-            final Directory parentOrNull = parentPathOrNull == null ? null : (Directory) tree.get(parentPathOrNull);
             try {
-                return new Directory(parentOrNull, pPath.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY));
+                return pPath.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }

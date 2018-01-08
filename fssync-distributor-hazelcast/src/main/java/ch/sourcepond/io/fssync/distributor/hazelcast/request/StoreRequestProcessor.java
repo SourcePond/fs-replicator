@@ -16,7 +16,7 @@ package ch.sourcepond.io.fssync.distributor.hazelcast.request;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.ClientMessageProcessor;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.DistributionMessage;
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
-import ch.sourcepond.io.fssync.target.api.SyncPath;
+import ch.sourcepond.io.fssync.common.api.SyncPath;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
 
 import javax.inject.Inject;

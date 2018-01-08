@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.common;
 
+import ch.sourcepond.io.fssync.common.api.SyncPath;
 import ch.sourcepond.io.fssync.distributor.hazelcast.Constants;
 import com.hazelcast.core.Endpoint;
 import com.hazelcast.core.HazelcastInstance;
@@ -26,10 +27,7 @@ import org.junit.Test;
 import java.io.IOException;
 
 import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_LOCAL_NODE;
-import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_PATH;
 import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_SENDER_NODE;
-import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_SYNC_DIR;
-import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.IS_EQUAL_TO_EXPECTED_GLOBAL_PATH;
 import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.IS_EQUAL_TO_EXPECTED_NODE_INFO;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.same;
@@ -46,6 +44,7 @@ public class ClientMessageListenerTest {
     private final ITopic<StatusMessage> sendResponseTopic = mock(ITopic.class);
     private final HazelcastInstance hci = mock(HazelcastInstance.class);
     private final Endpoint endpoint = mock(Endpoint.class);
+    private final SyncPath path = mock(SyncPath.class);
     private final ClientMessageListenerFactory factory = new ClientMessageListenerFactory(hci, sendResponseTopic);
     private final MessageListener<DistributionMessage> listener = factory.createListener(processor);
 
@@ -53,8 +52,7 @@ public class ClientMessageListenerTest {
     public void setup() {
         when(endpoint.getUuid()).thenReturn(EXPECTED_LOCAL_NODE);
         when(hci.getLocalEndpoint()).thenReturn(endpoint);
-        when(payload.getSyncDir()).thenReturn(EXPECTED_SYNC_DIR);
-        when(payload.getPath()).thenReturn(EXPECTED_PATH);
+        when(payload.getPath()).thenReturn(path);
         when(member.getUuid()).thenReturn(EXPECTED_SENDER_NODE);
         when(message.getMessageObject()).thenReturn(payload);
         when(message.getPublishingMember()).thenReturn(member);
@@ -64,18 +62,20 @@ public class ClientMessageListenerTest {
     public void onMessageSuccess() throws IOException {
         listener.onMessage(message);
         verify(processor).processMessage(argThat(IS_EQUAL_TO_EXPECTED_NODE_INFO),
-                argThat(IS_EQUAL_TO_EXPECTED_GLOBAL_PATH),
+                same(path),
                 same(payload));
-        verify(sendResponseTopic).publish(argThat(sm -> EXPECTED_PATH.equals(sm.getPath()) && sm.getFailureOrNull() == null));
+        verify(sendResponseTopic).publish(argThat(sm -> path.equals(sm.getPath()) && sm.getFailureOrNull() == null));
     }
 
     @Test
     public void onMessageFailure() throws IOException {
-        doThrow(Constants.EXPECTED_EXCEPTION).when(processor).processMessage(argThat(IS_EQUAL_TO_EXPECTED_NODE_INFO), argThat(IS_EQUAL_TO_EXPECTED_GLOBAL_PATH), same(payload));
+        doThrow(Constants.EXPECTED_EXCEPTION).when(processor).processMessage(argThat(IS_EQUAL_TO_EXPECTED_NODE_INFO),
+                same(path),
+                same(payload));
         listener.onMessage(message);
         verify(processor).processMessage(argThat(IS_EQUAL_TO_EXPECTED_NODE_INFO),
-                argThat(IS_EQUAL_TO_EXPECTED_GLOBAL_PATH),
+                same(path),
                 same(payload));
-        verify(sendResponseTopic).publish(argThat(sm -> EXPECTED_PATH.equals(sm.getPath()) && Constants.EXPECTED_EXCEPTION.equals(sm.getFailureOrNull())));
+        verify(sendResponseTopic).publish(argThat(sm -> path.equals(sm.getPath()) && Constants.EXPECTED_EXCEPTION.equals(sm.getFailureOrNull())));
     }
 }

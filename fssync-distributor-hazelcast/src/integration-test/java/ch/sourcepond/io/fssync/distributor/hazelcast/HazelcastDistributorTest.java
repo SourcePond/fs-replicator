@@ -13,9 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast;
 
+import ch.sourcepond.io.fssync.common.api.SyncPath;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
-import ch.sourcepond.io.fssync.target.api.SyncPath;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import org.junit.After;
 import org.junit.Before;
@@ -51,7 +51,7 @@ import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 @RunWith(PaxExam.class)
 public class HazelcastDistributorTest {
     private static final String EXPECTED_FAILURE = "expectedFailure";
-    private static final String EXPECTED_SYNC_DIR = "someExpectedSyncDir";
+    private static final String EXPECTED_SYNC_DIR = "/someExpectedSyncDir";
     private static final String EXPECTED_PATH = "someExpectedPath";
     private static final String FACTORY_PID = "ch.sourcepond.io.fssync.distributor.hazelcast.Config";
     private static final ArgumentMatcher<NodeInfo> NODE_MATCHER = inv -> inv.isLocalNode() && inv.getLocal().equals(inv.getSender());
@@ -59,6 +59,8 @@ public class HazelcastDistributorTest {
     private static final byte[] ARR_1 = new byte[]{1, 2, 3};
     private static final byte[] ARR_2 = new byte[]{4, 5, 6};
     private static final byte[] ARR_3 = new byte[]{7, 8, 9};
+
+    private final SyncPath syncPath = new SyncPath("/", EXPECTED_SYNC_DIR, EXPECTED_PATH);
 
     @Inject
     private BundleContext context;
@@ -83,6 +85,7 @@ public class HazelcastDistributorTest {
                 mavenBundle("com.google.guava", "guava").version("19.0"),
                 mavenBundle("com.hazelcast", "hazelcast").version("3.8.6"),
                 mavenBundle("ch.sourcepond.osgi.cmpn", "metatype-builder-lib").version("0.1-SNAPSHOT"),
+                mavenBundle("ch.sourcepond.io.fssync", "fssync-common-api").version("0.1-SNAPSHOT"),
                 mavenBundle("ch.sourcepond.io.fssync", "fssync-common-lib").version("0.1-SNAPSHOT"),
                 mavenBundle("ch.sourcepond.io.fssync", "fssync-distributor-api").version("0.1-SNAPSHOT"),
                 mavenBundle("ch.sourcepond.io.fssync", "fssync-target-api").version("0.1-SNAPSHOT"),
@@ -129,7 +132,7 @@ public class HazelcastDistributorTest {
 
     @After
     public void tearDown() throws Exception {
-        distributor.unlock(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+        distributor.unlock(syncPath);
         listener.unregister();
         targetRegistration.unregister();
         config.delete();
@@ -137,9 +140,9 @@ public class HazelcastDistributorTest {
 
     @Test
     public void delete() throws Exception {
-        assertTrue(distributor.tryLock(EXPECTED_SYNC_DIR, EXPECTED_PATH));
-        distributor.delete(EXPECTED_SYNC_DIR, EXPECTED_PATH);
-        distributor.unlock(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+        assertTrue(distributor.tryLock(syncPath));
+        distributor.delete(syncPath);
+        distributor.unlock(syncPath);
         final InOrder order = inOrder(target);
         order.verify(target).lock(argThat(NODE_MATCHER), argThat(PATH_MATCHER));
         order.verify(target).delete(argThat(NODE_MATCHER), argThat(PATH_MATCHER));
@@ -149,12 +152,12 @@ public class HazelcastDistributorTest {
 
     @Test
     public void transferStore() throws Exception {
-        assertTrue(distributor.tryLock(EXPECTED_SYNC_DIR, EXPECTED_PATH));
-        distributor.transfer(EXPECTED_SYNC_DIR, EXPECTED_PATH, ByteBuffer.wrap(ARR_1));
-        distributor.transfer(EXPECTED_SYNC_DIR, EXPECTED_PATH, ByteBuffer.wrap(ARR_2));
-        distributor.transfer(EXPECTED_SYNC_DIR, EXPECTED_PATH, ByteBuffer.wrap(ARR_3));
-        distributor.store(EXPECTED_SYNC_DIR, EXPECTED_PATH, new byte[0]);
-        distributor.unlock(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+        assertTrue(distributor.tryLock(syncPath));
+        distributor.transfer(syncPath, ByteBuffer.wrap(ARR_1));
+        distributor.transfer(syncPath, ByteBuffer.wrap(ARR_2));
+        distributor.transfer(syncPath, ByteBuffer.wrap(ARR_3));
+        distributor.store(syncPath, new byte[0]);
+        distributor.unlock(syncPath);
         final InOrder order = inOrder(target);
         order.verify(target).lock(argThat(NODE_MATCHER), argThat(PATH_MATCHER));
         order.verify(target).transfer(argThat(NODE_MATCHER), argThat(PATH_MATCHER), argThat(inv -> Arrays.equals(ARR_1, inv.array())));
@@ -168,10 +171,10 @@ public class HazelcastDistributorTest {
     @Test
     public void transferDiscard() throws Exception {
         final IOException expected = new IOException(EXPECTED_FAILURE);
-        assertTrue(distributor.tryLock(EXPECTED_SYNC_DIR, EXPECTED_PATH));
-        distributor.transfer(EXPECTED_SYNC_DIR, EXPECTED_PATH, ByteBuffer.wrap(ARR_1));
-        distributor.discard(EXPECTED_SYNC_DIR, EXPECTED_PATH, expected);
-        distributor.unlock(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+        assertTrue(distributor.tryLock(syncPath));
+        distributor.transfer(syncPath, ByteBuffer.wrap(ARR_1));
+        distributor.discard(syncPath, expected);
+        distributor.unlock(syncPath);
         final InOrder order = inOrder(target);
         order.verify(target).lock(argThat(NODE_MATCHER), argThat(PATH_MATCHER));
         order.verify(target).transfer(argThat(NODE_MATCHER), argThat(PATH_MATCHER), argThat(inv -> Arrays.equals(ARR_1, inv.array())));

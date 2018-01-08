@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.lock;
 
+import ch.sourcepond.io.fssync.common.api.SyncPath;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Lock;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Unlock;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.DistributionMessage;
@@ -29,7 +30,6 @@ import java.util.concurrent.TimeoutException;
 
 import static java.lang.String.format;
 import static java.lang.Thread.currentThread;
-import static java.util.Objects.requireNonNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class LockManager implements AutoCloseable {
@@ -62,9 +62,9 @@ public class LockManager implements AutoCloseable {
      * @throws ResponseException Thrown, if the lock acquisition failed on some node.
      * @throws LockException     Thrown, if the lock acquisition timed out for a node.
      */
-    private void acquireGlobalFileLock(final String pSyncDir, final String pPath) throws ResponseException, TimeoutException {
+    private void acquireGlobalFileLock(final SyncPath pPath) throws ResponseException, TimeoutException {
         // In this case, the path is also the request-message
-        factory.create(pPath, lockRequestTopic).awaitResponse(new DistributionMessage(pSyncDir, pPath));
+        factory.create(pPath, lockRequestTopic).awaitResponse(new DistributionMessage(pPath));
     }
 
     /**
@@ -73,55 +73,52 @@ public class LockManager implements AutoCloseable {
      *
      * @param pPath Path to be released on all nodes, must not be {@code null}
      */
-    private void releaseGlobalFileLock(final String pSyncDir, final String pPath) throws ResponseException, TimeoutException {
+    private void releaseGlobalFileLock(final SyncPath pPath) throws ResponseException, TimeoutException {
         // In this case, the path is also the request-message
-        factory.create(pPath, unlockRequestTopic).awaitResponse(new DistributionMessage(pSyncDir, pPath));
+        factory.create(pPath, unlockRequestTopic).awaitResponse(new DistributionMessage(pPath));
     }
 
-    private boolean lockAcquisitionFailed(final String pSyncDir, final String pPath, final String pMessage, final Exception pCause)
+    private boolean lockAcquisitionFailed(final SyncPath pPath,
+                                          final String pMessage,
+                                          final Exception pCause)
             throws LockException {
         try {
             throw new LockException(pMessage, pCause);
         } finally {
             try {
-                releaseGlobalFileLock(pSyncDir, pPath);
+                releaseGlobalFileLock(pPath);
             } catch (final ResponseException | TimeoutException e) {
                 LOG.warn(e.getMessage(), e);
             } finally {
-                locks.unlock(toGlobalPath(pSyncDir, pPath));
+                locks.unlock(pPath.toAbsolutePath());
             }
         }
     }
 
-    public String toGlobalPath(final String pSyncDir, final String pPath) {
-        return format("%s:%s", requireNonNull(pSyncDir, "syncdir is null"),
-                requireNonNull(pPath, "path is null"));
-    }
-
-    public boolean tryLock(final String pSyncDir, final String pPath) throws LockException {
+    public boolean tryLock(final SyncPath pPath) throws LockException {
         try {
-            if (locks.tryLock(toGlobalPath(pSyncDir, pPath))) {
-                acquireGlobalFileLock(pSyncDir, pPath);
+            if (locks.tryLock(pPath.toAbsolutePath())) {
+                acquireGlobalFileLock(pPath);
                 return true;
             } else {
-                return lockAcquisitionFailed(pSyncDir, pPath, format("Lock acquisition timed out after %d %s",
+                return lockAcquisitionFailed(pPath, format("Lock acquisition timed out after %d %s",
                         config.lockTimeout(), config.lockTimeoutUnit()), null);
             }
         } catch (final InterruptedException e) {
             currentThread().interrupt();
-            return lockAcquisitionFailed(pSyncDir, pPath, format("Lock acquisition interrupted for %s!", pPath), e);
+            return lockAcquisitionFailed(pPath, format("Lock acquisition interrupted for %s!", pPath), e);
         } catch (final ResponseException | TimeoutException e) {
-            return lockAcquisitionFailed(pSyncDir, pPath, format("Lock acquisition failed for %s!", pPath), e);
+            return lockAcquisitionFailed(pPath, format("Lock acquisition failed for %s!", pPath), e);
         }
     }
 
-    public void unlock(final String pSyncDir, final String pPath) throws UnlockException {
+    public void unlock(final SyncPath pPath) throws UnlockException {
         try {
-            releaseGlobalFileLock(pSyncDir, pPath);
+            releaseGlobalFileLock(pPath);
         } catch (final ResponseException | TimeoutException e) {
             throw new UnlockException(format("Exception occurred while releasing file-lock for %s", pPath), e);
         } finally {
-            locks.unlock(toGlobalPath(pSyncDir, pPath));
+            locks.unlock(pPath.toAbsolutePath());
         }
     }
 

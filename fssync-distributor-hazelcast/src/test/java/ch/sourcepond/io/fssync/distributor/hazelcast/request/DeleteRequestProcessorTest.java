@@ -19,8 +19,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_PATH;
-import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_SYNC_DIR;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,8 +33,7 @@ public class DeleteRequestProcessorTest extends ClientMessageProcessorTest<Distr
     @Override
     protected DistributionMessage createMessage() {
         final DistributionMessage message = mock(DistributionMessage.class);
-        when(message.getSyncDir()).thenReturn(EXPECTED_SYNC_DIR);
-        when(message.getPath()).thenReturn(EXPECTED_PATH);
+        when(message.getPath()).thenReturn(syncPath);
         return message;
     }
 

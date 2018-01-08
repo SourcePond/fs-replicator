@@ -13,33 +13,31 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.common;
 
-import ch.sourcepond.io.fssync.distributor.hazelcast.Constants;
+import ch.sourcepond.io.fssync.common.api.SyncPath;
 import org.junit.Test;
 
 import java.io.IOException;
 
-import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_PATH;
-import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_SYNC_DIR;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.mockito.Mockito.mock;
 
 public class StatusMessageTest {
+    private final SyncPath path = mock(SyncPath.class);
 
     @Test
     public void success() {
-        final StatusMessage response = new StatusMessage(EXPECTED_SYNC_DIR, EXPECTED_PATH);
-        assertEquals(EXPECTED_SYNC_DIR, response.getSyncDir());
-        assertEquals(EXPECTED_PATH, response.getPath());
+        final StatusMessage response = new StatusMessage(path);
+        assertEquals(path, response.getPath());
         assertNull(response.getFailureOrNull());
     }
 
     @Test
     public void failure() {
         final IOException expected = new IOException();
-        final StatusMessage response = new StatusMessage(EXPECTED_SYNC_DIR, EXPECTED_PATH, expected);
-        assertEquals(EXPECTED_SYNC_DIR, response.getSyncDir());
-        assertEquals(EXPECTED_PATH, response.getPath());
+        final StatusMessage response = new StatusMessage(path, expected);
+        assertEquals(path, response.getPath());
         assertSame(expected, response.getFailureOrNull());
     }
 }

@@ -14,7 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.common;
 
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
-import ch.sourcepond.io.fssync.target.api.SyncPath;
+import ch.sourcepond.io.fssync.common.api.SyncPath;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import com.hazelcast.core.Endpoint;
 import com.hazelcast.core.HazelcastInstance;

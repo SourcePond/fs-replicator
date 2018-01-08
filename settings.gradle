@@ -5,4 +5,5 @@ include 'fssync-target-api'
 include 'fssync-target-filesystem'
 include 'fssync-source-filesystem'
 include 'fssync-common-lib'
+include 'fssync-common-api'
 

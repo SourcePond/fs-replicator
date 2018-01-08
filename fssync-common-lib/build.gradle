@@ -34,6 +34,6 @@ artifacts {
 
 jar {
     manifest {
-        attributes('Export-Package': 'ch.sourcepond.io.fssync.common')
+        attributes('Export-Package': 'ch.sourcepond.io.fssync.common.lib')
     }
 }

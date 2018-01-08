@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.common;
 
+import ch.sourcepond.io.fssync.common.api.SyncPath;
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
-import ch.sourcepond.io.fssync.target.api.SyncPath;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.Message;
@@ -43,14 +43,14 @@ final class ClientMessageListener<T extends DistributionMessage> implements Mess
     public final void onMessage(final Message<T> message) {
         final NodeInfo nodeInfo = new NodeInfo(message.getPublishingMember().getUuid(), hci.getLocalEndpoint().getUuid());
         final T payload = message.getMessageObject();
-        final SyncPath syncPath = new SyncPath(payload.getSyncDir(), payload.getPath());
+        final SyncPath syncPath = payload.getPath();
 
         try {
             processor.processMessage(nodeInfo, syncPath, payload);
-            sendResponseTopic.publish(new StatusMessage(syncPath.getSyncDir(), syncPath.getPath()));
+            sendResponseTopic.publish(new StatusMessage(syncPath));
         } catch (final IOException e) {
             LOG.error(e.getMessage(), e);
-            sendResponseTopic.publish(new StatusMessage(syncPath.getSyncDir(), syncPath.getPath(), e));
+            sendResponseTopic.publish(new StatusMessage(syncPath, e));
         }
     }
 }

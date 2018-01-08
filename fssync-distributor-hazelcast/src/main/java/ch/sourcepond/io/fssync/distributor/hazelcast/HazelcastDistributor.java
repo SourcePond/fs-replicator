@@ -13,7 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast;
 
-import ch.sourcepond.io.fssync.common.Configurable;
+import ch.sourcepond.io.fssync.common.api.SyncPath;
+import ch.sourcepond.io.fssync.common.lib.Configurable;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.MessageListenerRegistration;
 import ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig;
@@ -36,13 +37,13 @@ import static java.util.Objects.requireNonNull;
 
 public class HazelcastDistributor extends Configurable<DistributorConfig> implements Distributor {
     static final byte[] EMPTY_CHECKSUM = new byte[0];
-    private final IMap<String, byte[]> checksums;
+    private final IMap<SyncPath, byte[]> checksums;
     private final LockManager lockManager;
     private final RequestDistributor requestDistributor;
     private final Set<MessageListenerRegistration> listenerRegistrations;
 
     @Inject
-    HazelcastDistributor(final IMap<String, byte[]> pChecksums,
+    HazelcastDistributor(final IMap<SyncPath, byte[]> pChecksums,
                          final LockManager pLockManager,
                          final RequestDistributor pRequestDistributor,
                          final Set<MessageListenerRegistration> pListenerRegistrations) {
@@ -53,49 +54,44 @@ public class HazelcastDistributor extends Configurable<DistributorConfig> implem
     }
 
     @Override
-    public boolean tryLock(final String pSyncDir, final String pPath) throws LockException {
-        return lockManager.tryLock(requireNonNull(pSyncDir, "syncdir is null"),
-                requireNonNull(pPath, "path is null"));
+    public boolean tryLock(final SyncPath pPath) throws LockException {
+        return lockManager.tryLock(requireNonNull(pPath, "path is null"));
     }
 
     @Override
-    public void unlock(final String pSyncDir, final String pPath) throws UnlockException {
-        lockManager.unlock(requireNonNull(pSyncDir, "syncdir is null"),
-                requireNonNull(pPath, "path is null"));
+    public void unlock(final SyncPath pPath) throws UnlockException {
+        lockManager.unlock(requireNonNull(pPath, "path is null"));
     }
 
     @Override
-    public void delete(final String pSyncDir, final String pPath) throws DeletionException {
-        requestDistributor.delete(requireNonNull(pSyncDir, "syncdir is null"),
-                requireNonNull(pPath, "path is null"));
+    public void delete(final SyncPath pPath) throws DeletionException {
+        requestDistributor.delete(requireNonNull(pPath, "path is null"));
     }
 
     @Override
-    public void transfer(final String pSyncDir, final String pPath, final ByteBuffer pData) throws TransferException {
-        requestDistributor.transfer(requireNonNull(pSyncDir, "syncdir is null"),
-                requireNonNull(pPath, "path is null"), requireNonNull(pData, "buffer is null"));
+    public void transfer(final SyncPath pPath, final ByteBuffer pData) throws TransferException {
+        requestDistributor.transfer(requireNonNull(pPath, "path is null"),
+                requireNonNull(pData, "buffer is null"));
     }
 
     @Override
-    public void discard(final String pSyncDir, final String pPath, final IOException pFailure) throws DiscardException {
-        requestDistributor.discard(requireNonNull(pSyncDir, "syncdir is null"),
-                requireNonNull(pPath, "path is null"), requireNonNull(pFailure, "failure is null"));
+    public void discard(final SyncPath pPath, final IOException pFailure) throws DiscardException {
+        requestDistributor.discard(requireNonNull(pPath, "path is null"),
+                requireNonNull(pFailure, "failure is null"));
     }
 
     @Override
-    public void store(final String pSyncDir, final String pPath, final byte[] pChecksum) throws StoreException {
-        requireNonNull(pSyncDir, "syncdir is null");
+    public void store(final SyncPath pPath, final byte[] pChecksum) throws StoreException {
         requireNonNull(pChecksum, "checksum is null");
-        requestDistributor.store(requireNonNull(pSyncDir, "syncdir is null"),
-                requireNonNull(pPath, "path is null"));
+        requestDistributor.store(requireNonNull(pPath, "path is null"));
 
         // Do only update the checksum when the store operation was successful
-        checksums.put(lockManager.toGlobalPath(pSyncDir, pPath), pChecksum);
+        checksums.put(pPath, pChecksum);
     }
 
     @Override
-    public byte[] getChecksum(final String pSyncDir, final String pPath) {
-        final byte[] checksum = checksums.get(lockManager.toGlobalPath(pSyncDir, pPath));
+    public byte[] getChecksum(final SyncPath pPath) {
+        final byte[] checksum = checksums.get(requireNonNull(pPath, "path is null"));
         return checksum == null ? EMPTY_CHECKSUM : checksum;
     }
 

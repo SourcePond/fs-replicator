@@ -15,24 +15,18 @@ package ch.sourcepond.io.fssync.source.fs;
 
 import ch.sourcepond.io.checksum.api.ResourceProducer;
 import ch.sourcepond.io.checksum.api.ResourceProducerFactory;
-import ch.sourcepond.io.fssync.common.CompoundServiceFactory;
-import ch.sourcepond.io.fssync.common.ServiceListenerRegistrar;
+import ch.sourcepond.io.fssync.common.lib.CompoundServiceFactory;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilder;
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilderFactory;
 import com.google.inject.Injector;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.osgi.framework.BundleContext;
 
-import java.nio.file.FileSystem;
-import java.nio.file.Path;
 import java.nio.file.WatchService;
 import java.util.Dictionary;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.Function;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.response;
 
+import ch.sourcepond.io.fssync.common.api.SyncPath;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.StatusMessage;
 import ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig;
 import com.hazelcast.core.Cluster;
@@ -34,8 +35,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_PATH;
-import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_SYNC_DIR;
 import static java.lang.Thread.currentThread;
 import static java.lang.Thread.interrupted;
 import static java.util.Arrays.asList;
@@ -57,7 +56,7 @@ public class ClusterResponseBarrierImplTest {
     private static final String EXPECTED_REGISTRATION_ID = "someRegistrationId";
     private static final long EXPECTED_TIMEOUT = 500;
     private static final TimeUnit EXPECTED_UNIT = MILLISECONDS;
-    private final ITopic<String> requestTopic = mock(ITopic.class);
+    private final ITopic<SyncPath> requestTopic = mock(ITopic.class);
     private final ITopic<StatusMessage> responseTopic = mock(ITopic.class);
     private final DistributorConfig config = mock(DistributorConfig.class);
     private final HazelcastInstance hci = mock(HazelcastInstance.class);
@@ -67,9 +66,10 @@ public class ClusterResponseBarrierImplTest {
     private final Message<StatusMessage> message = mock(Message.class);
     private final MembershipEvent event = mock(MembershipEvent.class);
     private final ScheduledExecutorService executor = newSingleThreadScheduledExecutor();
-    private StatusMessage payload = new StatusMessage(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+    private final SyncPath path = mock(SyncPath.class);
+    private StatusMessage payload = new StatusMessage(path);
     private final ClusterResponseBarrierFactory factory = new ClusterResponseBarrierFactory(hci, config, responseTopic);
-    private ClusterResponseBarrierImpl<String> listener;
+    private ClusterResponseBarrierImpl<SyncPath> listener;
     private volatile boolean run;
 
     @Before
@@ -81,7 +81,7 @@ public class ClusterResponseBarrierImplTest {
         when(message.getPublishingMember()).thenReturn(member);
         when(message.getMessageObject()).thenReturn(payload);
         when(event.getMember()).thenReturn(member);
-        listener = (ClusterResponseBarrierImpl<String>) factory.create(EXPECTED_PATH, requestTopic);
+        listener = (ClusterResponseBarrierImpl<SyncPath>) factory.create(path, requestTopic);
         when(cluster.addMembershipListener(listener)).thenReturn(EXPECTED_MEMBERSHIP_ID);
         when(responseTopic.addMessageListener(listener)).thenReturn(EXPECTED_REGISTRATION_ID);
     }
@@ -98,7 +98,7 @@ public class ClusterResponseBarrierImplTest {
             listener.memberRemoved(event);
             run = true;
         }, 200, MILLISECONDS);
-        listener.awaitResponse(EXPECTED_PATH);
+        listener.awaitResponse(path);
         assertTrue(run);
     }
 
@@ -120,7 +120,7 @@ public class ClusterResponseBarrierImplTest {
         final Thread thread = currentThread();
         executor.schedule(() -> thread.interrupt(), 200, MILLISECONDS);
         try {
-            listener.awaitResponse(EXPECTED_PATH);
+            listener.awaitResponse(path);
             fail("Exception expected");
         } catch (final ResponseException e) {
             final Throwable cause = e.getCause();
@@ -132,11 +132,11 @@ public class ClusterResponseBarrierImplTest {
     @Test(timeout = 2000)
     public void validateAnswers() throws Exception {
         final IOException expected = new IOException(EXPECTED_FAILURE_MESSAGE);
-        payload = new StatusMessage(EXPECTED_SYNC_DIR, EXPECTED_PATH, expected);
+        payload = new StatusMessage(path, expected);
         when(message.getMessageObject()).thenReturn(payload);
         listener.onMessage(message);
         try {
-            listener.awaitResponse(EXPECTED_PATH);
+            listener.awaitResponse(path);
             fail("Exception expected");
         } catch (final ResponseException e) {
             assertTrue(expected.getMessage().contains(EXPECTED_FAILURE_MESSAGE));
@@ -145,7 +145,7 @@ public class ClusterResponseBarrierImplTest {
 
     @Test(timeout = 5000, expected = TimeoutException.class)
     public void awaitNodeAnswersWaitTimedOut() throws Exception {
-        listener.awaitResponse(EXPECTED_PATH);
+        listener.awaitResponse(path);
     }
 
     @Test(expected = NullPointerException.class)
@@ -159,7 +159,7 @@ public class ClusterResponseBarrierImplTest {
             listener.onMessage(message);
             run = true;
         }, 200, MILLISECONDS);
-        listener.awaitResponse(EXPECTED_PATH);
+        listener.awaitResponse(path);
         assertTrue(run);
         final InOrder order = inOrder(cluster, responseTopic);
         verify(cluster).addMembershipListener(listener);

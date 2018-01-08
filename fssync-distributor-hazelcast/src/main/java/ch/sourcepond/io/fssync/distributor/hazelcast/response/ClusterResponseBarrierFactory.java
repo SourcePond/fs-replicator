@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.response;
 
+import ch.sourcepond.io.fssync.common.api.SyncPath;
 import ch.sourcepond.io.fssync.distributor.hazelcast.annotations.Response;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.StatusMessage;
 import ch.sourcepond.io.fssync.distributor.hazelcast.config.DistributorConfig;
@@ -39,7 +40,7 @@ public class ClusterResponseBarrierFactory {
         responseTopic = pResponseTopic;
     }
 
-    public <T extends Serializable> ClusterResponseBarrier<T> create(final String pPath, final ITopic<T> pRequestTopic) {
+    public <T extends Serializable> ClusterResponseBarrier<T> create(final SyncPath pPath, final ITopic<T> pRequestTopic) {
         return new ClusterResponseBarrierImpl<T>(pPath, hci, config, responseTopic, pRequestTopic);
     }
 }

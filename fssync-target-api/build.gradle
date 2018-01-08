@@ -1,10 +1,6 @@
 group 'ch.sourcepond.io.fssync'
 version '0.1-SNAPSHOT'
 
-apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'biz.aQute.bnd.builder'
-
 sourceCompatibility = 1.8
 
 repositories {
@@ -12,6 +8,7 @@ repositories {
 }
 
 dependencies {
+    compile project(':fssync-common-api')
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 

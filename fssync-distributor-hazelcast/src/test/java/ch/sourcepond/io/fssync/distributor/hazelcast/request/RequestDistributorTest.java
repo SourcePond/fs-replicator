@@ -13,12 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.request;
 
+import ch.sourcepond.io.fssync.common.api.SyncPath;
+import ch.sourcepond.io.fssync.distributor.hazelcast.common.DistributionMessage;
+import ch.sourcepond.io.fssync.distributor.hazelcast.common.StatusMessage;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.DeletionException;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.DiscardException;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.StoreException;
 import ch.sourcepond.io.fssync.distributor.hazelcast.exception.TransferException;
-import ch.sourcepond.io.fssync.distributor.hazelcast.common.DistributionMessage;
-import ch.sourcepond.io.fssync.distributor.hazelcast.common.StatusMessage;
 import ch.sourcepond.io.fssync.distributor.hazelcast.response.ClusterResponseBarrier;
 import ch.sourcepond.io.fssync.distributor.hazelcast.response.ClusterResponseBarrierFactory;
 import ch.sourcepond.io.fssync.distributor.hazelcast.response.ResponseException;
@@ -31,9 +32,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_PATH;
-import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_SYNC_DIR;
-import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.IS_EQUAL_TO_EXPECTED_DISTRIBUTION_MESSAGE;
 import static java.nio.ByteBuffer.wrap;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
@@ -46,8 +44,9 @@ import static org.mockito.Mockito.when;
 public class RequestDistributorTest {
     private static final byte[] EXPECTED_DATA = new byte[]{1, 2, 3, 4, 5};
     private static final IOException EXPECTED_FAILURE = new IOException();
-    private static ArgumentMatcher<TransferRequest> TRANSFER_REQUEST_MATCHER = message -> EXPECTED_PATH.equals(message.getPath()) && Arrays.equals(EXPECTED_DATA, message.getData());
-    private static ArgumentMatcher<StatusMessage> DISCARD_REQUEST_MATCHER = message -> EXPECTED_PATH.equals(message.getPath()) && message.getFailureOrNull() == EXPECTED_FAILURE;
+    private final SyncPath path = mock(SyncPath.class);
+    private final ArgumentMatcher<TransferRequest> transferRequestMatcher = message -> path.equals(message.getPath()) && Arrays.equals(EXPECTED_DATA, message.getData());
+    private final ArgumentMatcher<StatusMessage> discardRequestMatcher = message -> path.equals(message.getPath()) && message.getFailureOrNull() == EXPECTED_FAILURE;
     private final ClusterResponseBarrierFactory clusterResponseBarrierFactory = mock(ClusterResponseBarrierFactory.class);
     private final ITopic<DistributionMessage> deleteRequestTopic = mock(ITopic.class);
     private final ITopic<TransferRequest> transferRequestTopic = mock(ITopic.class);
@@ -57,30 +56,31 @@ public class RequestDistributorTest {
     private final ClusterResponseBarrier<TransferRequest> transferRequestBarrier = mock(ClusterResponseBarrier.class);
     private final ClusterResponseBarrier<StatusMessage> discardRequestBarrier = mock(ClusterResponseBarrier.class);
     private final ClusterResponseBarrier<DistributionMessage> storeRequestBarrier = mock(ClusterResponseBarrier.class);
+    private final ArgumentMatcher<DistributionMessage> isEqualToExpectedDistributionMessage = msg -> path.equals(msg.getPath());
     private final RequestDistributor distributor = new RequestDistributor(clusterResponseBarrierFactory,
             deleteRequestTopic, transferRequestTopic, discardRequestTopic, storeRequestTopic);
 
     @Before
     public void setup() {
-        when(clusterResponseBarrierFactory.create(EXPECTED_PATH, deleteRequestTopic)).thenReturn(deleteRequestBarrier);
-        when(clusterResponseBarrierFactory.create(EXPECTED_PATH, transferRequestTopic)).thenReturn(transferRequestBarrier);
-        when(clusterResponseBarrierFactory.create(EXPECTED_PATH, discardRequestTopic)).thenReturn(discardRequestBarrier);
-        when(clusterResponseBarrierFactory.create(EXPECTED_PATH, storeRequestTopic)).thenReturn(storeRequestBarrier);
+        when(clusterResponseBarrierFactory.create(path, deleteRequestTopic)).thenReturn(deleteRequestBarrier);
+        when(clusterResponseBarrierFactory.create(path, transferRequestTopic)).thenReturn(transferRequestBarrier);
+        when(clusterResponseBarrierFactory.create(path, discardRequestTopic)).thenReturn(discardRequestBarrier);
+        when(clusterResponseBarrierFactory.create(path, storeRequestTopic)).thenReturn(storeRequestBarrier);
     }
 
     @Test
     public void transfer() throws Exception {
         final ByteBuffer data = wrap(EXPECTED_DATA);
-        distributor.transfer(EXPECTED_SYNC_DIR, EXPECTED_PATH, data);
-        verify(transferRequestBarrier).awaitResponse(argThat(TRANSFER_REQUEST_MATCHER));
+        distributor.transfer(path, data);
+        verify(transferRequestBarrier).awaitResponse(argThat(transferRequestMatcher));
     }
 
     @Test
     public void transferFailed() throws Exception {
         final ResponseException expected = new ResponseException("any");
-        doThrow(expected).when(transferRequestBarrier).awaitResponse(argThat(TRANSFER_REQUEST_MATCHER));
+        doThrow(expected).when(transferRequestBarrier).awaitResponse(argThat(transferRequestMatcher));
         try {
-            distributor.transfer(EXPECTED_SYNC_DIR, EXPECTED_PATH, wrap(EXPECTED_DATA));
+            distributor.transfer(path, wrap(EXPECTED_DATA));
             fail("Exception expected!");
         } catch (final TransferException e) {
             assertSame(expected, e.getCause());
@@ -89,16 +89,16 @@ public class RequestDistributorTest {
 
     @Test
     public void discard() throws Exception {
-        distributor.discard(EXPECTED_SYNC_DIR, EXPECTED_PATH, EXPECTED_FAILURE);
-        verify(discardRequestBarrier).awaitResponse(argThat(DISCARD_REQUEST_MATCHER));
+        distributor.discard(path, EXPECTED_FAILURE);
+        verify(discardRequestBarrier).awaitResponse(argThat(discardRequestMatcher));
     }
 
     @Test
     public void discardFailed() throws Exception {
         final ResponseException expected = new ResponseException("any");
-        doThrow(expected).when(discardRequestBarrier).awaitResponse(argThat(DISCARD_REQUEST_MATCHER));
+        doThrow(expected).when(discardRequestBarrier).awaitResponse(argThat(discardRequestMatcher));
         try {
-            distributor.discard(EXPECTED_SYNC_DIR, EXPECTED_PATH, EXPECTED_FAILURE);
+            distributor.discard(path, EXPECTED_FAILURE);
             fail("Exception expected!");
         } catch (final DiscardException e) {
             assertSame(expected, e.getCause());
@@ -107,16 +107,16 @@ public class RequestDistributorTest {
 
     @Test
     public void store() throws Exception {
-        distributor.store(EXPECTED_SYNC_DIR, EXPECTED_PATH);
-        verify(storeRequestBarrier).awaitResponse(argThat(IS_EQUAL_TO_EXPECTED_DISTRIBUTION_MESSAGE));
+        distributor.store(path);
+        verify(storeRequestBarrier).awaitResponse(argThat(isEqualToExpectedDistributionMessage));
     }
 
     @Test
     public void storeFailed() throws Exception {
         final ResponseException expected = new ResponseException("any");
-        doThrow(expected).when(storeRequestBarrier).awaitResponse(argThat(IS_EQUAL_TO_EXPECTED_DISTRIBUTION_MESSAGE));
+        doThrow(expected).when(storeRequestBarrier).awaitResponse(argThat(isEqualToExpectedDistributionMessage));
         try {
-            distributor.store(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+            distributor.store(path);
             fail("Exception expected!");
         } catch (final StoreException e) {
             assertSame(expected, e.getCause());
@@ -125,16 +125,16 @@ public class RequestDistributorTest {
 
     @Test
     public void delete() throws Exception {
-        distributor.delete(EXPECTED_SYNC_DIR, EXPECTED_PATH);
-        verify(deleteRequestBarrier).awaitResponse(argThat(IS_EQUAL_TO_EXPECTED_DISTRIBUTION_MESSAGE));
+        distributor.delete(path);
+        verify(deleteRequestBarrier).awaitResponse(argThat(isEqualToExpectedDistributionMessage));
     }
 
     @Test
     public void deleteFailed() throws Exception {
         final ResponseException expected = new ResponseException("any");
-        doThrow(expected).when(deleteRequestBarrier).awaitResponse(argThat(IS_EQUAL_TO_EXPECTED_DISTRIBUTION_MESSAGE));
+        doThrow(expected).when(deleteRequestBarrier).awaitResponse(argThat(isEqualToExpectedDistributionMessage));
         try {
-            distributor.delete(EXPECTED_SYNC_DIR, EXPECTED_PATH);
+            distributor.delete(path);
             fail("Exception expected!");
         } catch (final DeletionException e) {
             assertSame(expected, e.getCause());

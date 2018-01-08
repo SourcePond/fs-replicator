@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.lock;
 
-import ch.sourcepond.io.fssync.distributor.hazelcast.common.ClientMessageProcessorTest;
 import ch.sourcepond.io.fssync.distributor.hazelcast.Constants;
+import ch.sourcepond.io.fssync.distributor.hazelcast.common.ClientMessageProcessorTest;
 import ch.sourcepond.io.fssync.distributor.hazelcast.common.DistributionMessage;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.Member;
@@ -24,8 +24,6 @@ import org.mockito.Mockito;
 
 import java.io.IOException;
 
-import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_PATH;
-import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_SYNC_DIR;
 import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.IS_EQUAL_TO_EXPECTED_NODE_INFO;
 import static com.hazelcast.core.MembershipEvent.MEMBER_REMOVED;
 import static java.util.Collections.emptySet;
@@ -45,8 +43,7 @@ public class ClientLockProcessorTest extends ClientMessageProcessorTest<Distribu
     @Override
     protected DistributionMessage createMessage() {
         final DistributionMessage message = mock(DistributionMessage.class);
-        when(message.getSyncDir()).thenReturn(EXPECTED_SYNC_DIR);
-        when(message.getPath()).thenReturn(EXPECTED_PATH);
+        when(message.getPath()).thenReturn(syncPath);
         return message;
     }
 

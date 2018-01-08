@@ -14,7 +14,7 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.target.fs;
 
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
-import ch.sourcepond.io.fssync.target.api.SyncPath;
+import ch.sourcepond.io.fssync.common.api.SyncPath;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import org.junit.After;
 import org.junit.Before;
@@ -28,6 +28,7 @@ import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.util.tracker.ServiceTracker;
 
 import javax.inject.Inject;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -75,6 +76,7 @@ public class TargetFilesystemTest {
         return new Option[]{
                 junitBundles(),
                 mavenBundle("ch.sourcepond.osgi.cmpn", "metatype-builder-lib").version("0.1-SNAPSHOT"),
+                mavenBundle("ch.sourcepond.io.fssync", "fssync-common-api").version("0.1-SNAPSHOT"),
                 mavenBundle("ch.sourcepond.io.fssync", "fssync-common-lib").version("0.1-SNAPSHOT"),
                 mavenBundle("ch.sourcepond.io.fssync", "fssync-target-api").version("0.1-SNAPSHOT"),
                 mavenBundle("ch.sourcepond.io.fssync", "fssync-target-filesystem").version("0.1-SNAPSHOT"),
@@ -117,7 +119,7 @@ public class TargetFilesystemTest {
     @Test
     public void verifyDefaultSync() throws IOException {
         final NodeInfo ni = new NodeInfo(EXPECTED_REMOTE_NODE, EXPECTED_LOCAL_NODE);
-        final SyncPath syncPath = new SyncPath(getProperty("user.dir"), "temp_testdata/examfile.txt");
+        final SyncPath syncPath = new SyncPath(File.separator, getProperty("user.dir"), "temp_testdata/examfile.txt");
         defaultSyncTarget.lock(ni, syncPath);
         assertTrue(Files.exists(getDefault().getPath(syncPath.getSyncDir(), syncPath.getPath())));
     }

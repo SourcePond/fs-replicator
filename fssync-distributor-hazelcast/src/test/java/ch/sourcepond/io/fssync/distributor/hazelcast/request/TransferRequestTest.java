@@ -15,13 +15,11 @@ package ch.sourcepond.io.fssync.distributor.hazelcast.request;
 
 import ch.sourcepond.io.fssync.distributor.hazelcast.DistributionMessageTest;
 
-import static ch.sourcepond.io.fssync.distributor.hazelcast.Constants.EXPECTED_SYNC_DIR;
-
 public class TransferRequestTest extends DistributionMessageTest<TransferRequest> {
     private static final byte[] EXPECTED_DATA = new byte[0];
 
     @Override
     protected TransferRequest createMessage() {
-        return new TransferRequest(EXPECTED_SYNC_DIR, EXPECTED_PATH, EXPECTED_DATA);
+        return new TransferRequest(path, EXPECTED_DATA);
     }
 }

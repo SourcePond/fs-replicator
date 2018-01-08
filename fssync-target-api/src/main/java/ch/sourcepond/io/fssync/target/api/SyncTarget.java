@@ -13,6 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.target.api;
 
+import ch.sourcepond.io.fssync.common.api.SyncPath;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 

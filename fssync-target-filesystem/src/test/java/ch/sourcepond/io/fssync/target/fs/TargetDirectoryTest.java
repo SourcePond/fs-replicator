@@ -14,13 +14,14 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.target.fs;
 
 import ch.sourcepond.io.fssync.target.api.NodeInfo;
-import ch.sourcepond.io.fssync.target.api.SyncPath;
+import ch.sourcepond.io.fssync.common.api.SyncPath;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.osgi.framework.ServiceRegistration;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.FileVisitResult;
@@ -52,7 +53,7 @@ import static org.mockito.Mockito.when;
 public class TargetDirectoryTest {
     private static final String EXPECTED_CONTEXT = "Some expected content";
     private final NodeInfo nodeInfo = mock(NodeInfo.class);
-    private final SyncPath syncPath = new SyncPath(format("%s/target", getProperty("user.dir")), "org/foo/bar.txt");
+    private final SyncPath syncPath = new SyncPath(File.separator, format("%s/target", getProperty("user.dir")), "org/foo/bar.txt");
     private final Config config = mock(Config.class);
     private final ServiceRegistration<SyncTarget> registration = mock(ServiceRegistration.class);
     private final Path expectedPath = getDefault().getPath(syncPath.getSyncDir(), syncPath.getPath());
@@ -259,18 +260,6 @@ public class TargetDirectoryTest {
             fail("Exception expected");
         } catch (final IOException expected) {
             // noop
-        }
-    }
-
-    @Test
-    public void lockPathIsNotRelative() throws Exception {
-        final SyncPath syncPath = new SyncPath(format("%s/target", getProperty("user.dir")), "/org/foo/bar.txt");
-
-        try {
-            syncTarget.lock(nodeInfo, syncPath);
-            fail("Exception expected");
-        } catch (final IOException expected) {
-            assertTrue(expected.getMessage().contains(syncPath.getPath()));
         }
     }
 }

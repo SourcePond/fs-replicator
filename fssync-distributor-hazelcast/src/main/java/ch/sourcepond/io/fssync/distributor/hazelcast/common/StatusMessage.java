@@ -13,6 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.common;
 
+import ch.sourcepond.io.fssync.common.api.SyncPath;
+
 import java.io.IOException;
 
 /**
@@ -24,12 +26,12 @@ public class StatusMessage extends DistributionMessage {
     /**
      * @param pPath
      */
-    public StatusMessage(final String pSyncDir, final String pPath) {
-        this(pSyncDir, pPath, null);
+    public StatusMessage(final SyncPath pPath) {
+        this(pPath, null);
     }
 
-    public StatusMessage(final String pSyncDir, final String pPath, final IOException pFailureOrNull) {
-        super(pSyncDir, pPath);
+    public StatusMessage(final SyncPath pPath, final IOException pFailureOrNull) {
+        super(pPath);
         failureOrNull = pFailureOrNull;
     }
 

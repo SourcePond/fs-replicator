@@ -13,22 +13,18 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.distributor.hazelcast.common;
 
+import ch.sourcepond.io.fssync.common.api.SyncPath;
+
 import java.io.Serializable;
 
 public class DistributionMessage implements Serializable {
-    private final String syncDir;
-    private final String path;
+    private final SyncPath path;
 
-    public DistributionMessage(final String pSyncDir, final String pPath) {
-        syncDir = pSyncDir;
+    public DistributionMessage(final SyncPath pPath) {
         path = pPath;
     }
 
-    public String getSyncDir() {
-        return syncDir;
-    }
-
-    public String getPath() {
+    public SyncPath getPath() {
         return path;
     }
 }
