@@ -18,17 +18,21 @@ import ch.sourcepond.io.checksum.api.ResourceProducerFactory;
 import ch.sourcepond.io.fssync.common.CompoundServiceFactory;
 import ch.sourcepond.io.fssync.common.ServiceListenerRegistrar;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
+import ch.sourcepond.io.fssync.source.fs.fswatch.WatchServiceInstaller;
+import ch.sourcepond.io.fssync.source.fs.fswatch.WatchServiceInstallerFactory;
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilder;
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilderFactory;
-import org.junit.After;
+import com.google.inject.Injector;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
 import org.osgi.service.cm.ManagedServiceFactory;
 
+import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.WatchService;
@@ -38,8 +42,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 
 import static ch.sourcepond.io.fssync.source.fs.Activator.FACTORY_PID;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -65,11 +72,18 @@ public class ActivatorTest {
     private final CompoundServiceFactory compoundServiceFactory = mock(CompoundServiceFactory.class);
     private final Dictionary<String, Object> props = mock(Dictionary.class);
     private final Config config = mock(Config.class, withSettings().defaultAnswer(inv -> inv.getMethod().getDefaultValue()));
+    private final InjectorFactory injectorFactory = mock(InjectorFactory.class);
+    private final Injector injector = mock(Injector.class);
+    private final WatchServiceInstallerFactory installerFactory = mock(WatchServiceInstallerFactory.class);
+    private final WatchServiceInstaller installer = mock(WatchServiceInstaller.class);
     private final Activator activator = new Activator(fs, configBuilderFactory, compoundServiceFactory,
-            distributionExecutor, watchServiceExecutor, registrar);
+            distributionExecutor, registrar, injectorFactory);
 
     @Before
     public void setup() throws Exception {
+        when(injectorFactory.createInjector(config, watchService, distributor, resourceProducerFactory)).thenReturn(injector);
+        when(installerFactory.create(watchedDirectory)).thenReturn(installer);
+        when(injector.getInstance(WatchServiceInstallerFactory.class)).thenReturn(installerFactory);
         when(fs.newWatchService()).thenReturn(watchService);
         when(config.watchedDirectory()).thenReturn(EXPECTED_WATCHED_DIRECTORY);
         when(compoundServiceFactory.create(context, distributionExecutor, Distributor.class)).thenReturn(distributor);
@@ -79,16 +93,57 @@ public class ActivatorTest {
         when(fs.getPath(EXPECTED_WATCHED_DIRECTORY)).thenReturn(watchedDirectory);
         activator.setResourceProducerFactory(resourceProducerFactory);
         activator.start(context);
-        activator.updated(EXPECTED_CONFIG_PID, props);
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @Test
+    public void verifyDefaultConstructor() {
+        new Activator();
+    }
+
+    @Test
+    public void unsetSetResourceProducerFactory() throws Exception {
+        activator.updated(EXPECTED_CONFIG_PID, props);
+        activator.unsetResourceProducerFactory();
+        activator.setResourceProducerFactory(resourceProducerFactory);
+
+        final InOrder order = inOrder(installer);
+        order.verify(installer).start();
+        order.verify(installer).close();
+        order.verify(installer).start();
+    }
+
+    @Test
+    public void stopInstallerCloseException() throws Exception {
+        activator.updated(EXPECTED_CONFIG_PID, props);
+        doThrow(IOException.class).when(installer).close();
+
+        // This should not cause an exception
         activator.stop(context);
     }
 
     @Test
-    public void verifyStart() {
+    public void stop() throws Exception {
+        activator.updated(EXPECTED_CONFIG_PID, props);
+        activator.stop(context);
+        verify(installer).close();
+        verify(distributionExecutor).shutdown();
+    }
+
+    @Test
+    public void getName() {
+        assertEquals(FACTORY_PID, activator.getName());
+    }
+
+    @Test
+    public void startFailed() throws Exception {
+        doThrow(IOException.class).when(fs).newWatchService();
+
+        // This should not throw an exception
+        activator.updated(EXPECTED_CONFIG_PID, props);
+    }
+
+    @Test
+    public void start() {
         verify(context).registerService(Mockito.eq(ManagedServiceFactory.class), Mockito.same(activator), argThat(inv -> FACTORY_PID.equals(inv.get(SERVICE_PID))));
         final ArgumentCaptor<Consumer<ResourceProducerFactory>> registrationCaptor = ArgumentCaptor.forClass(Consumer.class);
         final ArgumentCaptor<Runnable> unregistrationCaptor = ArgumentCaptor.forClass(Runnable.class);

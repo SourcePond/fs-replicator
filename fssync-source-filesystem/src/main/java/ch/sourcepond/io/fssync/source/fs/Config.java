@@ -49,4 +49,7 @@ public @interface Config {
 
     @AttributeDefinition
     int readBufferSize() default 1024;
+
+    @AttributeDefinition(min = "1")
+    int triggerConcurrency() default 3;
 }

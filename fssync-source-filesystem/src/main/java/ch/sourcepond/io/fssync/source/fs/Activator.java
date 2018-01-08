@@ -36,9 +36,9 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
 
-import static com.google.inject.Guice.createInjector;
+import static java.nio.file.FileSystems.getDefault;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.osgi.framework.Constants.SERVICE_PID;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -49,25 +49,34 @@ public class Activator implements ManagedServiceFactory, BundleActivator {
     private final ConfigBuilderFactory configBuilderFactory;
     private final CompoundServiceFactory compoundServiceFactory;
     private final ExecutorService distributionExecutor;
-    private final ScheduledExecutorService watchServiceExecutor;
     private final ServiceListenerRegistrar registrar;
+    private final InjectorFactory injectorFactory;
     private final Map<String, Config> configs = new HashMap<>();
     private final Map<String, WatchServiceInstaller> installers = new HashMap<>();
     private volatile Distributor distributor;
     private ResourceProducerFactory resourceProducerFactory;
 
+    public Activator() {
+        this(getDefault(),
+                new ConfigBuilderFactory(),
+                new CompoundServiceFactory(),
+                newSingleThreadExecutor(),
+                new ServiceListenerRegistrar(),
+                new InjectorFactory());
+    }
+
     public Activator(final FileSystem pFs,
                      final ConfigBuilderFactory pConfigBuildFactory,
                      final CompoundServiceFactory pCompoundServiceFactory,
                      final ExecutorService pDistributionExecutor,
-                     final ScheduledExecutorService pWatchServiceExecutor,
-                     final ServiceListenerRegistrar pRegistrar) {
+                     final ServiceListenerRegistrar pRegistrar,
+                     final InjectorFactory pInjectorFactory) {
         fs = pFs;
         configBuilderFactory = pConfigBuildFactory;
         compoundServiceFactory = pCompoundServiceFactory;
         distributionExecutor = pDistributionExecutor;
-        watchServiceExecutor = pWatchServiceExecutor;
         registrar = pRegistrar;
+        injectorFactory = pInjectorFactory;
     }
 
     @Override
@@ -82,6 +91,7 @@ public class Activator implements ManagedServiceFactory, BundleActivator {
     @Override
     public synchronized void stop(final BundleContext bundleContext) {
         stopInstallers();
+        distributionExecutor.shutdown();
     }
 
     synchronized void setResourceProducerFactory(final ResourceProducerFactory pResourceProducerFactory) {
@@ -110,9 +120,8 @@ public class Activator implements ManagedServiceFactory, BundleActivator {
 
     private WatchServiceInstaller startInstaller(final Config pConfig) throws IOException {
         final WatchService watchService = fs.newWatchService();
-        final Injector injector = createInjector(new SourceFsModule(distributor,
-                resourceProducerFactory.create(pConfig.checksumConcurrency()),
-                watchService, watchServiceExecutor, pConfig));
+        final Injector injector = injectorFactory.createInjector(pConfig, watchService, distributor,
+                resourceProducerFactory);
         final Path watchedDirectory = fs.getPath(pConfig.watchedDirectory());
         final WatchServiceInstaller installer = injector.getInstance(WatchServiceInstallerFactory.class).create(watchedDirectory);
         installer.start();
