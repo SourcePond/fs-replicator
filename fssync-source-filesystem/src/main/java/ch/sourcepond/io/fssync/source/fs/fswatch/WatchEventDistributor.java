@@ -101,7 +101,17 @@ class WatchEventDistributor extends SimpleFileVisitor<Path> {
         }
     }
 
-    private void delete(final Path pPath) {
+    private void registerDirectory(final Path pPath) {
+        tree.computeIfAbsent(pPath, d -> {
+            try {
+                return pPath.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+    }
+
+    public void delete(final Path pPath) {
         final Object obj = tree.remove(pPath);
         if (isDirectory(pPath)) {
             final WatchKey watchKeyOrNull = (WatchKey) obj;
@@ -113,17 +123,7 @@ class WatchEventDistributor extends SimpleFileVisitor<Path> {
         }
     }
 
-    private void registerDirectory(final Path pPath) {
-        tree.computeIfAbsent(pPath, d -> {
-            try {
-                return pPath.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        });
-    }
-
-    private void create(final Path pPath) throws IOException {
+    public void create(final Path pPath) throws IOException {
         if (isDirectory(pPath)) {
             registerDirectory(pPath);
         } else {
@@ -131,33 +131,9 @@ class WatchEventDistributor extends SimpleFileVisitor<Path> {
         }
     }
 
-    private void modify(final Path pPath) throws IOException {
+    public void modify(final Path pPath) throws IOException {
         if (isRegularFile(pPath)) {
             getResource(pPath).update(update -> updateResource(update, pPath));
-        }
-    }
-
-    public void processEvents(final WatchKey pWatchKey, final Path pDir) {
-        for (final WatchEvent<?> event : pWatchKey.pollEvents()) {
-
-            // Ignore overflow
-            if (OVERFLOW == event.kind()) {
-                continue;
-            }
-
-            final Path path = pDir.resolve((Path) event.context());
-
-            try {
-                if (ENTRY_DELETE == event.kind()) {
-                    delete(path);
-                } else if (ENTRY_CREATE == event.kind()) {
-                    create(path);
-                } else { // ENTRY_MODIFY
-                    modify(path);
-                }
-            } catch (final IOException e) {
-                LOG.warn(e.getMessage(), e);
-            }
         }
     }
 }

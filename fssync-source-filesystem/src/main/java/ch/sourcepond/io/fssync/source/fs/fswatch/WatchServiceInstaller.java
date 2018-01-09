@@ -20,12 +20,16 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 
 import static java.lang.String.format;
 import static java.lang.Thread.currentThread;
 import static java.nio.file.Files.walkFileTree;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
+import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class WatchServiceInstaller extends SimpleFileVisitor<Path> implements Runnable, Closeable {
@@ -61,13 +65,37 @@ public class WatchServiceInstaller extends SimpleFileVisitor<Path> implements Ru
         }
     }
 
+    private void processEvents(final WatchKey pWatchKey, final Path pDir) {
+        for (final WatchEvent<?> event : pWatchKey.pollEvents()) {
+
+            // Ignore overflow
+            if (OVERFLOW == event.kind()) {
+                continue;
+            }
+
+            final Path path = pDir.resolve((Path) event.context());
+
+            try {
+                if (ENTRY_DELETE == event.kind()) {
+                    watchEventDistributor.delete(path);
+                } else if (ENTRY_CREATE == event.kind()) {
+                    watchEventDistributor.create(path);
+                } else { // ENTRY_MODIFY
+                    watchEventDistributor.modify(path);
+                }
+            } catch (final IOException e) {
+                LOG.warn(e.getMessage(), e);
+            }
+        }
+    }
+
     @Override
     public void run() {
         try {
             while (!currentThread().isInterrupted()) {
                 final WatchKey watchKey = watchService.take();
                 try {
-                    watchEventDistributor.processEvents(watchKey, (Path) watchKey.watchable());
+                    processEvents(watchKey, (Path) watchKey.watchable());
                 } finally {
                     watchKey.reset();
                 }
