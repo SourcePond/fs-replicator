@@ -19,6 +19,7 @@ public class FswatchModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(WatchServiceInstallerFactory.class);
+        bind(WatchServiceInstaller.class);
+        bind(WatchEventDistributor.class);
     }
 }

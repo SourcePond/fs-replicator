@@ -15,23 +15,23 @@ package ch.sourcepond.io.fssync.source.fs;
 
 import ch.sourcepond.io.checksum.api.ResourceProducerFactory;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-import java.nio.file.FileSystem;
+import java.nio.file.Path;
 import java.nio.file.WatchService;
 
+import static com.google.inject.Guice.createInjector;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 
 class InjectorFactory {
 
-    public Injector createInjector(final Config pConfig,
-                                   final WatchService pWatchService,
-                                   final FileSystem pFs,
-                                   final Distributor pDistributor,
-                                   final ResourceProducerFactory pResourceProducerFactory) {
-        return Guice.createInjector(new SourceFsModule(pDistributor,
+    public Injector create(final Config pConfig,
+                           final WatchService pWatchService,
+                           final Path pWatchedDirectory,
+                           final Distributor pDistributor,
+                           final ResourceProducerFactory pResourceProducerFactory) {
+        return createInjector(new SourceFsModule(pDistributor,
                 pResourceProducerFactory.create(pConfig.checksumConcurrency()),
-                pWatchService, pFs, newScheduledThreadPool(pConfig.triggerConcurrency()), pConfig));
+                pWatchService, pWatchedDirectory, newScheduledThreadPool(pConfig.triggerConcurrency()), pConfig));
     }
 }

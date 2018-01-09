@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.osgi.framework.BundleContext;
 
 import java.nio.file.FileSystem;
+import java.nio.file.Path;
 import java.nio.file.WatchService;
 import java.util.Dictionary;
 import java.util.concurrent.ExecutorService;
@@ -40,6 +41,7 @@ public class InjectorFactoryTest {
     private final ResourceProducer resourceProducer = mock(ResourceProducer.class);
     private final WatchService watchService = mock(WatchService.class);
     private final FileSystem fs = mock(FileSystem.class);
+    private final Path watchedDirectory = mock(Path.class);
     private final ExecutorService distributionExecutor = mock(ExecutorService.class);
     private final ConfigBuilderFactory configBuilderFactory = mock(ConfigBuilderFactory.class);
     private final ConfigBuilder<Config> configBuilder = mock(ConfigBuilder.class);
@@ -51,6 +53,7 @@ public class InjectorFactoryTest {
 
     @Before
     public void setup() throws Exception {
+        when(watchedDirectory.getFileSystem()).thenReturn(fs);
         when(compoundServiceFactory.create(context, distributionExecutor, Distributor.class)).thenReturn(distributor);
         when(configBuilderFactory.create(Config.class, props)).thenReturn(configBuilder);
         when(configBuilder.build()).thenReturn(config);
@@ -60,6 +63,6 @@ public class InjectorFactoryTest {
 
     @Test
     public void createInjector() {
-        final Injector injector = injectorFactory.createInjector(config, watchService, fs, distributor, resourceProducerFactory);
+        final Injector injector = injectorFactory.create(config, watchService, watchedDirectory, distributor, resourceProducerFactory);
     }
 }

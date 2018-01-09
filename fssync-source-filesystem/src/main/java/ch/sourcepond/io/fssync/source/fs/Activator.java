@@ -18,7 +18,6 @@ import ch.sourcepond.io.fssync.common.lib.CompoundServiceFactory;
 import ch.sourcepond.io.fssync.common.lib.ServiceListenerRegistrar;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.io.fssync.source.fs.fswatch.WatchServiceInstaller;
-import ch.sourcepond.io.fssync.source.fs.fswatch.WatchServiceInstallerFactory;
 import ch.sourcepond.osgi.cmpn.metatype.ConfigBuilderFactory;
 import com.google.inject.Injector;
 import org.osgi.framework.BundleActivator;
@@ -30,14 +29,15 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
-import java.nio.file.WatchService;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
+import static java.lang.String.format;
 import static java.nio.file.FileSystems.getDefault;
+import static java.nio.file.Files.isDirectory;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.osgi.framework.Constants.SERVICE_PID;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -110,7 +110,7 @@ public class Activator implements ManagedServiceFactory, BundleActivator {
                 if (!installers.containsKey(entry.getKey())) {
                     try {
                         installers.put(entry.getKey(), startInstaller(entry.getValue()));
-                    } catch (final IOException e) {
+                    } catch (final IOException | ConfigurationException e) {
                         LOG.error(e.getMessage(), e);
                     }
                 }
@@ -118,12 +118,16 @@ public class Activator implements ManagedServiceFactory, BundleActivator {
         }
     }
 
-    private WatchServiceInstaller startInstaller(final Config pConfig) throws IOException {
-        final WatchService watchService = fs.newWatchService();
-        final Injector injector = injectorFactory.createInjector(pConfig, watchService, fs, distributor,
-                resourceProducerFactory);
+    private WatchServiceInstaller startInstaller(final Config pConfig) throws IOException, ConfigurationException {
         final Path watchedDirectory = fs.getPath(pConfig.watchedDirectory());
-        final WatchServiceInstaller installer = injector.getInstance(WatchServiceInstallerFactory.class).create(watchedDirectory);
+
+        if (!isDirectory(watchedDirectory)) {
+            throw new ConfigurationException("watchedDirectory", format("%s is not a directory!", watchedDirectory));
+        }
+
+        final Injector injector = injectorFactory.create(pConfig, fs.newWatchService(), watchedDirectory,
+                distributor, resourceProducerFactory);
+        final WatchServiceInstaller installer = injector.getInstance(WatchServiceInstaller.class);
         installer.start();
         return installer;
     }

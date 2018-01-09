@@ -20,6 +20,7 @@ import ch.sourcepond.io.fssync.source.fs.trigger.TriggerModule;
 import com.google.inject.AbstractModule;
 
 import java.nio.file.FileSystem;
+import java.nio.file.Path;
 import java.nio.file.WatchService;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -27,20 +28,20 @@ public class SourceFsModule extends AbstractModule {
     private final Distributor distributor;
     private final ResourceProducer resourceProducer;
     private final WatchService watchService;
-    private final FileSystem fs;
+    private final Path watchedPath;
     private final ScheduledExecutorService watchServiceExecutor;
     private final Config config;
 
     public SourceFsModule(final Distributor pDistributor,
                           final ResourceProducer pResourceProducer,
                           final WatchService pWatchService,
-                          final FileSystem pFs,
+                          final Path pWatchedDirectory,
                           final ScheduledExecutorService pWatchServiceExecutor,
                           final Config pConfig) {
         distributor = pDistributor;
         resourceProducer = pResourceProducer;
         watchService = pWatchService;
-        fs = pFs;
+        watchedPath = pWatchedDirectory;
         watchServiceExecutor = pWatchServiceExecutor;
         config = pConfig;
     }
@@ -50,7 +51,8 @@ public class SourceFsModule extends AbstractModule {
         bind(Distributor.class).toInstance(distributor);
         bind(ResourceProducer.class).toInstance(resourceProducer);
         bind(WatchService.class).toInstance(watchService);
-        bind(FileSystem.class).toInstance(fs);
+        bind(Path.class).toInstance(watchedPath);
+        bind(FileSystem.class).toInstance(watchedPath.getFileSystem());
         bind(ScheduledExecutorService.class).toInstance(watchServiceExecutor);
         bind(Config.class).toInstance(config);
         install(new FswatchModule());
