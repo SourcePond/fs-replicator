@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.source.fs.trigger;
 
+import ch.sourcepond.io.fssync.common.api.SyncPathFactory;
 import com.google.inject.AbstractModule;
 
 public class TriggerModule extends AbstractModule {
@@ -22,5 +23,6 @@ public class TriggerModule extends AbstractModule {
         bind(MessageDigestFactory.class);
         bind(ReplicationTrigger.class);
         bind(SyncTriggerFactory.class);
+        bind(SyncPathFactory.class);
     }
 }

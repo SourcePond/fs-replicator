@@ -56,7 +56,7 @@ public class TargetDirectoryTest {
     private final SyncPath syncPath = new SyncPath(File.separator, format("%s/target", getProperty("user.dir")), "org/foo/bar.txt");
     private final Config config = mock(Config.class);
     private final ServiceRegistration<SyncTarget> registration = mock(ServiceRegistration.class);
-    private final Path expectedPath = getDefault().getPath(syncPath.getSyncDir(), syncPath.getPath());
+    private final Path expectedPath = getDefault().getPath(syncPath.getSyncDir(), syncPath.getRelativePath());
     private TargetDirectory syncTarget;
 
     @Before
@@ -114,7 +114,7 @@ public class TargetDirectoryTest {
             fail("Exception expected");
         } catch (final IOException expected) {
             assertTrue(expected.getMessage().contains(syncPath.getSyncDir()));
-            assertTrue(expected.getMessage().contains(syncPath.getPath()));
+            assertTrue(expected.getMessage().contains(syncPath.getRelativePath()));
         }
     }
 

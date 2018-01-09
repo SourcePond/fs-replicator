@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.source.fs.trigger;
 
+import ch.sourcepond.io.fssync.common.api.SyncPath;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.io.fssync.source.fs.Config;
 import org.slf4j.Logger;
@@ -46,11 +47,11 @@ class SyncTrigger implements Runnable {
     @Override
     public void run() {
         try {
-            if (distributor.tryLock(path.getSyncDirAsString(), path.getPathAsString())) {
+            if (distributor.tryLock(path)) {
                 try {
                     trigger.process(path);
                 } finally {
-                    distributor.unlock(path.getSyncDirAsString(), path.getPathAsString());
+                    distributor.unlock(path);
                 }
             } else if (config.retryAttempts() > retries++) {
                 executor.schedule(this, config.retryDelay(), config.retryDelayUnit());

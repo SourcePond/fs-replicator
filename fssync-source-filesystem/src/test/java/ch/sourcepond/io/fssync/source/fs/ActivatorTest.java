@@ -80,7 +80,7 @@ public class ActivatorTest {
 
     @Before
     public void setup() throws Exception {
-        when(injectorFactory.createInjector(config, watchService, distributor, resourceProducerFactory)).thenReturn(injector);
+        when(injectorFactory.createInjector(config, watchService, fs, distributor, resourceProducerFactory)).thenReturn(injector);
         when(installerFactory.create(watchedDirectory)).thenReturn(installer);
         when(injector.getInstance(WatchServiceInstallerFactory.class)).thenReturn(installerFactory);
         when(fs.newWatchService()).thenReturn(watchService);

@@ -120,7 +120,7 @@ public class Activator implements ManagedServiceFactory, BundleActivator {
 
     private WatchServiceInstaller startInstaller(final Config pConfig) throws IOException {
         final WatchService watchService = fs.newWatchService();
-        final Injector injector = injectorFactory.createInjector(pConfig, watchService, distributor,
+        final Injector injector = injectorFactory.createInjector(pConfig, watchService, fs, distributor,
                 resourceProducerFactory);
         final Path watchedDirectory = fs.getPath(pConfig.watchedDirectory());
         final WatchServiceInstaller installer = injector.getInstance(WatchServiceInstallerFactory.class).create(watchedDirectory);

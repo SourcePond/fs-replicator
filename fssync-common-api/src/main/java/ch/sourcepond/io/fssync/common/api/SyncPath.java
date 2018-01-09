@@ -27,10 +27,11 @@ public class SyncPath implements Serializable {
     private final String separator;
     private final String syncDir;
     private final String path;
+    private transient volatile String absolutePath;
 
     public SyncPath(final String pSeparator,
-                    final String pSyncDir,
-                    final String pRelativePath) {
+             final String pSyncDir,
+             final String pRelativePath) {
         requireNonNull(pSeparator, "separator is null");
         if (pSeparator.isEmpty()) {
             throw new IllegalArgumentException("Separator cannot be empty");
@@ -80,12 +81,15 @@ public class SyncPath implements Serializable {
         return syncDir;
     }
 
-    public String getPath() {
+    public String getRelativePath() {
         return path;
     }
 
     public String toAbsolutePath() {
-        return format("%s%s%s", syncDir, separator, path);
+        if (absolutePath == null) {
+            absolutePath = format("%s%s%s", syncDir, separator, path);
+        }
+        return absolutePath;
     }
 
     @Override

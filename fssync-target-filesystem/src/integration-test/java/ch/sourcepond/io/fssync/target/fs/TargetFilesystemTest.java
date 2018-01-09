@@ -121,7 +121,7 @@ public class TargetFilesystemTest {
         final NodeInfo ni = new NodeInfo(EXPECTED_REMOTE_NODE, EXPECTED_LOCAL_NODE);
         final SyncPath syncPath = new SyncPath(File.separator, getProperty("user.dir"), "temp_testdata/examfile.txt");
         defaultSyncTarget.lock(ni, syncPath);
-        assertTrue(Files.exists(getDefault().getPath(syncPath.getSyncDir(), syncPath.getPath())));
+        assertTrue(Files.exists(getDefault().getPath(syncPath.getSyncDir(), syncPath.getRelativePath())));
     }
 
     @Test

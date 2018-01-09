@@ -99,13 +99,18 @@ public class SyncPathTest {
     }
 
     @Test
+    public void getSeparator() {
+        assertEquals(EXPECTED_SEPARATOR, path.getSeparator());
+    }
+
+    @Test
     public void getSyncDir() {
         assertEquals(EXPECTED_SYNC_DIR, path.getSyncDir());
     }
 
     @Test
     public void getPath() {
-        assertEquals(EXPECTED_PATH, path.getPath());
+        assertEquals(EXPECTED_PATH, path.getRelativePath());
     }
 
     @Test
@@ -125,6 +130,6 @@ public class SyncPathTest {
         out.writeObject(path);
 
         final ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bOut.toByteArray()));
-        assertEquals(path, (SyncPath)in.readObject());
+        assertEquals(path, in.readObject());
     }
 }

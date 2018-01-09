@@ -55,7 +55,7 @@ public class HazelcastDistributorTest {
     private static final String EXPECTED_PATH = "someExpectedPath";
     private static final String FACTORY_PID = "ch.sourcepond.io.fssync.distributor.hazelcast.Config";
     private static final ArgumentMatcher<NodeInfo> NODE_MATCHER = inv -> inv.isLocalNode() && inv.getLocal().equals(inv.getSender());
-    private static final ArgumentMatcher<SyncPath> PATH_MATCHER = inv -> EXPECTED_SYNC_DIR.equals(inv.getSyncDir()) && EXPECTED_PATH.equals(inv.getPath());
+    private static final ArgumentMatcher<SyncPath> PATH_MATCHER = inv -> EXPECTED_SYNC_DIR.equals(inv.getSyncDir()) && EXPECTED_PATH.equals(inv.getRelativePath());
     private static final byte[] ARR_1 = new byte[]{1, 2, 3};
     private static final byte[] ARR_2 = new byte[]{4, 5, 6};
     private static final byte[] ARR_3 = new byte[]{7, 8, 9};

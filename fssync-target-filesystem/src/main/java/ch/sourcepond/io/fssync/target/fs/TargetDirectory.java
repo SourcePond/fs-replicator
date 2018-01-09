@@ -56,11 +56,11 @@ class TargetDirectory extends Configurable<Config> implements SyncTarget, Runnab
 
     private FileHandle createHandle(final NodeInfo pNodeInfo, final SyncPath pPath) throws IOException {
         final Path syncDir = this.syncDir.getFileSystem().getPath(pPath.getSyncDir());
-        final Path targetFile = syncDir.resolve(pPath.getPath());
+        final Path targetFile = syncDir.resolve(pPath.getRelativePath());
 
         if (!targetFile.startsWith(syncDir)) {
             throw new IOException(format("%s is not relative! File-handle could not be created for node-info %s and sync-path %s",
-                    pPath.getPath(), pNodeInfo, pPath));
+                    pPath.getRelativePath(), pNodeInfo, pPath));
         }
 
         if (!isDirectory(targetFile.getParent())) {

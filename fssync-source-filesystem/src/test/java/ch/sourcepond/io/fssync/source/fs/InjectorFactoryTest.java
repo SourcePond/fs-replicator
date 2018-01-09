@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.osgi.framework.BundleContext;
 
+import java.nio.file.FileSystem;
 import java.nio.file.WatchService;
 import java.util.Dictionary;
 import java.util.concurrent.ExecutorService;
@@ -38,6 +39,7 @@ public class InjectorFactoryTest {
     private final ResourceProducerFactory resourceProducerFactory = mock(ResourceProducerFactory.class);
     private final ResourceProducer resourceProducer = mock(ResourceProducer.class);
     private final WatchService watchService = mock(WatchService.class);
+    private final FileSystem fs = mock(FileSystem.class);
     private final ExecutorService distributionExecutor = mock(ExecutorService.class);
     private final ConfigBuilderFactory configBuilderFactory = mock(ConfigBuilderFactory.class);
     private final ConfigBuilder<Config> configBuilder = mock(ConfigBuilder.class);
@@ -58,6 +60,6 @@ public class InjectorFactoryTest {
 
     @Test
     public void createInjector() {
-        final Injector injector = injectorFactory.createInjector(config, watchService, distributor, resourceProducerFactory);
+        final Injector injector = injectorFactory.createInjector(config, watchService, fs, distributor, resourceProducerFactory);
     }
 }
