@@ -66,7 +66,11 @@ public class WatchServiceInstaller extends SimpleFileVisitor<Path> implements Ru
         try {
             while (!currentThread().isInterrupted()) {
                 final WatchKey watchKey = watchService.take();
-                watchEventDistributor.processEvents(watchKey, (Path) watchKey.watchable());
+                try {
+                    watchEventDistributor.processEvents(watchKey, (Path) watchKey.watchable());
+                } finally {
+                    watchKey.reset();
+                }
             }
         } catch (final InterruptedException e) {
             currentThread().interrupt();

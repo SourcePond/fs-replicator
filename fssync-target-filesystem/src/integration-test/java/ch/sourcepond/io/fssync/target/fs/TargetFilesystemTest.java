@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.target.fs;
 
-import ch.sourcepond.io.fssync.target.api.NodeInfo;
 import ch.sourcepond.io.fssync.common.api.SyncPath;
+import ch.sourcepond.io.fssync.target.api.NodeInfo;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import org.junit.After;
 import org.junit.Before;
@@ -30,21 +30,14 @@ import org.osgi.util.tracker.ServiceTracker;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Hashtable;
 
 import static ch.sourcepond.io.fssync.target.fs.Activator.FACTORY_PID;
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
-import static java.lang.Thread.sleep;
 import static java.nio.file.FileSystems.getDefault;
-import static java.nio.file.FileVisitResult.CONTINUE;
-import static java.nio.file.Files.delete;
-import static java.nio.file.Files.walkFileTree;
+import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -81,7 +74,8 @@ public class TargetFilesystemTest {
                 mavenBundle("ch.sourcepond.io.fssync", "fssync-target-api").version("0.1-SNAPSHOT"),
                 mavenBundle("ch.sourcepond.io.fssync", "fssync-target-filesystem").version("0.1-SNAPSHOT"),
                 mavenBundle("org.apache.felix", "org.apache.felix.metatype").version("1.1.6"),
-                mavenBundle("org.apache.felix", "org.apache.felix.configadmin").version("1.8.16")
+                mavenBundle("org.apache.felix", "org.apache.felix.configadmin").version("1.8.16"),
+                mavenBundle("commons-io", "commons-io").version("2.6")
         };
     }
 
@@ -96,23 +90,7 @@ public class TargetFilesystemTest {
 
     @After
     public void tearDown() throws Exception {
-        final Path path = getDefault().getPath(getProperty("user.dir"), "temp_testdata");
-        if (Files.exists(path)) {
-            walkFileTree(path, new SimpleFileVisitor<Path>() {
-
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
-                    delete(file);
-                    return CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) throws IOException {
-                    delete(dir);
-                    return CONTINUE;
-                }
-            });
-        }
+        deleteDirectory(getDefault().getPath(getProperty("user.dir"), "temp_testdata").toFile());
         tracker.close();
     }
 
