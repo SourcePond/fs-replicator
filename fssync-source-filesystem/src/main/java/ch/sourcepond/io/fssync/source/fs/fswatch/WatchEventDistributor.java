@@ -64,7 +64,7 @@ class WatchEventDistributor extends SimpleFileVisitor<Path> implements Closeable
     public void close() {
         tree.values().forEach(c -> {
             if (c instanceof WatchKey) {
-                ((WatchKey)c).cancel();
+                ((WatchKey) c).cancel();
             }
         });
     }
@@ -81,7 +81,7 @@ class WatchEventDistributor extends SimpleFileVisitor<Path> implements Closeable
 
     @Override
     public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
-        getResource(file);
+        getResource(file).update(update -> updateResource(update, file));
         return CONTINUE;
     }
 
@@ -92,21 +92,11 @@ class WatchEventDistributor extends SimpleFileVisitor<Path> implements Closeable
     }
 
     private Resource computeResource(final Path pFile) {
-        final Resource resource = resourceProducer.create(SHA256, pFile);
-        try {
-            resource.update(update -> updateResource(update, pFile));
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        return resource;
+        return resourceProducer.create(SHA256, pFile);
     }
 
-    private Resource getResource(final Path pFile) throws IOException {
-        try {
-            return (Resource) tree.computeIfAbsent(pFile, this::computeResource);
-        } catch (final UncheckedIOException e) {
-            throw new IOException(e);
-        }
+    private Resource getResource(final Path pFile) {
+        return (Resource) tree.computeIfAbsent(pFile, this::computeResource);
     }
 
     private void registerDirectory(final Path pPath) {
