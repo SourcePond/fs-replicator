@@ -25,7 +25,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
-import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -39,7 +38,6 @@ import static java.nio.file.Files.isRegularFile;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
-import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 import static org.slf4j.LoggerFactory.getLogger;
 
 class WatchEventDistributor extends SimpleFileVisitor<Path> {
@@ -113,12 +111,14 @@ class WatchEventDistributor extends SimpleFileVisitor<Path> {
 
     public void delete(final Path pPath) {
         final Object obj = tree.remove(pPath);
-        if (isDirectory(pPath)) {
+        if (obj == null) {
+            LOG.warn("No watch-key nor a resource registered for {}", pPath);
+        } else if (obj instanceof WatchKey) { // Was a directory
             final WatchKey watchKeyOrNull = (WatchKey) obj;
             if (watchKeyOrNull != null) {
                 watchKeyOrNull.cancel();
             }
-        } else if (isRegularFile(pPath) && obj != null) {
+        } else { // Was a regular file
             trigger.delete(syncDir, pPath);
         }
     }

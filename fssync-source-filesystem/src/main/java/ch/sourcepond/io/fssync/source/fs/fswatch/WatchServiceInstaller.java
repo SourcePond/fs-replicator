@@ -84,7 +84,7 @@ public class WatchServiceInstaller extends SimpleFileVisitor<Path> implements Ru
                     watchEventDistributor.modify(path);
                 }
             } catch (final IOException e) {
-                LOG.warn(e.getMessage(), e);
+                LOG.error(e.getMessage(), e);
             }
         }
     }

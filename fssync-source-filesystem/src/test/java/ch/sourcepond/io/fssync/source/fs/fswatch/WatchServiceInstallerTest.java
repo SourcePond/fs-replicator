@@ -20,9 +20,9 @@ import ch.sourcepond.io.checksum.api.Update;
 import ch.sourcepond.io.checksum.api.UpdateObserver;
 import ch.sourcepond.io.fssync.source.fs.trigger.ReplicationTrigger;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -34,10 +34,12 @@ import java.nio.file.WatchService;
 
 import static ch.sourcepond.io.checksum.api.Algorithm.SHA256;
 import static java.lang.System.getProperty;
-import static java.lang.System.in;
+import static java.lang.Thread.sleep;
 import static java.nio.file.FileSystems.getDefault;
+import static java.nio.file.Files.delete;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.isDirectory;
+import static java.nio.file.Files.newBufferedWriter;
 import static java.util.UUID.randomUUID;
 import static org.apache.commons.io.FileUtils.copyDirectory;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
@@ -85,6 +87,7 @@ public class WatchServiceInstallerTest {
         watchEventDistributor = new WatchEventDistributor(resourceProducer, watchService, replicationTrigger, watchedDirectory);
         installer = new WatchServiceInstaller(watchEventDistributor, watchService, watchedDirectory);
         installer.start();
+        sleep(1000);
     }
 
     @After
@@ -104,16 +107,24 @@ public class WatchServiceInstallerTest {
     }
 
     private void changeFile() throws Exception {
-        try (final Writer writer = Files.newBufferedWriter(expectedPath)) {
+        try (final Writer writer = newBufferedWriter(expectedPath)) {
             writer.write(randomUUID().toString());
         }
-        verify(replicationTrigger, timeout(10000)).modify(watchedDirectory, expectedPath, EXPECTED_CHECKSUM);
+        verify(replicationTrigger, timeout(15000).atLeastOnce()).
+                modify(watchedDirectory, expectedPath, EXPECTED_CHECKSUM);
     }
 
     @Test
-    public void detectChange() throws Exception {
+    public void modify() throws Exception {
         reset(replicationTrigger);
         changeFile();
+    }
+
+    @Test
+    public void deleteCreate() throws Exception {
+        reset(replicationTrigger);
+        delete(expectedPath);
+        verify(replicationTrigger, timeout(15000)).delete(watchedDirectory, expectedPath);
         changeFile();
     }
 
