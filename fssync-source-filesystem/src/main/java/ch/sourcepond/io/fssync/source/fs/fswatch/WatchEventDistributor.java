@@ -20,6 +20,7 @@ import ch.sourcepond.io.fssync.source.fs.trigger.ReplicationTrigger;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.FileVisitResult;
@@ -40,7 +41,7 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static org.slf4j.LoggerFactory.getLogger;
 
-class WatchEventDistributor extends SimpleFileVisitor<Path> {
+class WatchEventDistributor extends SimpleFileVisitor<Path> implements Closeable {
     private static final Logger LOG = getLogger(WatchEventDistributor.class);
     private final ConcurrentMap<Path, Object> tree = new ConcurrentHashMap<>();
     private final ResourceProducer resourceProducer;
@@ -57,6 +58,15 @@ class WatchEventDistributor extends SimpleFileVisitor<Path> {
         watchService = pWatchService;
         trigger = pTrigger;
         syncDir = pSyncDir;
+    }
+
+    @Override
+    public void close() {
+        tree.values().forEach(c -> {
+            if (c instanceof WatchKey) {
+                ((WatchKey)c).cancel();
+            }
+        });
     }
 
     @Override

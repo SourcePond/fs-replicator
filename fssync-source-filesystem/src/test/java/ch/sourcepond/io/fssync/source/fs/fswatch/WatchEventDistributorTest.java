@@ -13,6 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.source.fs.fswatch;
 
+import ch.sourcepond.io.checksum.api.Algorithm;
+import ch.sourcepond.io.checksum.api.Resource;
 import ch.sourcepond.io.checksum.api.ResourceProducer;
 import ch.sourcepond.io.fssync.source.fs.trigger.ReplicationTrigger;
 import org.junit.Assert;
@@ -26,6 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 
+import static ch.sourcepond.io.checksum.api.Algorithm.SHA256;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
@@ -33,20 +36,31 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class WatchEventDistributorTest {
+    private final Resource resource = mock(Resource.class);
     private final ResourceProducer resourceProducer = mock(ResourceProducer.class);
     private final WatchService watchService = mock(WatchService.class);
     private final WatchKey watchKey = mock(WatchKey.class);
     private final ReplicationTrigger replicationTrigger = mock(ReplicationTrigger.class);
     private final Path syncDir = mock(Path.class);
+    private final Path file = mock(Path.class);
     private final WatchEventDistributor distributor = new WatchEventDistributor(resourceProducer, watchService,
             replicationTrigger, syncDir);
 
     @Before
     public void setup() throws Exception {
+        when(resourceProducer.create(SHA256, file)).thenReturn(resource);
         when(syncDir.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)).thenReturn(watchKey);
+    }
+
+    @Test
+    public void preVisitDirectory() throws Exception {
+        distributor.preVisitDirectory(syncDir, null);
+        distributor.close();
+        verify(watchKey).cancel();
     }
 
     @Test
@@ -59,5 +73,10 @@ public class WatchEventDistributorTest {
         } catch (final IOException e) {
             assertSame(expected, e.getCause().getCause());
         }
+    }
+
+    @Test
+    public void visitFile() throws Exception {
+        distributor.visitFile(file, null);
     }
 }

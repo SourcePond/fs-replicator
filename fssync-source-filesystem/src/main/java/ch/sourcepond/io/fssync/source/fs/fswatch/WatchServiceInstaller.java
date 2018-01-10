@@ -52,6 +52,7 @@ public class WatchServiceInstaller extends SimpleFileVisitor<Path> implements Ru
     @Override
     public void close() throws IOException {
         thread.interrupt();
+        watchEventDistributor.close();
         watchService.close();
     }
 
