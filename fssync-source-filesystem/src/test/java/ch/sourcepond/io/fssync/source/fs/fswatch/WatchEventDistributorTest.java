@@ -13,20 +13,21 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.source.fs.fswatch;
 
-import ch.sourcepond.io.checksum.api.Algorithm;
 import ch.sourcepond.io.checksum.api.Resource;
 import ch.sourcepond.io.checksum.api.ResourceProducer;
+import ch.sourcepond.io.checksum.api.UpdateObserver;
 import ch.sourcepond.io.fssync.source.fs.trigger.ReplicationTrigger;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
+import org.mockito.ArgumentCaptor;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.spi.FileSystemProvider;
 
 import static ch.sourcepond.io.checksum.api.Algorithm.SHA256;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
@@ -34,8 +35,10 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -46,7 +49,11 @@ public class WatchEventDistributorTest {
     private final WatchKey watchKey = mock(WatchKey.class);
     private final ReplicationTrigger replicationTrigger = mock(ReplicationTrigger.class);
     private final Path syncDir = mock(Path.class);
+    private final BasicFileAttributes syncDirAttributes = mock(BasicFileAttributes.class);
     private final Path file = mock(Path.class);
+    private final BasicFileAttributes fileAttributes = mock(BasicFileAttributes.class);
+    private final FileSystem fs = mock(FileSystem.class);
+    private final FileSystemProvider provider = mock(FileSystemProvider.class);
     private final WatchEventDistributor distributor = new WatchEventDistributor(resourceProducer, watchService,
             replicationTrigger, syncDir);
 
@@ -54,6 +61,11 @@ public class WatchEventDistributorTest {
     public void setup() throws Exception {
         when(resourceProducer.create(SHA256, file)).thenReturn(resource);
         when(syncDir.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)).thenReturn(watchKey);
+        when(fs.provider()).thenReturn(provider);
+        when(provider.readAttributes(file, BasicFileAttributes.class)).thenReturn(fileAttributes);
+        when(provider.readAttributes(syncDir, BasicFileAttributes.class)).thenReturn(syncDirAttributes);
+        when(syncDir.getFileSystem()).thenReturn(fs);
+        when(file.getFileSystem()).thenReturn(fs);
     }
 
     @Test
@@ -77,6 +89,35 @@ public class WatchEventDistributorTest {
 
     @Test
     public void visitFile() throws Exception {
+        when(fileAttributes.isRegularFile()).thenReturn(true);
         distributor.visitFile(file, null);
+        ArgumentCaptor<UpdateObserver> updateCaptor = forClass(UpdateObserver.class);
+        verify(resource).update(updateCaptor.capture());
+    }
+
+    @Test
+    public void modifyFile() throws Exception {
+        when(fileAttributes.isRegularFile()).thenReturn(true);
+        distributor.visitFile(file, null);
+        distributor.modify(file);
+        ArgumentCaptor<UpdateObserver> updateCaptor = forClass(UpdateObserver.class);
+        verify(resource, times(2)).update(updateCaptor.capture());
+    }
+
+
+    @Test
+    public void modifyFileNewResourceCreated() throws Exception {
+        when(fileAttributes.isRegularFile()).thenReturn(true);
+        distributor.modify(file);
+        ArgumentCaptor<UpdateObserver> updateCaptor = forClass(UpdateObserver.class);
+        verify(resource, times(2)).update(updateCaptor.capture());
+    }
+
+    @Test
+    public void createDirectory() throws Exception {
+        when(syncDirAttributes.isDirectory()).thenReturn(true);
+        distributor.create(syncDir);
+        distributor.close();
+        verify(watchKey).cancel();
     }
 }
