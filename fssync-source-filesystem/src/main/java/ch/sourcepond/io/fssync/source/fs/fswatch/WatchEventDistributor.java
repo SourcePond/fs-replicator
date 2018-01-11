@@ -111,15 +111,12 @@ class WatchEventDistributor extends SimpleFileVisitor<Path> implements Closeable
 
     public void delete(final Path pPath) {
         final Object obj = tree.remove(pPath);
-        if (obj == null) {
-            LOG.warn("No watch-key nor a resource registered for {}", pPath);
-        } else if (obj instanceof WatchKey) { // Was a directory
-            final WatchKey watchKeyOrNull = (WatchKey) obj;
-            if (watchKeyOrNull != null) {
-                watchKeyOrNull.cancel();
-            }
-        } else { // Was a regular file
+        if (obj instanceof WatchKey) {  // Was a directory
+            ((WatchKey) obj).cancel();
+        } else if (obj != null) { // Was a regular file
             trigger.delete(syncDir, pPath);
+        } else {
+            LOG.warn("No watch-key nor a resource registered for {}", pPath);
         }
     }
 

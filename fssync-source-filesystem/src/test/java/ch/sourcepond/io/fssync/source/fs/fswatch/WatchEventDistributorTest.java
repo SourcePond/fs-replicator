@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.source.fs.fswatch;
 
+import ch.qos.logback.core.encoder.EchoEncoder;
 import ch.sourcepond.io.checksum.api.Checksum;
 import ch.sourcepond.io.checksum.api.Resource;
 import ch.sourcepond.io.checksum.api.ResourceProducer;
@@ -74,11 +75,13 @@ public class WatchEventDistributorTest {
         when(update.getCurrent()).thenReturn(checksum);
         when(checksum.toByteArray()).thenReturn(EXPECTECTED_CHECKSUM);
         when(resourceProducer.create(SHA256, file)).thenReturn(resource);
+        when(syncDirAttributes.isDirectory()).thenReturn(true);
         when(syncDir.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)).thenReturn(watchKey);
         when(fs.provider()).thenReturn(provider);
         when(provider.readAttributes(file, BasicFileAttributes.class)).thenReturn(fileAttributes);
         when(provider.readAttributes(syncDir, BasicFileAttributes.class)).thenReturn(syncDirAttributes);
         when(syncDir.getFileSystem()).thenReturn(fs);
+        when(fileAttributes.isRegularFile()).thenReturn(true);
         when(file.getFileSystem()).thenReturn(fs);
     }
 
@@ -103,14 +106,12 @@ public class WatchEventDistributorTest {
 
     @Test
     public void visitFile() throws Exception {
-        when(fileAttributes.isRegularFile()).thenReturn(true);
         distributor.visitFile(file, null);
         verify(replicationTrigger).modify(syncDir, file, EXPECTECTED_CHECKSUM);
     }
 
     @Test
     public void visitAndModifyFile() throws Exception {
-        when(fileAttributes.isRegularFile()).thenReturn(true);
         distributor.visitFile(file, null);
         distributor.modify(file);
         verify(replicationTrigger, times(2)).modify(syncDir, file, EXPECTECTED_CHECKSUM);
@@ -118,7 +119,6 @@ public class WatchEventDistributorTest {
 
     @Test
     public void modifyFileNewResourceCreated() throws Exception {
-        when(fileAttributes.isRegularFile()).thenReturn(true);
         distributor.modify(file);
         verify(replicationTrigger).modify(syncDir, file, EXPECTECTED_CHECKSUM);
     }
@@ -126,14 +126,12 @@ public class WatchEventDistributorTest {
     @Test
     public void modifyNothingChanged() throws Exception {
         when(update.hasChanged()).thenReturn(false);
-        when(fileAttributes.isRegularFile()).thenReturn(true);
         distributor.modify(file);
         verifyZeroInteractions(replicationTrigger);
     }
 
     @Test
     public void createDirectory() throws Exception {
-        when(syncDirAttributes.isDirectory()).thenReturn(true);
         distributor.create(syncDir);
         distributor.close();
         verify(watchKey).cancel();
@@ -141,8 +139,34 @@ public class WatchEventDistributorTest {
 
     @Test
     public void createFile() throws Exception {
-        when(fileAttributes.isRegularFile()).thenReturn(true);
         distributor.create(file);
         verify(replicationTrigger).modify(syncDir, file, EXPECTECTED_CHECKSUM);
+    }
+
+    @Test
+    public void deleteNoSuchPath() {
+        // This should not cause an exception to be thrown
+        distributor.delete(mock(Path.class));
+    }
+
+    @Test
+    public void deleteDirectory() throws Exception {
+        distributor.create(syncDir);
+        distributor.delete(syncDir);
+
+        // Nothing should happen
+        distributor.delete(syncDir);
+        verify(watchKey).cancel();
+        verifyZeroInteractions(replicationTrigger);
+    }
+
+    @Test
+    public void deleteFile() throws Exception {
+        distributor.create(file);
+        distributor.delete(file);
+
+        // Nothing should happen
+        distributor.delete(file);
+        verify(replicationTrigger).delete(syncDir, file);
     }
 }
