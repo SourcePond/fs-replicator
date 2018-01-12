@@ -14,7 +14,6 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.source.fs.trigger;
 
 import ch.sourcepond.io.fssync.common.api.SyncPath;
-import ch.sourcepond.io.fssync.common.api.SyncPathFactory;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.io.fssync.source.fs.Config;
 import ch.sourcepond.io.fssync.source.fs.fswatch.DigestingChannel;
@@ -24,7 +23,6 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.FileSystem;
 import java.util.Arrays;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -36,22 +34,16 @@ public class ReplicationTrigger {
     private final Distributor distributor;
     private final SyncTriggerFactory syncTriggerFactory;
     private final ScheduledExecutorService executor;
-    private final FileSystem fs;
-    private final SyncPathFactory syncPathFactory;
     private final Config config;
 
     @Inject
     public ReplicationTrigger(final Distributor pDistributor,
                               final SyncTriggerFactory pSyncTriggerFactory,
                               final ScheduledExecutorService pExecutor,
-                              final FileSystem pFs,
-                              final SyncPathFactory pSyncPathFactory,
                               final Config pConfig) {
         distributor = pDistributor;
         syncTriggerFactory = pSyncTriggerFactory;
         executor = pExecutor;
-        fs = pFs;
-        syncPathFactory = pSyncPathFactory;
         config = pConfig;
     }
 
@@ -61,8 +53,9 @@ public class ReplicationTrigger {
             final ByteBuffer buffer = allocate(config.readBufferSize());
             try {
                 while (source.read(buffer) != -1) {
+                    buffer.flip();
                     distributor.transfer(syncPath, buffer);
-                    buffer.rewind();
+                    buffer.flip();
                 }
                 distributor.store(syncPath, source.digest());
             } catch (final IOException e) {

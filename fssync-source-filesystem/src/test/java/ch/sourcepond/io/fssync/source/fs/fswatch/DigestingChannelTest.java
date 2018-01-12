@@ -19,12 +19,12 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.file.Path;
 import java.util.concurrent.locks.Lock;
 
-import static java.lang.System.getProperty;
+import static ch.sourcepond.io.checksum.api.Checksum.toHexString;
+import static ch.sourcepond.io.fssync.source.fs.Constants.EXPECTED_CHECKSUM;
+import static ch.sourcepond.io.fssync.source.fs.Constants.TEST_DATA_FILE;
 import static java.nio.channels.FileChannel.open;
-import static java.nio.file.FileSystems.getDefault;
 import static java.nio.file.StandardOpenOption.READ;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
@@ -36,7 +36,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class DigestingChannelTest {
-    private static final String EXPECTED_CHECKSUM = "0be0b1c29bc463b8c16a681b511bad8cb05134d802da91db770bf0dd0a49786e";
     private final ReadableByteChannel delegate = mock(ReadableByteChannel.class);
     private final Lock lock = mock(Lock.class);
     private final DigestingChannel channel = new DigestingChannel(lock);
@@ -80,16 +79,13 @@ public class DigestingChannelTest {
 
     @Test
     public void verifyReadChecksum() throws IOException {
-        final Path sourcePath = getDefault().getPath(getProperty("user.dir")).
-                resolve("src").resolve("test").resolve("resources").
-                resolve(getClass().getSimpleName() + ".txt");
-        try (final ReadableByteChannel ch = open(sourcePath, READ)) {
+        try (final ReadableByteChannel ch = open(TEST_DATA_FILE, READ)) {
             channel.lock(ch);
             final ByteBuffer buffer = ByteBuffer.allocate(16);
             while (channel.read(buffer) != -1) {
                 buffer.flip();
             }
         }
-        assertEquals(EXPECTED_CHECKSUM, Checksum.toHexString(channel.digest()));
+        assertEquals(EXPECTED_CHECKSUM, toHexString(channel.digest()));
     }
 }
