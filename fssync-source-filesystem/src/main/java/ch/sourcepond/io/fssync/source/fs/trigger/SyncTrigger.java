@@ -16,6 +16,7 @@ package ch.sourcepond.io.fssync.source.fs.trigger;
 import ch.sourcepond.io.fssync.common.api.SyncPath;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.io.fssync.source.fs.Config;
+import ch.sourcepond.io.fssync.source.fs.fswatch.RegularFile;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -29,13 +30,13 @@ class SyncTrigger implements Runnable {
     private final Distributor distributor;
     private final Config config;
     private final SyncTriggerFunction trigger;
-    private final SyncPath path;
+    private final RegularFile path;
     private volatile int retries;
 
     public SyncTrigger(final ScheduledExecutorService pExecutor,
                        final Distributor pDistributor,
                        final Config pConfig,
-                       final SyncPath pPath,
+                       final RegularFile pPath,
                        final SyncTriggerFunction pTrigger) {
         executor = pExecutor;
         distributor = pDistributor;
@@ -47,11 +48,12 @@ class SyncTrigger implements Runnable {
     @Override
     public void run() {
         try {
-            if (distributor.tryLock(path)) {
+            final SyncPath syncPath = path.getSyncPath();
+            if (distributor.tryLock(syncPath)) {
                 try {
                     trigger.process(path);
                 } finally {
-                    distributor.unlock(path);
+                    distributor.unlock(syncPath);
                 }
             } else if (config.retryAttempts() > retries++) {
                 executor.schedule(this, config.retryDelay(), config.retryDelayUnit());

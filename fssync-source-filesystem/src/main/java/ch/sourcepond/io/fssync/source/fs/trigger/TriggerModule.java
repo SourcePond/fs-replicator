@@ -20,7 +20,6 @@ public class TriggerModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(MessageDigestFactory.class);
         bind(ReplicationTrigger.class);
         bind(SyncTriggerFactory.class);
         bind(SyncPathFactory.class);

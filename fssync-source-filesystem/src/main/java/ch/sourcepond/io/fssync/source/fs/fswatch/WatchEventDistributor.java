@@ -13,8 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.source.fs.fswatch;
 
-import ch.sourcepond.io.checksum.api.Resource;
-import ch.sourcepond.io.checksum.api.ResourceProducer;
 import ch.sourcepond.io.checksum.api.Update;
 import ch.sourcepond.io.fssync.source.fs.trigger.ReplicationTrigger;
 import org.slf4j.Logger;
@@ -32,7 +30,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static ch.sourcepond.io.checksum.api.Algorithm.SHA256;
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isRegularFile;
@@ -44,17 +41,17 @@ import static org.slf4j.LoggerFactory.getLogger;
 class WatchEventDistributor extends SimpleFileVisitor<Path> implements Closeable {
     private static final Logger LOG = getLogger(WatchEventDistributor.class);
     private final ConcurrentMap<Path, Object> tree = new ConcurrentHashMap<>();
-    private final ResourceProducer resourceProducer;
+    private final RegularFileFactory regularFileFactory;
     private final WatchService watchService;
     private final ReplicationTrigger trigger;
     private final Path syncDir;
 
     @Inject
-    WatchEventDistributor(final ResourceProducer pResourceProducer,
+    WatchEventDistributor(final RegularFileFactory pRegularFileFactory,
                           final WatchService pWatchService,
                           final ReplicationTrigger pTrigger,
                           final Path pSyncDir) {
-        resourceProducer = pResourceProducer;
+        regularFileFactory = pRegularFileFactory;
         watchService = pWatchService;
         trigger = pTrigger;
         syncDir = pSyncDir;
@@ -81,22 +78,27 @@ class WatchEventDistributor extends SimpleFileVisitor<Path> implements Closeable
 
     @Override
     public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
-        getResource(file).update(update -> updateResource(update, file));
+        getRegularFile(file).update(update -> updateResource(update, file));
         return CONTINUE;
     }
 
     private void updateResource(final Update pUpdate, final Path pFile) {
         if (pUpdate.hasChanged()) {
-            trigger.modify(syncDir, pFile, pUpdate.getCurrent().toByteArray());
+            final Object regularFile = tree.get(pFile);
+            if (regularFile instanceof RegularFile) {
+                trigger.modify((RegularFile) regularFile, pUpdate.getCurrent().toByteArray());
+            } else {
+                LOG.warn("{} is not a regular file, update cannot be performed!", regularFile);
+            }
         }
     }
 
-    private Resource computeResource(final Path pFile) {
-        return resourceProducer.create(SHA256, pFile);
+    private RegularFile computeRegularFile(final Path pFile) {
+        return regularFileFactory.create(syncDir, pFile);
     }
 
-    private Resource getResource(final Path pFile) {
-        return (Resource) tree.computeIfAbsent(pFile, this::computeResource);
+    private RegularFile getRegularFile(final Path pFile) {
+        return (RegularFile) tree.computeIfAbsent(pFile, this::computeRegularFile);
     }
 
     private void registerDirectory(final Path pPath) {
@@ -113,8 +115,8 @@ class WatchEventDistributor extends SimpleFileVisitor<Path> implements Closeable
         final Object obj = tree.remove(pPath);
         if (obj instanceof WatchKey) {  // Was a directory
             ((WatchKey) obj).cancel();
-        } else if (obj != null) { // Was a regular file
-            trigger.delete(syncDir, pPath);
+        } else if (obj instanceof RegularFile) { // Was a regular file
+            trigger.delete((RegularFile) obj);
         } else {
             LOG.warn("No watch-key nor a resource registered for {}", pPath);
         }
@@ -130,7 +132,7 @@ class WatchEventDistributor extends SimpleFileVisitor<Path> implements Closeable
 
     public void modify(final Path pPath) throws IOException {
         if (isRegularFile(pPath)) {
-            getResource(pPath).update(update -> updateResource(update, pPath));
+            getRegularFile(pPath).update(update -> updateResource(update, pPath));
         }
     }
 }

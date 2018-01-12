@@ -16,6 +16,7 @@ package ch.sourcepond.io.fssync.source.fs.trigger;
 import ch.sourcepond.io.fssync.common.api.SyncPath;
 import ch.sourcepond.io.fssync.distributor.api.Distributor;
 import ch.sourcepond.io.fssync.source.fs.Config;
+import ch.sourcepond.io.fssync.source.fs.fswatch.RegularFile;
 
 import javax.inject.Inject;
 import java.util.concurrent.ScheduledExecutorService;
@@ -34,7 +35,7 @@ class SyncTriggerFactory {
         config = pConfig;
     }
 
-    public SyncTrigger create(final SyncPath pPath,
+    public SyncTrigger create(final RegularFile pPath,
                               final SyncTriggerFunction pTrigger) {
         return new SyncTrigger(executor, distributor, config, pPath, pTrigger);
     }

@@ -14,11 +14,12 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.source.fs.trigger;
 
 import ch.sourcepond.io.fssync.common.api.SyncPath;
+import ch.sourcepond.io.fssync.source.fs.fswatch.RegularFile;
 
 import java.io.IOException;
 
 @FunctionalInterface
 public interface SyncTriggerFunction {
 
-    void process(SyncPath pPath) throws IOException;
+    void process(RegularFile pPath) throws IOException;
 }

@@ -13,10 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.source.fs.fswatch;
 
-import ch.qos.logback.core.encoder.EchoEncoder;
 import ch.sourcepond.io.checksum.api.Checksum;
-import ch.sourcepond.io.checksum.api.Resource;
-import ch.sourcepond.io.checksum.api.ResourceProducer;
 import ch.sourcepond.io.checksum.api.Update;
 import ch.sourcepond.io.checksum.api.UpdateObserver;
 import ch.sourcepond.io.fssync.source.fs.trigger.ReplicationTrigger;
@@ -31,7 +28,6 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.spi.FileSystemProvider;
 
-import static ch.sourcepond.io.checksum.api.Algorithm.SHA256;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
@@ -48,8 +44,8 @@ import static org.mockito.Mockito.when;
 
 public class WatchEventDistributorTest {
     private static final byte[] EXPECTECTED_CHECKSUM = new byte[0];
-    private final Resource resource = mock(Resource.class);
-    private final ResourceProducer resourceProducer = mock(ResourceProducer.class);
+    private final RegularFileFactory regularFileFactory = mock(RegularFileFactory.class);
+    private final RegularFile regularFile = mock(RegularFile.class);
     private final Update update = mock(Update.class);
     private final Checksum checksum = mock(Checksum.class);
     private final WatchService watchService = mock(WatchService.class);
@@ -61,7 +57,7 @@ public class WatchEventDistributorTest {
     private final BasicFileAttributes fileAttributes = mock(BasicFileAttributes.class);
     private final FileSystem fs = mock(FileSystem.class);
     private final FileSystemProvider provider = mock(FileSystemProvider.class);
-    private final WatchEventDistributor distributor = new WatchEventDistributor(resourceProducer, watchService,
+    private final WatchEventDistributor distributor = new WatchEventDistributor(regularFileFactory, watchService,
             replicationTrigger, syncDir);
 
     @Before
@@ -70,11 +66,11 @@ public class WatchEventDistributorTest {
             final UpdateObserver obs = inv.getArgument(0);
             obs.done(update);
             return null;
-        }).when(resource).update(notNull());
+        }).when(regularFile).update(notNull());
         when(update.hasChanged()).thenReturn(true);
         when(update.getCurrent()).thenReturn(checksum);
         when(checksum.toByteArray()).thenReturn(EXPECTECTED_CHECKSUM);
-        when(resourceProducer.create(SHA256, file)).thenReturn(resource);
+        when(regularFileFactory.create(syncDir, file)).thenReturn(regularFile);
         when(syncDirAttributes.isDirectory()).thenReturn(true);
         when(syncDir.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)).thenReturn(watchKey);
         when(fs.provider()).thenReturn(provider);
@@ -107,20 +103,20 @@ public class WatchEventDistributorTest {
     @Test
     public void visitFile() throws Exception {
         distributor.visitFile(file, null);
-        verify(replicationTrigger).modify(syncDir, file, EXPECTECTED_CHECKSUM);
+        verify(replicationTrigger).modify(regularFile, EXPECTECTED_CHECKSUM);
     }
 
     @Test
     public void visitAndModifyFile() throws Exception {
         distributor.visitFile(file, null);
         distributor.modify(file);
-        verify(replicationTrigger, times(2)).modify(syncDir, file, EXPECTECTED_CHECKSUM);
+        verify(replicationTrigger, times(2)).modify(regularFile, EXPECTECTED_CHECKSUM);
     }
 
     @Test
     public void modifyFileNewResourceCreated() throws Exception {
         distributor.modify(file);
-        verify(replicationTrigger).modify(syncDir, file, EXPECTECTED_CHECKSUM);
+        verify(replicationTrigger).modify(regularFile, EXPECTECTED_CHECKSUM);
     }
 
     @Test
@@ -140,7 +136,7 @@ public class WatchEventDistributorTest {
     @Test
     public void createFile() throws Exception {
         distributor.create(file);
-        verify(replicationTrigger).modify(syncDir, file, EXPECTECTED_CHECKSUM);
+        verify(replicationTrigger).modify(regularFile, EXPECTECTED_CHECKSUM);
     }
 
     @Test
@@ -167,6 +163,6 @@ public class WatchEventDistributorTest {
 
         // Nothing should happen
         distributor.delete(file);
-        verify(replicationTrigger).delete(syncDir, file);
+        verify(replicationTrigger).delete(regularFile);
     }
 }

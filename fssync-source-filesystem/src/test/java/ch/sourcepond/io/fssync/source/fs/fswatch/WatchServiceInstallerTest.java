@@ -14,25 +14,20 @@ limitations under the License.*/
 package ch.sourcepond.io.fssync.source.fs.fswatch;
 
 import ch.sourcepond.io.checksum.api.Checksum;
-import ch.sourcepond.io.checksum.api.Resource;
-import ch.sourcepond.io.checksum.api.ResourceProducer;
 import ch.sourcepond.io.checksum.api.Update;
 import ch.sourcepond.io.checksum.api.UpdateObserver;
 import ch.sourcepond.io.fssync.source.fs.trigger.ReplicationTrigger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystem;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.WatchService;
 
-import static ch.sourcepond.io.checksum.api.Algorithm.SHA256;
 import static java.lang.System.getProperty;
 import static java.lang.Thread.sleep;
 import static java.nio.file.FileSystems.getDefault;
@@ -62,8 +57,8 @@ public class WatchServiceInstallerTest {
     private final Path expectedPath = watchedDirectory.resolve("test.txt");
     private final Update update = mock(Update.class);
     private final Checksum checksum = mock(Checksum.class);
-    private final ResourceProducer resourceProducer = mock(ResourceProducer.class);
-    private final Resource resource = mock(Resource.class, withSettings().defaultAnswer(inv -> {
+    private final RegularFileFactory regularFileFactory = mock(RegularFileFactory.class);
+    private final RegularFile regularFile = mock(RegularFile.class, withSettings().defaultAnswer(inv -> {
         final Object[] args = inv.getArguments();
         ((UpdateObserver) args[args.length - 1]).done(update);
         return null;
@@ -79,12 +74,12 @@ public class WatchServiceInstallerTest {
         assertTrue(isDirectory(sourcePath));
         copyDirectory(sourcePath.toFile(), watchedDirectory.toFile());
         assertTrue(exists(expectedPath));
-        when(resourceProducer.create(SHA256, expectedPath)).thenReturn(resource);
+        when(regularFileFactory.create(watchedDirectory, expectedPath)).thenReturn(regularFile);
         when(update.getCurrent()).thenReturn(checksum);
         when(update.hasChanged()).thenReturn(true);
         when(checksum.toByteArray()).thenReturn(EXPECTED_CHECKSUM);
         watchService = getDefault().newWatchService();
-        watchEventDistributor = new WatchEventDistributor(resourceProducer, watchService, replicationTrigger, watchedDirectory);
+        watchEventDistributor = new WatchEventDistributor(regularFileFactory, watchService, replicationTrigger, watchedDirectory);
         installer = new WatchServiceInstaller(watchEventDistributor, watchService, watchedDirectory);
         installer.start();
         sleep(1000);
@@ -111,7 +106,7 @@ public class WatchServiceInstallerTest {
             writer.write(randomUUID().toString());
         }
         verify(replicationTrigger, timeout(15000).atLeastOnce()).
-                modify(watchedDirectory, expectedPath, EXPECTED_CHECKSUM);
+                modify(regularFile, EXPECTED_CHECKSUM);
     }
 
     @Test
@@ -124,7 +119,7 @@ public class WatchServiceInstallerTest {
     public void deleteCreate() throws Exception {
         reset(replicationTrigger);
         delete(expectedPath);
-        verify(replicationTrigger, timeout(15000)).delete(watchedDirectory, expectedPath);
+        verify(replicationTrigger, timeout(15000)).delete(regularFile);
         changeFile();
     }
 
