@@ -2,18 +2,17 @@ dependencies {
     compile project(':fssync-distributor-api')
     compile project(':fssync-common-api')
     compile project(':fssync-common-lib')
-    compile 'ch.sourcepond.io:checksum-api:4.0-SNAPSHOT'
-    compile 'com.google.inject:guice:4.1.0'
-    compile 'org.osgi:org.osgi.core:6.0.0'
-    compile 'org.osgi:osgi.cmpn:6.0.0'
-    compile 'org.slf4j:slf4j-api:1.7.25'
-    testCompile 'org.mockito:mockito-core:2.11.0'
-    testCompile 'junit:junit:4.12'
-    testCompile 'commons-io:commons-io:2.6'
+    compile 'ch.sourcepond.io:checksum-api'
+    compile 'com.google.inject:guice'
+    compile 'org.osgi:org.osgi.core'
+    compile 'org.osgi:osgi.cmpn'
+    compile 'org.slf4j:slf4j-api'
+    testCompile 'commons-io:commons-io'
 }
 
 jar {
     manifest {
-        attributes('Bundle-Activator': 'ch.sourcepond.io.fssync.source.fs.Activator')
+        attributes('Bundle-Activator': 'ch.sourcepond.io.fssync.source.fs.Activator',
+                'Require-Capability': 'osgi.service;filter:="(objectClass=org.osgi.service.cm.ConfigurationAdmin)"')
     }
 }

@@ -1,26 +1,26 @@
 dependencies {
     compile project(':fssync-target-api')
     compile project(':fssync-common-lib')
-    compile 'ch.sourcepond.osgi.cmpn:metatype-builder-lib:0.1-SNAPSHOT'
-    compile 'org.slf4j:slf4j-api:1.7.25'
-    compile 'org.osgi:org.osgi.core:6.0.0'
-    compile 'org.osgi:osgi.cmpn:6.0.0'
+    compile 'ch.sourcepond.osgi.cmpn:metatype-builder-lib'
+    compile 'org.slf4j:slf4j-api'
+    compile 'org.osgi:org.osgi.core'
+    compile 'org.osgi:osgi.cmpn'
     testCompile project(path: ":fssync-common-lib", configuration: 'testArtifacts')
-    testCompile 'org.mockito:mockito-core:2.11.0'
     integrationTestCompile project(':fssync-target-filesystem')
-    integrationTestCompile 'org.apache.felix:org.apache.felix.metatype:1.1.6'
-    integrationTestCompile 'org.apache.felix:org.apache.felix.configadmin:1.8.16'
-    integrationTestCompile 'org.apache.servicemix.bundles:org.apache.servicemix.bundles.javax-inject:1_2'
-    integrationTestCompile 'org.ops4j.pax.exam:pax-exam-container-native:4.11.0'
-    integrationTestCompile 'org.ops4j.pax.exam:pax-exam-junit4:4.11.0'
-    integrationTestCompile 'org.ops4j.pax.exam:pax-exam-link-mvn:4.11.0'
-    integrationTestCompile 'org.ops4j.pax.url:pax-url-aether:2.5.3'
-    integrationTestCompile 'org.apache.felix:org.apache.felix.framework:5.6.10'
-    integrationTestCompile 'commons-io:commons-io:2.6'
+    integrationTestCompile 'org.apache.felix:org.apache.felix.metatype'
+    integrationTestCompile 'org.apache.felix:org.apache.felix.configadmin'
+    integrationTestCompile 'org.apache.servicemix.bundles:org.apache.servicemix.bundles.javax-inject'
+    integrationTestCompile 'org.ops4j.pax.exam:pax-exam-container-native'
+    integrationTestCompile 'org.ops4j.pax.exam:pax-exam-junit4'
+    integrationTestCompile 'org.ops4j.pax.exam:pax-exam-link-mvn'
+    integrationTestCompile 'org.ops4j.pax.url:pax-url-aether'
+    integrationTestCompile 'org.apache.felix:org.apache.felix.framework'
+    integrationTestCompile 'commons-io:commons-io'
 }
 
 jar {
     manifest {
-        attributes('Bundle-Activator': 'ch.sourcepond.io.fssync.target.fs.Activator')
+        attributes('Bundle-Activator': 'ch.sourcepond.io.fssync.target.fs.Activator',
+                'Require-Capability': 'osgi.service;filter:="(objectClass=org.osgi.service.cm.ConfigurationAdmin)"')
     }
 }

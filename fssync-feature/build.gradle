@@ -1,0 +1,59 @@
+apply plugin: 'com.github.lburgazzoli.karaf'
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "com.github.lburgazzoli:gradle-karaf-plugin:0.0.49"
+    }
+}
+
+configurations {
+    guice {
+        transitive = false
+    }
+    fssync {
+        transitive = false
+    }
+}
+
+dependencies {
+    guice 'com.google.inject:guice'
+    guice 'com.google.inject.extensions:guice-multibindings'
+    guice 'com.google.guava:guava'
+    guice 'org.apache.servicemix.bundles:org.apache.servicemix.bundles.javax-inject'
+    guice 'org.apache.servicemix.bundles:org.apache.servicemix.bundles.aopalliance'
+
+    fssync 'ch.sourcepond.io:checksum-api'
+    fssync 'ch.sourcepond.osgi.cmpn:metatype-builder-lib'
+    fssync project(':fssync-common-api')
+    fssync project(':fssync-common-lib')
+    fssync project(':fssync-distributor-api')
+    fssync project(':fssync-distributor-hazelcast')
+    fssync project(':fssync-source-filesystem')
+    fssync project(':fssync-target-api')
+    fssync project(':fssync-target-filesystem')
+}
+
+karaf {
+    features {
+        // See section below for karaf 4 support if using 1.3.0
+        xsdVersion  = '1.3.0'
+        version     = '0.1' // Your project version
+        description = 'Fssync features'
+
+        feature {
+            name        = 'Sourcepond Fssync'
+            description = 'Sourcepond Fssync dependencies'
+
+            configurations 'guice', 'fssync'
+
+            feature('config') {
+                dependency = true
+                version="4.1.4"
+            }
+        }
+    }
+}
