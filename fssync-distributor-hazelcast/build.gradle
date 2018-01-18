@@ -10,14 +10,16 @@ dependencies {
     compile 'com.google.inject:guice'
     compile 'com.google.inject.extensions:guice-multibindings'
     testCompile project(path: ":fssync-common-lib", configuration: 'testArtifacts')
-    integrationTestCompile 'org.apache.felix:org.apache.felix.metatype'
-    integrationTestCompile 'org.apache.felix:org.apache.felix.configadmin'
-    integrationTestCompile 'org.apache.servicemix.bundles:org.apache.servicemix.bundles.javax-inject'
-    integrationTestCompile 'org.ops4j.pax.exam:pax-exam-container-native'
     integrationTestCompile 'org.ops4j.pax.exam:pax-exam-junit4'
-    integrationTestCompile 'org.ops4j.pax.exam:pax-exam-link-mvn'
-    integrationTestCompile 'org.ops4j.pax.url:pax-url-aether'
-    integrationTestCompile 'org.apache.felix:org.apache.felix.framework'
+    integrationTestCompile 'org.apache.servicemix.bundles:org.apache.servicemix.bundles.javax-inject'
+    integrationTestRuntime 'org.apache.felix:org.apache.felix.metatype'
+    integrationTestRuntime 'org.apache.felix:org.apache.felix.configadmin'
+    integrationTestRuntime 'org.ops4j.pax.exam:pax-exam-container-native'
+    integrationTestRuntime 'org.ops4j.pax.exam:pax-exam-link-mvn'
+    integrationTestRuntime 'org.ops4j.pax.url:pax-url-aether'
+    integrationTestRuntime 'org.apache.felix:org.apache.felix.framework'
+
+    integrationTest.dependsOn(":fssync-target-api:install")
 }
 
 jar {
