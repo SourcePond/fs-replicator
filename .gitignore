@@ -1,5 +1,4 @@
 /.gradle/
-/gradle/
 /build/
 /out/
 /target/
@@ -13,5 +12,3 @@
 .project
 *.log
 *.iml
-gradlew
-gradlew.bat
