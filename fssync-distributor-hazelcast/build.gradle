@@ -18,8 +18,6 @@ dependencies {
     integrationTestRuntime 'org.ops4j.pax.exam:pax-exam-link-mvn'
     integrationTestRuntime 'org.ops4j.pax.url:pax-url-aether'
     integrationTestRuntime 'org.apache.felix:org.apache.felix.framework'
-
-    integrationTest.dependsOn(":fssync-target-api:install")
 }
 
 jar {
@@ -28,3 +26,5 @@ jar {
                 'Require-Capability': 'osgi.service;filter:="(objectClass=org.osgi.service.cm.ConfigurationAdmin)"')
     }
 }
+
+integrationTest.dependsOn(":fssync-target-api:install")
