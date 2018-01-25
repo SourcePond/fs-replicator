@@ -31,7 +31,7 @@ subprojects {
         dependencies {
             // Compile dependencies
             dependency 'ch.sourcepond.osgi.cmpn:metatype-builder-lib:0.1'
-            dependency 'ch.sourcepond.io:checksum-api:4.0.2'
+            dependency 'ch.sourcepond.io:checksum-api:4.0.3'
             dependency 'org.slf4j:slf4j-api:1.7.25'
             dependency 'org.osgi:org.osgi.core:6.0.0'
             dependency 'org.osgi:osgi.cmpn:6.0.0'
