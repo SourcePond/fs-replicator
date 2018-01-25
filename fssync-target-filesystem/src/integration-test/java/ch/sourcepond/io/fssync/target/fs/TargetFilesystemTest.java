@@ -18,34 +18,26 @@ import ch.sourcepond.io.fssync.target.api.NodeInfo;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
-import org.osgi.framework.BundleContext;
-import org.osgi.service.cm.ConfigurationAdmin;
-import org.osgi.util.tracker.ServiceTracker;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.Hashtable;
 
-import static ch.sourcepond.io.fssync.target.fs.Config.FACTORY_PID;
 import static java.lang.System.getProperty;
 import static java.nio.file.FileSystems.getDefault;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.ops4j.pax.exam.CoreOptions.junitBundles;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
-import static org.osgi.framework.Constants.OBJECTCLASS;
-import static org.osgi.framework.Constants.SERVICE_PID;
 
+@Ignore
 @RunWith(PaxExam.class)
 public class TargetFilesystemTest {
     private static final String EXPECTED_LOCAL_NODE = "expectedLocalNode";
@@ -53,15 +45,6 @@ public class TargetFilesystemTest {
 
     @Inject
     private SyncTarget defaultSyncTarget;
-
-    @Inject
-    private ConfigurationAdmin configAdmin;
-
-    @Inject
-    private BundleContext context;
-
-    private TestCustomizer customizer;
-    private ServiceTracker<SyncTarget, SyncTarget> tracker;
 
     @Configuration
     public Option[] configure() {
@@ -80,17 +63,13 @@ public class TargetFilesystemTest {
 
     @Before
     public void setup() throws Exception {
-        customizer = new TestCustomizer(context);
-        tracker = new ServiceTracker<SyncTarget, SyncTarget>(context,
-                context.createFilter(String.format("(&(%s=%s)(!(%s=%s)))", OBJECTCLASS, SyncTarget.class.getName(), SERVICE_PID, FACTORY_PID)),
-                customizer);
-        tracker.open();
+
     }
 
     @After
     public void tearDown() throws Exception {
         deleteDirectory(getDefault().getPath(getProperty("user.dir"), "temp_testdata").toFile());
-        tracker.close();
+
     }
 
     @Test
@@ -103,29 +82,6 @@ public class TargetFilesystemTest {
 
     @Test
     public void registerAndUnregisterSyncTargets() throws Exception {
-        org.osgi.service.cm.Configuration config = configAdmin.createFactoryConfiguration(FACTORY_PID, null);
-        final Hashtable<String, Object> values = new Hashtable<>();
-        values.put("syncDir", getProperty("user.dir") + "/temp_testdata");
-        config.update(values);
 
-        // A new service should have been registered
-        tracker.open();
-        final SyncTarget syncTarget1 = tracker.waitForService(10000);
-        assertNotNull(syncTarget1);
-        assertNotEquals(defaultSyncTarget, syncTarget1);
-
-        config = configAdmin.createFactoryConfiguration(FACTORY_PID, null);
-        values.put("syncDir", getProperty("user.dir") + "/temp_testdata2");
-        config.update(values);
-
-        final SyncTarget syncTarget2 = tracker.waitForService(10000);
-        assertNotNull(syncTarget2);
-        assertNotEquals(defaultSyncTarget, syncTarget2);
-
-        customizer.waitForRegistrations();
-
-        assertEquals(2, customizer.targets.size());
-        assertTrue(customizer.targets.contains(syncTarget1));
-        assertTrue(customizer.targets.contains(syncTarget2));
     }
 }

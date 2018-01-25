@@ -13,14 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.target.fs;
 
-import ch.sourcepond.io.fssync.target.api.NodeInfo;
 import ch.sourcepond.io.fssync.common.api.SyncPath;
-import ch.sourcepond.io.fssync.target.api.SyncTarget;
+import ch.sourcepond.io.fssync.target.api.NodeInfo;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
-import org.osgi.framework.ServiceRegistration;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +28,6 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
 
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
@@ -39,6 +35,7 @@ import static java.lang.Thread.sleep;
 import static java.nio.file.FileSystems.getDefault;
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.Files.delete;
+import static java.nio.file.Files.deleteIfExists;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.isRegularFile;
 import static java.nio.file.Files.walkFileTree;
@@ -46,7 +43,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
@@ -55,14 +51,14 @@ import static org.mockito.Mockito.when;
 public class TargetDirectoryTest {
     private static final String EXPECTED_CONTEXT = "Some expected content";
     private final NodeInfo nodeInfo = mock(NodeInfo.class);
-    private final SyncPath syncPath = new SyncPath(File.separator, format("%s/build", getProperty("user.dir")), "org/foo/bar.txt");
+    private final SyncPath syncPath = new SyncPath(File.separator, format("%s/build/testsync", getProperty("user.dir")), "org/foo/bar.txt");
     private final Config config = mock(Config.class);
     private final Path expectedPath = getDefault().getPath(syncPath.getSyncDir(), syncPath.getRelativePath());
     private TargetDirectory syncTarget;
 
     @Before
     public void setup() throws IOException {
-        when(config.syncDir()).thenReturn(syncPath.getSyncDir());
+        when(config.syncDir()).thenReturn(syncPath.toAbsolutePath());
         when(config.forceUnlockSchedulePeriod()).thenReturn(100L);
         when(config.forceUnlockSchedulePeriodUnit()).thenReturn(MILLISECONDS);
         syncTarget = new TargetDirectory();
@@ -79,7 +75,7 @@ public class TargetDirectoryTest {
 
                 @Override
                 public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
-                    delete(file);
+                    deleteIfExists(file);
                     return CONTINUE;
                 }
 

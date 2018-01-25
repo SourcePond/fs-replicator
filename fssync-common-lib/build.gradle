@@ -4,14 +4,11 @@ dependencies {
     compile 'org.osgi:org.osgi.core'
     compile 'org.osgi:osgi.cmpn'
     integrationTestCompile project(':fssync-common-lib')
-    integrationTestCompile 'org.apache.felix:org.apache.felix.metatype'
-    integrationTestCompile 'org.apache.felix:org.apache.felix.configadmin'
-    integrationTestCompile 'org.apache.servicemix.bundles:org.apache.servicemix.bundles.javax-inject'
+    integrationTestCompile 'org.ops4j.pax.exam:pax-exam'
     integrationTestCompile 'org.ops4j.pax.exam:pax-exam-junit4'
+    integrationTestCompile 'org.apache.servicemix.bundles:org.apache.servicemix.bundles.javax-inject'
     integrationTestRuntime 'org.ops4j.pax.exam:pax-exam-container-karaf'
-    integrationTestRuntime 'org.ops4j.pax.exam:pax-exam-link-mvn'
     integrationTestRuntime 'org.ops4j.pax.url:pax-url-aether'
-    integrationTestRuntime 'org.apache.felix:org.apache.felix.framework'
 }
 
 configurations {
