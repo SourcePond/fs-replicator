@@ -13,20 +13,25 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package ch.sourcepond.io.fssync.target.fs;
 
-import ch.sourcepond.io.fssync.common.lib.Configurable;
-import ch.sourcepond.io.fssync.target.api.NodeInfo;
 import ch.sourcepond.io.fssync.common.api.SyncPath;
+import ch.sourcepond.io.fssync.target.api.NodeInfo;
 import ch.sourcepond.io.fssync.target.api.SyncTarget;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 
 import static java.lang.String.format;
 import static java.nio.channels.FileChannel.open;
@@ -36,26 +41,28 @@ import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isSameFile;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.WRITE;
+import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.slf4j.LoggerFactory.getLogger;
 
-class TargetDirectory extends Configurable<Config> implements SyncTarget, Runnable {
+@Component(service = {SyncTarget.class})
+@Designate(ocd = Config.class, factory = true)
+class TargetDirectory implements SyncTarget {
     private static final Logger LOG = getLogger(TargetDirectory.class);
+    private static final Set<String> SYNC_DIRS = new HashSet<>();
     private final ConcurrentMap<SyncPath, FileHandle> handles = new ConcurrentHashMap<>();
+    private final FileSystem fs;
     private final ScheduledExecutorService watchDogExecutor;
-    private volatile ScheduledFuture<?> watchDogFuture;
-    private volatile Path syncDir;
+    private volatile Config config;
+    private Path syncDir;
 
-    public TargetDirectory(final ScheduledExecutorService pWatchDogExecutor) {
-        watchDogExecutor = pWatchDogExecutor;
-    }
-
-    @Override
-    public void run() {
-        handles.values().removeIf(value -> value.closeExpired(getConfig()));
+    public TargetDirectory() {
+        fs = getDefault();
+        watchDogExecutor = newSingleThreadScheduledExecutor();
     }
 
     private FileHandle createHandle(final NodeInfo pNodeInfo, final SyncPath pPath) throws IOException {
-        final Path syncDir = this.syncDir.getFileSystem().getPath(pPath.getSyncDir());
+        final Path syncDir = fs.getPath(pPath.getSyncDir());
         final Path targetFile = syncDir.resolve(pPath.getRelativePath());
 
         if (!targetFile.startsWith(syncDir)) {
@@ -151,22 +158,30 @@ class TargetDirectory extends Configurable<Config> implements SyncTarget, Runnab
         handles.remove(pSyncPath);
     }
 
-    @Override
-    public void close() {
-        super.close();
-        watchDogExecutor.shutdown();
-        handles.values().forEach(ch -> ch.close());
-    }
-
-    public void update(final Config pConfig) {
-        super.update(pConfig);
-        syncDir = getDefault().getPath(pConfig.syncDir());
-        if (watchDogFuture != null) {
-            watchDogFuture.cancel(false);
+    @Activate
+    public void activate(final Config pConfig) {
+        synchronized (SYNC_DIRS) {
+            if (!SYNC_DIRS.add(pConfig.syncDir())) {
+                throw new IllegalArgumentException(format("Sync-dir %s is already used by another component!", pConfig.syncDir()));
+            }
         }
-        watchDogFuture = watchDogExecutor.scheduleAtFixedRate(this,
-                pConfig.forceUnlockSchedulePeriod(),
+        config = pConfig;
+        watchDogExecutor.scheduleAtFixedRate(() -> handles.values().removeIf(value -> value.closeExpired(config)),
+                pConfig.forceUnlockTimeout(),
                 pConfig.forceUnlockSchedulePeriod(),
                 pConfig.forceUnlockSchedulePeriodUnit());
+        syncDir = fs.getPath(pConfig.syncDir());
+    }
+
+    @Deactivate
+    public void deactivate() throws InterruptedException {
+        synchronized (SYNC_DIRS) {
+            SYNC_DIRS.remove(config.syncDir());
+        }
+        watchDogExecutor.shutdown();
+        while (!watchDogExecutor.isTerminated()) {
+            watchDogExecutor.awaitTermination(100, MILLISECONDS);
+        }
+        handles.values().forEach(ch -> ch.close());
     }
 }

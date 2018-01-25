@@ -8,7 +8,7 @@ dependencies {
     integrationTestCompile 'org.apache.felix:org.apache.felix.configadmin'
     integrationTestCompile 'org.apache.servicemix.bundles:org.apache.servicemix.bundles.javax-inject'
     integrationTestCompile 'org.ops4j.pax.exam:pax-exam-junit4'
-    integrationTestRuntime 'org.ops4j.pax.exam:pax-exam-container-native'
+    integrationTestRuntime 'org.ops4j.pax.exam:pax-exam-container-karaf'
     integrationTestRuntime 'org.ops4j.pax.exam:pax-exam-link-mvn'
     integrationTestRuntime 'org.ops4j.pax.url:pax-url-aether'
     integrationTestRuntime 'org.apache.felix:org.apache.felix.framework'

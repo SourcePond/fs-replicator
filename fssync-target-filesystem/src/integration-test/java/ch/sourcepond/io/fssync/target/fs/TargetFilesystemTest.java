@@ -33,8 +33,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Hashtable;
 
-import static ch.sourcepond.io.fssync.target.fs.Activator.FACTORY_PID;
-import static java.lang.String.format;
+import static ch.sourcepond.io.fssync.target.fs.Config.FACTORY_PID;
 import static java.lang.System.getProperty;
 import static java.nio.file.FileSystems.getDefault;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
@@ -83,7 +82,7 @@ public class TargetFilesystemTest {
     public void setup() throws Exception {
         customizer = new TestCustomizer(context);
         tracker = new ServiceTracker<SyncTarget, SyncTarget>(context,
-                context.createFilter(format("(&(%s=%s)(!(%s=%s)))", OBJECTCLASS, SyncTarget.class.getName(), SERVICE_PID, FACTORY_PID)),
+                context.createFilter(String.format("(&(%s=%s)(!(%s=%s)))", OBJECTCLASS, SyncTarget.class.getName(), SERVICE_PID, FACTORY_PID)),
                 customizer);
         tracker.open();
     }

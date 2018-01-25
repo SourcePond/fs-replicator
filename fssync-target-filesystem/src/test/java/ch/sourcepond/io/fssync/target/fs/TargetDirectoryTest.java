@@ -19,6 +19,7 @@ import ch.sourcepond.io.fssync.target.api.SyncTarget;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.osgi.framework.ServiceRegistration;
 
 import java.io.File;
@@ -30,6 +31,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
@@ -53,9 +55,8 @@ import static org.mockito.Mockito.when;
 public class TargetDirectoryTest {
     private static final String EXPECTED_CONTEXT = "Some expected content";
     private final NodeInfo nodeInfo = mock(NodeInfo.class);
-    private final SyncPath syncPath = new SyncPath(File.separator, format("%s/target", getProperty("user.dir")), "org/foo/bar.txt");
+    private final SyncPath syncPath = new SyncPath(File.separator, format("%s/build", getProperty("user.dir")), "org/foo/bar.txt");
     private final Config config = mock(Config.class);
-    private final ServiceRegistration<SyncTarget> registration = mock(ServiceRegistration.class);
     private final Path expectedPath = getDefault().getPath(syncPath.getSyncDir(), syncPath.getRelativePath());
     private TargetDirectory syncTarget;
 
@@ -64,16 +65,15 @@ public class TargetDirectoryTest {
         when(config.syncDir()).thenReturn(syncPath.getSyncDir());
         when(config.forceUnlockSchedulePeriod()).thenReturn(100L);
         when(config.forceUnlockSchedulePeriodUnit()).thenReturn(MILLISECONDS);
-        syncTarget = new TargetDirectoryFactory().create();
-        syncTarget.update(config);
-        syncTarget.setRegistration(registration);
+        syncTarget = new TargetDirectory();
+        syncTarget.activate(config);
         syncTarget.lock(nodeInfo, syncPath);
     }
 
     @After
-    public void tearDown() throws IOException {
+    public void tearDown() throws Exception {
         try {
-            syncTarget.close();
+            syncTarget.deactivate();
         } finally {
             walkFileTree(getDefault().getPath(syncPath.getSyncDir()), new SimpleFileVisitor<Path>() {
 
@@ -90,16 +90,6 @@ public class TargetDirectoryTest {
                 }
             });
         }
-    }
-
-    @Test
-    public void updateConfig() {
-        syncTarget.update(config);
-    }
-
-    @Test
-    public void getConfig() {
-        assertSame(config, syncTarget.getConfig());
     }
 
     @Test
