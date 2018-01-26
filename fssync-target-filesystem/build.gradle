@@ -1,12 +1,30 @@
+configurations {
+    apis
+    compile.extendsFrom apis
+}
+
 dependencies {
-    compile project(':fssync-target-api')
+    apis project(':fssync-target-api')
+    apis project(':fssync-common-api')
     compile 'org.slf4j:slf4j-api'
     compile 'org.osgi:osgi.cmpn'
-    runtime 'org.apache.karaf:apache-karaf:4.1.4'
+
+    integrationTestCompile 'ch.sourcepond.testing:bundle-test-support'
+    integrationTestCompile 'org.osgi:org.osgi.core'
+    integrationTestCompile 'org.osgi:osgi.cmpn'
     integrationTestCompile 'commons-io:commons-io'
     integrationTestCompile 'org.ops4j.pax.exam:pax-exam'
     integrationTestCompile 'org.ops4j.pax.exam:pax-exam-junit4'
     integrationTestCompile 'org.apache.servicemix.bundles:org.apache.servicemix.bundles.javax-inject'
-    integrationTestRuntime 'org.ops4j.pax.exam:pax-exam-container-karaf'
+    integrationTestCompile 'org.ops4j.pax.exam:pax-exam-container-karaf'
+    integrationTestCompile 'commons-io:commons-io'
+
     integrationTestRuntime 'org.ops4j.pax.url:pax-url-aether'
+    integrationTestRuntime group: 'org.apache.karaf', name: 'apache-karaf', ext: 'tar.gz'
+    integrationTestRuntime group: 'org.apache.karaf.features', name: 'standard', classifier: 'features', ext: 'xml'
+}
+
+copyIntegrationTestArtifacts {
+    from configurations.apis
+    into 'build/paxexam'
 }

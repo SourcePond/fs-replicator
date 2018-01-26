@@ -51,6 +51,9 @@ subprojects {
             dependency 'commons-io:commons-io:2.6'
 
             // Integration-test dependencies
+            dependency 'org.apache.karaf:apache-karaf:4.1.4'
+            dependency 'org.apache.karaf.features:standard:4.1.4'
+            dependency 'ch.sourcepond.testing:bundle-test-support:0.2.0'
             dependency 'org.apache.servicemix.bundles:org.apache.servicemix.bundles.javax-inject:1_2'
             dependency 'org.ops4j.pax.exam:pax-exam:4.11.0'
             dependency 'org.ops4j.pax.exam:pax-exam-container-karaf:4.11.0'
@@ -77,8 +80,8 @@ subprojects {
         // we need to generate a META-INF/maven/dependencies.properties file
         // just like the generate-depends-file Maven goal from ServiceMix/Karaf
 
-        File outputFileDir = project.file( "${project.buildDir}/classes/test/META-INF/maven/" )
-        File outputFile = new File( outputFileDir, 'dependencies.properties' )
+        File outputFileDir = project.file("${project.buildDir}/classes/java/integrationTest/META-INF/maven/")
+        File outputFile = new File(outputFileDir, 'dependencies.properties')
 
         outputs.file outputFile
 
@@ -88,27 +91,36 @@ subprojects {
             Properties properties = new Properties();
 
             // first we add our GAV info
-            properties.setProperty( "groupId", "${project.group}" );
-            properties.setProperty( "artifactId", project.name );
-            properties.setProperty( "version", "${project.version}" );
-            properties.setProperty( "${project.group}/${project.name}/version", "${project.version}" );
+            properties.setProperty("groupId", "${project.group}");
+            properties.setProperty("artifactId", project.name);
+            properties.setProperty("version", "${project.version}");
+            properties.setProperty("${project.group}/${project.name}/version", "${project.version}");
 
             // then for all our deps
-            project.configurations.testRuntime.resolvedConfiguration.resolvedArtifacts.each {
+            project.configurations.integrationTestRuntime.resolvedConfiguration.resolvedArtifacts.each {
                 final String keyBase = it.moduleVersion.id.group + '/' + it.moduleVersion.id.name;
-                properties.setProperty( "${keyBase}/scope", "compile" )
-                properties.setProperty( "${keyBase}/type", it.extension )
-                properties.setProperty( "${keyBase}/version", it.moduleVersion.id.version )
+                properties.setProperty("${keyBase}/scope", "compile")
+                properties.setProperty("${keyBase}/type", it.extension)
+                properties.setProperty("${keyBase}/version", it.moduleVersion.id.version)
+
+                if (it.classifier) {
+                    properties.setProperty("${keyBase}/classifier", it.classifier)
+                }
             }
 
-            FileOutputStream outputStream = new FileOutputStream( outputFile );
+            FileOutputStream outputStream = new FileOutputStream(outputFile);
             try {
-                properties.store( outputStream, "Generated from Gradle by Hibernate build for PaxExam testing of hibernate-osgi module" )
+                properties.store(outputStream, "Generated from Gradle by Hibernate build for PaxExam testing of hibernate-osgi module")
             }
             finally {
                 outputStream.close()
             }
         }
+    }
+
+    task copyIntegrationTestArtifacts(type: Copy) {
+        from jar // here it automatically reads jar file produced from jar task
+        into 'build/paxexam'
     }
 
     task integrationTest(type: Test) {
@@ -118,7 +130,7 @@ subprojects {
     }
 
     check.dependsOn integrationTest
-    integrationTest.dependsOn(install, generateDependsFile)
+    integrationTest.dependsOn(install, generateDependsFile, copyIntegrationTestArtifacts)
     integrationTest.mustRunAfter test
 }
 
