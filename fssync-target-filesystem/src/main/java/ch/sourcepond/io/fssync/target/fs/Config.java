@@ -16,18 +16,13 @@ package ch.sourcepond.io.fssync.target.fs;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-import java.lang.annotation.Retention;
 import java.util.concurrent.TimeUnit;
 
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-@Retention(RUNTIME)
-@ObjectClassDefinition(name = "Fssync target filesystem", description = "Configuration for target filesystem",
-        factoryPid = Config.FACTORY_PID)
+@ObjectClassDefinition(name = "Fssync target filesystem", description = "Configuration for target filesystem")
 public @interface Config {
-    String FACTORY_PID = "ch.sourcepond.io.fssync.target.fs.SyncTargetConfig";
 
     @AttributeDefinition(
             min = "0",

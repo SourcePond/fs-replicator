@@ -43,11 +43,12 @@ import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.WRITE;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.osgi.service.component.annotations.ConfigurationPolicy.OPTIONAL;
 import static org.slf4j.LoggerFactory.getLogger;
 
-@Component(service = {SyncTarget.class})
+@Component(configurationPolicy = OPTIONAL, service = SyncTarget.class)
 @Designate(ocd = Config.class, factory = true)
-class TargetDirectory implements SyncTarget {
+public class TargetDirectory implements SyncTarget {
     private static final Logger LOG = getLogger(TargetDirectory.class);
     private static final Set<String> SYNC_DIRS = new HashSet<>();
     private final ConcurrentMap<SyncPath, FileHandle> handles = new ConcurrentHashMap<>();

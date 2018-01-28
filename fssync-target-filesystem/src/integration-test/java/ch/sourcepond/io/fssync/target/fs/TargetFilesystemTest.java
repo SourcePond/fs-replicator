@@ -24,6 +24,8 @@ import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.options.MavenUrlReference;
+import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
+import org.ops4j.pax.exam.spi.reactors.PerSuite;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.util.tracker.ServiceTracker;
@@ -32,15 +34,16 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Hashtable;
 
-import static ch.sourcepond.io.fssync.target.fs.Config.FACTORY_PID;
 import static ch.sourcepond.testing.OptionsHelper.karafContainer;
 import static ch.sourcepond.testing.OptionsHelper.provisionBundlesFromUserDir;
 import static java.lang.System.getProperty;
 import static java.nio.file.FileSystems.getDefault;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.ops4j.pax.exam.CoreOptions.maven;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.features;
@@ -48,9 +51,12 @@ import static org.osgi.framework.Constants.OBJECTCLASS;
 import static org.osgi.framework.Constants.SERVICE_PID;
 
 @RunWith(PaxExam.class)
+@ExamReactorStrategy(PerSuite.class)
 public class TargetFilesystemTest {
+    private static final String FACTORY_PID = "ch.sourcepond.io.fssync.target.fs.TargetDirectory";
     private static final String EXPECTED_LOCAL_NODE = "expectedLocalNode";
     private static final String EXPECTED_REMOTE_NODE = "expectedRemoteNode";
+    private final Path testSyncBaseDir = getDefault().getPath(getProperty("user.dir"), "build", "test_syncdir");
 
     @Inject
     private SyncTarget defaultSyncTarget;
@@ -72,8 +78,9 @@ public class TargetFilesystemTest {
                 .classifier("features")
                 .type("xml")
                 .versionAsInProject();
-        return new Option[] {
-                karafContainer(features(karafStandardRepo, "scr", "config")),
+        return new Option[]{
+                karafContainer(getDefault().getPath(getProperty("user.dir"), "build", "paxexam"),
+                        features(karafStandardRepo)),
                 mavenBundle("commons-io", "commons-io").versionAsInProject(),
                 provisionBundlesFromUserDir("build", "paxexam")
         };
@@ -82,7 +89,7 @@ public class TargetFilesystemTest {
     @Before
     public void setup() throws Exception {
         customizer = new TestCustomizer(context);
-        tracker = new ServiceTracker<SyncTarget, SyncTarget>(context,
+        tracker = new ServiceTracker<>(context,
                 context.createFilter(String.format("(&(%s=%s)(!(%s=%s)))", OBJECTCLASS, SyncTarget.class.getName(), SERVICE_PID, FACTORY_PID)),
                 customizer);
         tracker.open();
@@ -106,27 +113,17 @@ public class TargetFilesystemTest {
     public void registerAndUnregisterSyncTargets() throws Exception {
         org.osgi.service.cm.Configuration config = configAdmin.createFactoryConfiguration(FACTORY_PID, null);
         final Hashtable<String, Object> values = new Hashtable<>();
-        values.put("syncDir", getProperty("user.dir") + "/temp_testdata");
+        values.put("syncDir", testSyncBaseDir.resolve("temp_testdata2").toString());
         config.update(values);
-
-        // A new service should have been registered
-        tracker.open();
-        final SyncTarget syncTarget1 = tracker.waitForService(10000);
-        assertNotNull(syncTarget1);
-        assertNotEquals(defaultSyncTarget, syncTarget1);
 
         config = configAdmin.createFactoryConfiguration(FACTORY_PID, null);
-        values.put("syncDir", getProperty("user.dir") + "/temp_testdata2");
+        values.put("syncDir", testSyncBaseDir.resolve("temp_testdata3").toString());
         config.update(values);
-
-        final SyncTarget syncTarget2 = tracker.waitForService(10000);
-        assertNotNull(syncTarget2);
-        assertNotEquals(defaultSyncTarget, syncTarget2);
-
         customizer.waitForRegistrations();
 
-        assertEquals(2, customizer.targets.size());
-        assertTrue(customizer.targets.contains(syncTarget1));
-        assertTrue(customizer.targets.contains(syncTarget2));
+        final Object[] services = tracker.getServices();
+        assertEquals(2, services.length);
+        assertTrue(customizer.targets.contains(services[0]));
+        assertTrue(customizer.targets.contains(services[1]));
     }
 }

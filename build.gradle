@@ -53,7 +53,7 @@ subprojects {
             // Integration-test dependencies
             dependency 'org.apache.karaf:apache-karaf:4.1.4'
             dependency 'org.apache.karaf.features:standard:4.1.4'
-            dependency 'ch.sourcepond.testing:bundle-test-support:0.2.0'
+            dependency 'ch.sourcepond.testing:bundle-test-support:0.2.1'
             dependency 'org.apache.servicemix.bundles:org.apache.servicemix.bundles.javax-inject:1_2'
             dependency 'org.ops4j.pax.exam:pax-exam:4.11.0'
             dependency 'org.ops4j.pax.exam:pax-exam-container-karaf:4.11.0'
